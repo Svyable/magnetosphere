@@ -3,11 +3,13 @@ import Gallery from "./Gallery";
 import FieldExplorer from "./FieldExplorer";
 import SolarActivity from "./SolarActivity";
 import Guide from "./Guide";
+import DataPassport, { type ProvenanceFeed } from "./DataPassport";
 import { Overlay } from "./ui";
 import { loadPrefs, savePrefs, clearPrefs } from "@/lib/space/prefs";
 import { validateTarget, type Target } from "@/lib/space/explorer";
 import { measuredWindCsv } from "@/lib/space/export";
-import { useHp30, useKp, useMag, useOvation, useWind, URLS } from "@/lib/space/data";
+import { useHp30, useKp, useMag, useOvation, useWind, useXray, URLS } from "@/lib/space/data";
+import { XRAY_URL } from "@/lib/space/xray";
 import {
   bzNear, dynamicPressure, freshness, joinL1, kpLabel, laggedSample, propagationSeconds, shue,
   type Freshness, type L1Sample,
@@ -74,7 +76,7 @@ function Spark({ data, sel, accessor, color, zero }: { data: L1Sample[]; sel: nu
 }
 
 export default function MissionApp() {
-  const mag = useMag(); const wind = useWind(); const kp = useKp(); const ov = useOvation(); const hp = useHp30();
+  const mag = useMag(); const wind = useWind(); const kp = useKp(); const ov = useOvation(); const hp = useHp30(); const xr = useXray();
   const [now, setNow] = useState(() => Date.now());
   const [initQ] = useState(() => new URLSearchParams(typeof window === "undefined" ? "" : window.location.search));
   const [savedPrefs] = useState(() => loadPrefs());
@@ -94,6 +96,7 @@ export default function MissionApp() {
   const [playing, setPlaying] = useState(false);
   const [drawer, setDrawer] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [passportOpen, setPassportOpen] = useState(false);
   const [fieldTarget, setFieldTarget] = useState<Target | null>(() => {
     const la = initQ.get("lat"), lo = initQ.get("lon");
     if (la === null || lo === null) return null;
@@ -137,7 +140,7 @@ export default function MissionApp() {
     const onKey = (e: KeyboardEvent) => {
       if (e.altKey || e.ctrlKey || e.metaKey) return;
       if (e.key === "Escape") {
-        setGalleryOpen(false); setFieldOpen(false); setHelpOpen(false); setTourOpen(false); setDrawer(false);
+        setGalleryOpen(false); setFieldOpen(false); setHelpOpen(false); setTourOpen(false); setDrawer(false); setPassportOpen(false);
         return;
       }
       const t = e.target;
@@ -151,6 +154,7 @@ export default function MissionApp() {
       else if (k === "e") { setEarthOnly((v) => !v); setPreset("earth"); setNonce((n) => n + 1); }
       else if (k === "g") setGalleryOpen(true);
       else if (k === "i") setFieldOpen(true);
+      else if (k === "d") setPassportOpen(true);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -228,6 +232,17 @@ export default function MissionApp() {
   const ovValid = live && st.ov === "live" && ov.data && ov.data.points.length > 0;
   const lastRefresh = Math.max(wind.dataUpdatedAt, mag.dataUpdatedAt, kp.dataUpdatedAt, ov.dataUpdatedAt);
   const overall: Freshness = st.wind === "disconnected" && st.mag === "disconnected" ? "disconnected" : st.wind === "live" && st.mag === "live" ? "live" : st.wind === "loading" ? "loading" : "stale";
+  const feedLines: ProvenanceFeed[] = [
+    { id: "wind", title: "Upstream plasma", producer: "NOAA SWPC RTSW", role: "measurement", url: URLS.wind, observedAt: wind.data?.at(-1)?.t ?? null, browserUpdatedAt: wind.dataUpdatedAt || null, thresholdMinutes: 10, count: wind.data?.length ?? 0, failed: wind.isError, note: "In-situ spacecraft speed & proton density near L1" },
+    { id: "mag", title: "Upstream magnetic field", producer: "NOAA SWPC RTSW", role: "measurement", url: URLS.mag, observedAt: mag.data?.at(-1)?.t ?? null, browserUpdatedAt: mag.dataUpdatedAt || null, thresholdMinutes: 10, count: mag.data?.length ?? 0, failed: mag.isError, note: "IMF Bz GSM and total field strength near L1" },
+    { id: "kp", title: "Planetary Kp", producer: "NOAA SWPC", role: "index", url: URLS.kp, observedAt: kpLatest?.t ?? null, browserUpdatedAt: kp.dataUpdatedAt || null, thresholdMinutes: 360, count: kp.data?.length ?? 0, failed: kp.isError, note: "Ground-derived 3-hour index; not instantaneous" },
+    { id: "hp", title: "Planetary Hp30", producer: "GFZ Potsdam", role: "index", url: "https://kp.gfz.de/en/hp30-hp60", observedAt: hpLatest?.t ?? null, browserUpdatedAt: hp.dataUpdatedAt || null, thresholdMinutes: 120, count: hp.data?.length ?? 0, failed: hp.isError, note: "Ground-derived 30-minute index; browser CORS may block GFZ" },
+    { id: "ov", title: "Aurora OVATION", producer: "NOAA SWPC", role: "forecast", url: URLS.ovation, observedAt: ov.data?.observed ?? null, browserUpdatedAt: ov.dataUpdatedAt || null, thresholdMinutes: 30, count: ov.data?.points.length ?? 0, failed: ov.isError, note: "Short-term model, forecast target " + fmtUtc(ov.data?.forecast) },
+    { id: "xr", title: "GOES X-ray long band", producer: "NOAA SWPC GOES", role: "measurement", url: XRAY_URL, observedAt: xr.data?.long.at(-1)?.t ?? null, browserUpdatedAt: xr.dataUpdatedAt || null, thresholdMinutes: 10, count: xr.data?.long.length ?? 0, failed: xr.isError, note: "Measured 0.1–0.8 nm solar X-ray flux; flare class is derived" },
+  ];
+  const requestRefresh = () => {
+    void Promise.allSettled([wind.refetch(), mag.refetch(), kp.refetch(), hp.refetch(), ov.refetch(), xr.refetch()]);
+  };
 
   // Share URL sync
   useEffect(() => {
@@ -317,6 +332,7 @@ export default function MissionApp() {
           <span className="hide-sm">Refreshed {lastRefresh ? fmtUtc(lastRefresh) : "—"}</span>
           <button className="btn-ghost" onClick={() => setGalleryOpen(true)}>◉ Eyes on Earth</button>
           <button className="btn-ghost" onClick={() => setFieldOpen(true)}>⌖ Field explorer</button>
+          <button className="btn-ghost" onClick={() => setPassportOpen(true)}>▤ Data passport</button>
           <button className="btn-ghost" onClick={() => setTourOpen(true)}>Explore tour</button>
           <button className="btn-ghost" aria-pressed={focus} onClick={() => setFocus((v) => !v)}>{focus ? "Exit focus" : "Focus"}</button>
           <button className="btn-ghost" onClick={() => setHelpOpen(true)} aria-label="Keyboard shortcuts">?</button>
@@ -429,6 +445,8 @@ export default function MissionApp() {
           <div className="tl-track">
             <div className="spark-wrap"><span className="spark-lab">Bz</span><Spark data={timeline} sel={selIdx} accessor={(s) => s.bz} color="var(--cyan)" zero /></div>
             <div className="spark-wrap"><span className="spark-lab">V</span><Spark data={timeline} sel={selIdx} accessor={(s) => s.v} color="var(--sun)" /></div>
+            <div className="spark-wrap"><span className="spark-lab">N</span><Spark data={timeline} sel={selIdx} accessor={(s) => s.n} color="var(--aurora)" /></div>
+            <div className="spark-wrap"><span className="spark-lab">P</span><Spark data={timeline} sel={selIdx} accessor={(s) => dynamicPressure(s.n, s.v)} color="var(--field)" /></div>
             <input type="range" min={0} max={Math.max(timeline.length - 1, 0)} value={selIdx ?? Math.max(timeline.length - 1, 0)} disabled={timeline.length < 2}
               aria-label="Select measured L1 sample" aria-valuetext={sample ? fmtUtc(sample.t) : "live"}
               onChange={(e) => { setPlaying(false); setSelIdx(Number(e.target.value)); }} />
@@ -439,6 +457,7 @@ export default function MissionApp() {
 
       {toast && <div className="toast" role="status">{toast}</div>}
       {galleryOpen && <Gallery onClose={() => setGalleryOpen(false)} now={now} />}
+      {passportOpen && <DataPassport now={now} feeds={feedLines} timeline={timeline} sample={sample} estimatedArrival={arrival} modelR0={model.r0} missingBz={bz === null} onClose={() => setPassportOpen(false)} onRefresh={requestRefresh} />}
       {fieldOpen && <Overlay title="Inspect Earth's magnetic field" onClose={() => setFieldOpen(false)} wide><FieldExplorer core={core} target={fieldTarget} onTarget={setFieldTarget} /></Overlay>}
       {tourOpen && <Guide onClose={() => setTourOpen(false)} onView={chooseView} onField={() => { setTourOpen(false); setFieldOpen(true); }} onPhotos={() => { setTourOpen(false); setGalleryOpen(true); }} />}
       {helpOpen && (
@@ -446,7 +465,7 @@ export default function MissionApp() {
           <p className="guide-copy">Drag the 3D view to orbit, scroll or pinch to zoom. Click the globe to inspect its IGRF-14 field at that geographic position.</p>
           <div className="guide-shortcuts">
             <p><kbd>1</kbd> Global · <kbd>2</kbd> Earth · <kbd>3</kbd> Tail · <kbd>4</kbd> SAA · <kbd>5</kbd> Arctic</p>
-            <p><kbd>L</kbd> Live · <kbd>E</kbd> Earth only · <kbd>F</kbd> Focus · <kbd>G</kbd> Satellite photos · <kbd>I</kbd> Field explorer</p>
+            <p><kbd>L</kbd> Live · <kbd>E</kbd> Earth only · <kbd>F</kbd> Focus · <kbd>G</kbd> Satellite photos · <kbd>I</kbd> Field explorer · <kbd>D</kbd> Data passport</p>
             <p><kbd>?</kbd> or <kbd>H</kbd> Help · <kbd>Esc</kbd> Close overlays</p>
           </div>
           <div className="guide-actions">
