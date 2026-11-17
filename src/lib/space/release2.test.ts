@@ -80,7 +80,10 @@ describe("Field explorer", () => {
   });
   it("epoch boundaries", () => {
     expect(epochKind(2020)).toBe("definitive");
-    expect(epochKind(2025)).toBe("definitive");
+    expect(epochKind(2025)).toBe("provisional");
+    expect(epochKind(1900)).toBe("historical");
+    expect(epochKind(1945)).toBe("definitive");
+    expect(epochKind(2022)).toBe("provisional");
     expect(epochKind(2027)).toBe("predicted");
     expect(epochKind(2031)).toBe("clamped");
     expect(explore({ lat: 0, lon: 0 }, 2040).year).toBe(2030);
