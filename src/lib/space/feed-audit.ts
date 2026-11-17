@@ -33,7 +33,7 @@ export function summarizePayload(id: AuditId, payload: unknown): PayloadSummary 
   return { count: ov?.points.length ?? 0, newest: ov?.observed ?? null, forecastFor: ov?.forecast ?? null };
 }
 
-export type AuditStatus = HealthState | "schema-error" | "image-reachable-unverified";
+export type AuditStatus = HealthState | "schema-error" | "image-reachable-unverified" | "released" | "old-release";
 export interface AuditResult {
   label: string; origin: string; url: string; required: boolean;
   status: AuditStatus; checkedAt: number; acquiredAt: number | null;
@@ -47,7 +47,7 @@ export function evaluateJson(spec: AuditSpec, payload: unknown, now: number, res
   const assessment = assessHealth({ now, observedAt: summary.newest, maxAgeMs: spec.maxAgeMinutes * 60_000 });
   return {
     label: spec.label, origin: spec.origin, url: spec.url, required: spec.required,
-    status: valid ? assessment.state : "schema-error",
+    status: !valid ? "schema-error" : spec.id === "epic" && assessment.state === "current" ? "released" : spec.id === "epic" && assessment.state === "stale" ? "old-release" : assessment.state,
     checkedAt: now, acquiredAt: summary.newest, ageMinutes: assessment.ageMinutes,
     validCount: summary.count, forecastFor: summary.forecastFor,
     responseStatus,
