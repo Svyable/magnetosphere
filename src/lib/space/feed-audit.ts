@@ -37,8 +37,8 @@ export type AuditStatus = HealthState | "schema-error" | "image-reachable-unveri
 export interface AuditResult {
   label: string; origin: string; url: string; required: boolean;
   status: AuditStatus; checkedAt: number; acquiredAt: number | null;
-  ageMinutes: number | null; validCount: number; forecastFor?: number | null;
-  responseStatus?: number; error?: string; note: string;
+  ageMinutes: number | null; validCount: number; forecastFor?: number | null | undefined;
+  responseStatus?: number | undefined; error?: string | undefined; note: string;
 }
 /** A recent EPIC capture is a *released* photograph, not a live camera feed. */
 export function evaluateJson(spec: AuditSpec, payload: unknown, now: number, responseStatus = 200): AuditResult {
