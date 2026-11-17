@@ -477,7 +477,7 @@ export default function MissionApp() {
             </ul>
             <h3>Model</h3>
             <p>P = n · 1.6726×10⁻⁶ · v² nPa. Shue et al. (1998): r₀ = (10.22 + 1.29 tanh(0.184(Bz + 8.14))) · P<sup>−1/6.6</sup>, α = (0.58 − 0.007 Bz)(1 + 0.024 ln P), r(θ) = r₀ (2/(1+cos θ))<sup>α</sup>. Inputs clamped (P 0.1–100 nPa, Bz ±50 nT). Propagation: flat delay 1.5×10⁶ km ÷ v; the live view uses the newest L1 sample whose estimated arrival has already happened. Missing values are dropped, never filled. Bow shock (1.32 × r₀), field lines and tail are schematic.</p>
-            <p>Core field: IGRF-14 spherical harmonics (degree 13) on a spherical Earth (r = 6371.2 km; geodetic correction ignored, error ≲0.2°). Dip poles = points where the field is vertical, found by numerical search; speed = great-circle distance between the pole now and one year earlier. SAA = minimum of surface total intensity on a 2° grid. These are model values, not live measurements, and change over years.</p>
+            <p>Core field: IGRF-14 spherical harmonics (degree 13) on a spherical Earth (r = 6371.2 km; geodetic correction ignored). Dip poles = points where the field is vertical, found by numerical search; speed = great-circle distance between the pole now and one year earlier. SAA = minimum of surface total intensity on a 2° grid. These are model values, not live measurements, and change over years.</p>
             <h3>Citations</h3>
             <ul>
               <li>IAGA Working Group V-MOD, IGRF-14 (2024). <a href="https://www.ncei.noaa.gov/products/international-geomagnetic-reference-field" target="_blank" rel="noreferrer">NOAA NCEI IGRF</a> — coefficients bundled, evaluated to degree 13 in-browser.</li>
@@ -488,6 +488,7 @@ export default function MissionApp() {
             </ul>
             <h3>Imagery & credits</h3>
             <p>Earth day/night textures: NASA Blue Marble / Earth at Night (public domain), via the three.js examples. Data courtesy of NOAA SWPC and GFZ Potsdam. Conceptual inspiration: <a href="https://github.com/Kracht/AEGIS" target="_blank" rel="noreferrer">AEGIS</a> (MIT) and <a href="https://terra.terryelemans.nl/" target="_blank" rel="noreferrer">TERRA</a>; implemented independently, no code copied.</p>
+            <p>IGRF-14 model status: definitive DGRF 1945–2020, earlier historical IGRF non-definitive; 2025 IGRF non-definitive and 2025–2030 secular variation predictive (<a href="https://doi.org/10.1186/s40623-025-02360-0" target="_blank" rel="noreferrer">IAGA IGRF-14 technical description</a>). The field inspector gives internal main field at geocentric radius, not a street-level compass calibration.</p>
             <p className="caveat">Scientific status: NOAA L1/X-ray are measured upstream/sun sensors; Shue, OVATION and IGRF are models or forecasts; the bow shock/field lines are schematic. The Earth texture is historical imagery; EPIC/GOES are dated satellite observations. Not an operational forecast. For official alerts use <a href="https://www.swpc.noaa.gov/" target="_blank" rel="noreferrer">NOAA SWPC</a>.</p>
           </aside>
         </div>
