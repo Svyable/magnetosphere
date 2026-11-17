@@ -1,37 +1,19 @@
-<!-- LOVABLE:BEGIN -->
-> [!IMPORTANT]
-> This project is connected to [Lovable](https://lovable.dev). Avoid rewriting
-> published git history — force pushing, or rebasing/amending/squashing commits
-> that are already pushed — as it rewrites history on Lovable's side and the
-> user will likely lose their project history.
->
-> Commits you push to the connected branch sync back to Lovable and show up in
-> the editor, so keep the branch in a working state.
+# MAGNETOSPHERE contributor and agent instructions
 
-## What Lovable manages
+This repository is the dedicated GitHub source workspace. Its code was migrated from the Lovable project on 2026-11-17. **The dedicated GitHub repository is not yet verified as linked to Lovable.** Do not claim GitHub edits have synchronized to the Lovable editor or public preview without verifying that connection. Do not force-push or rewrite published history.
 
-Rules outside this block are the project's own. Change the pieces below in
-Lovable, not by hand. With the [Lovable MCP](https://mcp.lovable.dev)
-connected, `send_message` asks Lovable to do it; otherwise ask the user to
-use the editor.
+## Science and integrity
+- Never invent "live" satellite measurements, spacecraft ephemerides, magnetic field observations, or warning status.
+- Distinguish NOAA in-situ L1 measurements from the estimated Earth arrival; OVATION short-term forecasts from photographs; the Shue magnetopause empirical model from MHD output; IGRF-14 internal field and its secular variation from external storm-time magnetic field.
+- The 3D bow shock, plasma sheet, and illustrative field lines are **not measured, traced, or MHD solved**. Keep this transparent in UI, docs, and exports.
+- Do not texture the whole globe with GOES or EPIC imagery unless spatial registration and projection are physically justified. NASA Blue Marble and Earth-at-night textures are historical.
+- Normalize/validate incoming JSON with timestamp, units, quality and physical-range checks; declare stale and unavailable sources. Preserve 2025–2030 IGRF forecast bounds.
+- Use source-linked citations and precise observation/forecast times. Official NOAA, NASA, GFZ and IAGA/NCEI resources are preferred.
 
-- **Database.** Do not add or edit `supabase/migrations/` or `drizzle/`.
-  Ask Lovable to change the schema.
-- **Generated files.** Do not edit a file whose header says it is automatically
-  generated.
-- **AI gateway.** Keep model calls on Lovable's gateway, and keep
-  `LOVABLE_API_KEY` out of browser code.
-- **Connectors.** Lovable provides native connectors. `list_connectors` shows
-  which are enabled; `add_connector` only returns the dashboard link. When a
-  connector is enabled, calls go through the connector gateway and need
-  `LOVABLE_API_KEY`. When Lovable does not provide one, users can bring their
-  own key and store it in Secrets.
-- **Secrets.** Lovable manages them. Do not put secret values in the repo.
-<!-- LOVABLE:END -->
-
-## Project rules
-- Science/parsing logic lives in `src/lib/space/model.ts` (pure TS, tested in `model.test.ts`); the 3D scene only draws its outputs — keeps physics testable.
-- All data is fetched client-side from NOAA/GFZ (no backend); missing values are dropped, never filled — honesty requirement.
-- The 3D scene (`src/components/mag/Scene.tsx`) is lazy-loaded on an `ssr: false` route — three.js must not render on the server.
-- Core-field (IGRF) math lives in `src/lib/space/igrf.ts` with tests in `igrf.test.ts`; coefficients are bundled JSON — no network needed for the model.
-- Scene HUD labels use a single DOM overlay projected per frame (`Label`/`LabelProjector` in Scene.tsx), not drei `Html` — many Html roots dropped labels.
+## Engineering
+- Keep scientific calculations pure and tested in `src/lib/space`; `Scene.tsx` is only a renderer.
+- Use `bun install --frozen-lockfile`, `bunx tsc --noEmit`, `bun run test`, `bun run build`.
+- Honor reduced motion and low-power requests; disable gratuitous animations on mobile. All overlays need keyboard access and meaningful fallback text.
+- Work on a focused branch, create mergeable PRs, prefer objective checks to human review gates, and merge after checks pass where repository rules allow. Commit substantive work.
+- Do not commit API keys, access tokens, or private user data.
+- Preserve independent licensing/attribution for source imagery and external data.
