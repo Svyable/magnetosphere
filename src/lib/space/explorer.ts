@@ -12,10 +12,13 @@ export function validateTarget(lat: unknown, lon: unknown): { ok: true; target: 
   return { ok: true, target: { lat: la, lon: lo } };
 }
 
-export type EpochKind = "definitive" | "predicted" | "clamped";
+export type EpochKind = "historical" | "definitive" | "provisional" | "predicted" | "clamped";
 export function epochKind(year: number): EpochKind {
   if (year < IGRF_FIRST || year > IGRF_SV_END) return "clamped";
-  return year > IGRF_LAST ? "predicted" : "definitive";
+  if (year < 1945) return "historical"; // Earlier epochs remain non-definitive IGRF models.
+  if (year <= 2020) return "definitive"; // DGRF 1945–2020.
+  if (year <= IGRF_LAST) return "provisional"; // 2025.0 IGRF non-definitive.
+  return "predicted"; // 2025–2030 predictive linear secular variation.
 }
 
 export interface Exploration {
