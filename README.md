@@ -32,7 +32,7 @@ No NOAA/NASA API key is required for the public data accessed by the browser.
 - `I` opens the **IGRF-14 field explorer**. Click the 3D globe or enter latitude/longitude to inspect field strength, compass declination, inclination, annual change, and distance from the modeled South Atlantic Anomaly minimum.
 - `L` returns from the 4-hour measured wind timeline to live. `?` displays keyboard shortcuts and accessibility/power settings. `Esc` closes overlays.
 - Guided **Explore tour** explains solar-wind pressure, empirical boundaries, the NOAA aurora forecast, pole drift, SAA, and actual Earth imagery.
-- Export a PNG of the rendered 3D scene, or copy a link containing layer, camera, focus, and replay choices. Display preferences are saved locally and can be reset.
+- Export a PNG of the rendered 3D scene or download the **measured NOAA L1 timeline as CSV**, with estimated Earth-arrival times in a separate column. Copy share links that include layer, camera, focus, replay and optional inspected latitude/longitude. Display preferences are saved locally and can be reset.
 
 ### Sources: what is and is not directly observed
 
@@ -43,7 +43,7 @@ No NOAA/NASA API key is required for the public data accessed by the browser.
 | Bow shock, plasma sheet, schematic field lines | Our illustrated 3D geometry | **Illustrative**, not an MHD model or traced measurements |
 | Aurora | [NOAA OVATION](https://www.swpc.noaa.gov/products/aurora-30-minute-forecast) | **Short-term model forecast**, not a photo |
 | Planetary Kp / Hp30 | [NOAA](https://www.swpc.noaa.gov/products/planetary-k-index) / [GFZ Potsdam](https://kp.gfz.de/en/hp30-hp60) | Ground-derived indices, with different time bins |
-| Internal surface field / SAA / dip poles | [IAGA IGRF-14 via NOAA NCEI](https://www.ncei.noaa.gov/products/international-geomagnetic-reference-field) | **Model**, 1900–2025 coefficients with published 2025–2030 predicted variation |
+| Internal surface field / SAA / dip poles | [IAGA IGRF-14 via NOAA NCEI](https://www.ncei.noaa.gov/products/international-geomagnetic-reference-field) | **Model**, historical/non-definitive IGRF before 1945; definitive DGRF 1945–2020; non-definitive 2025 IGRF; predicted 2025–2030 secular variation |
 | Solar X-ray flare class | [NOAA GOES X-rays](https://services.swpc.noaa.gov/json/goes/primary/xrays-1-day.json) | **Measured** 0.1–0.8 nm long-band flux; not a forecast |
 | DSCOVR/EPIC Earth disk | [NASA EPIC](https://epic.gsfc.nasa.gov/) | **Real dated photograph** of the sunlit Earth, delayed by processing |
 | GOES-East / GOES-West | [NOAA STAR G19](https://www.star.nesdis.noaa.gov/GOES/fulldisk.php?sat=G19) / [G18](https://www.star.nesdis.noaa.gov/GOES/fulldisk.php?sat=G18) | **Recent geostationary GeoColor composites**, visible/IR mix at night |
@@ -58,7 +58,7 @@ The L1-to-Earth estimate is a simplified ~1.5 million km ÷ wind speed propagati
 - `src/components/mag/Gallery.tsx`: date-stamped NASA/NOAA satellite evidence panel.
 - `src/components/mag/FieldExplorer.tsx`: geocentric IGRF surface-field inspection.
 - `src/components/mag/SolarActivity.tsx`: NOAA GOES X-ray measurements and flare class.
-- `src/lib/space/*.ts`: testable physics, parsers, IGRF model and preferences.
+- `src/lib/space/*.ts`: testable physics, NOAA/NASA parsers, research CSV export, IGRF model and preferences.
 - `src/lib/space/*.test.ts`: science/data-integrity tests.
 - `.github/workflows/ci.yml`: typecheck, tests, build checks on PRs.
 
