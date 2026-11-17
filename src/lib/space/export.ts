@@ -9,7 +9,9 @@ export const EXPORT_COLUMNS = [
 
 function safeCell(v: string | number | null): string {
   if (v === null) return "";
-  const s = String(v);
+  // Measured numeric columns must remain numeric, including negative IMF Bz.
+  if (typeof v === "number") return Number.isFinite(v) ? String(v) : "";
+  const s = v;
   // Treat spacecraft names supplied by upstream feeds as untrusted spreadsheet strings.
   const safe = /^[=+@\-\t\r]/.test(s) ? "'" + s : s;
   return '"' + safe.replace(/"/g, '""') + '"';
