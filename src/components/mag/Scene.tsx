@@ -1,4 +1,4 @@
-import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useLoader, useThree, type ThreeEvent } from "@react-three/fiber";
 import { Line, OrbitControls, Stars } from "@react-three/drei";
 import { createContext, Suspense, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
@@ -25,6 +25,8 @@ export interface SceneProps {
   lowPower: boolean;
   baseline: boolean;
   core: CoreField | null;
+  /** Earth-only picking: geographic latitude/longitude in degrees. */
+  onGlobePick?: (lat: number, lon: number) => void;
 }
 
 const D2R = Math.PI / 180;
@@ -426,7 +428,16 @@ function World(p: SceneProps) {
         <meshBasicMaterial color="#ffd28a" />
       </mesh>
       <group rotation={[0, 0, frame.rotZ]}>
-        <group rotation={[0, frame.rotY, 0]}>
+        <group rotation={[0, frame.rotY, 0]} onClick={(e: ThreeEvent<MouseEvent>) => {
+          if (!p.onGlobePick || e.delta > 6) return; // orbit drags must not select locations
+          const local = e.eventObject.worldToLocal(e.point.clone());
+          if (local.length() > 1.22) return; // ignore satellite or orbit references
+          e.stopPropagation();
+          const unit = local.normalize();
+          const lat = THREE.MathUtils.radToDeg(Math.asin(THREE.MathUtils.clamp(unit.y, -1, 1)));
+          const lon = THREE.MathUtils.radToDeg(Math.atan2(-unit.z, unit.x));
+          p.onGlobePick(lat, lon);
+        }}>
           <Suspense fallback={null}><Globe /></Suspense>
           {L.aurora && p.aurora && <AuroraDots points={p.aurora} />}
           {L.saa && p.core && <FieldMap grid={p.core.grid} />}
