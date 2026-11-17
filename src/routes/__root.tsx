@@ -75,20 +75,16 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
-    // Replace these placeholders with the app's name and description when first building the app.
-    // Each content route, / included, must still set its own head(). Never add og:image or
-    // twitter:image here: every page without its own would inherit the root's preview image.
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "MAGNETOSPHERE / EARTH NOW" },
-      { name: "description", content: "Live 3D magnetosphere and space weather observatory." },
-      { name: "author", content: "Lovable" },
+      { name: "description", content: "Inspect NOAA live solar wind, IGRF-14 magnetic poles and South Atlantic Anomaly, NASA EPIC Earth photographs, GOES satellite imagery and X-ray activity." },
+      { name: "author", content: "Magnetosphere Observatory" },
       { property: "og:title", content: "MAGNETOSPHERE / EARTH NOW" },
-      { property: "og:description", content: "Live 3D magnetosphere and space weather observatory." },
+      { property: "og:description", content: "Real Earth observations, space-weather measurements, magnetic models and clear scientific provenance." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
@@ -98,7 +94,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Barlow:wght@400;500&display=swap" },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
     ],
   }),
   shellComponent: RootShell,
