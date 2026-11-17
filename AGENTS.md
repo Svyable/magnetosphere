@@ -17,3 +17,9 @@ This repository is the dedicated GitHub source workspace. Its code was migrated 
 - Work on a focused branch, create mergeable PRs, prefer objective checks to human review gates, and merge after checks pass where repository rules allow. Commit substantive work.
 - Do not commit API keys, access tokens, or private user data.
 - Preserve independent licensing/attribution for source imagery and external data.
+
+
+## Provenance and public-source operations
+- Maintain `src/lib/space/health.ts` and `feed-audit.ts` tests when changing parsing, source URLs or freshness thresholds.
+- Source-audit workflows are evidence of GitHub runner accessibility only. Do not call source failures a global outage or substitute stale/dummy measurements; distinguish last fetch from acquisition/forecast time.
+- Operational checks run in `.github/workflows/feed-health.yml`; attach factual reports as Actions artifacts, not speculative user-facing incident statements.
