@@ -1,4 +1,11 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import Gallery from "./Gallery";
+import FieldExplorer from "./FieldExplorer";
+import SolarActivity from "./SolarActivity";
+import Guide from "./Guide";
+import { Overlay } from "./ui";
+import { loadPrefs, savePrefs, clearPrefs } from "@/lib/space/prefs";
+import type { Target } from "@/lib/space/explorer";
 import { useHp30, useKp, useMag, useOvation, useWind, URLS } from "@/lib/space/data";
 import {
   bzNear, dynamicPressure, freshness, joinL1, kpLabel, laggedSample, propagationSeconds, shue,
@@ -69,6 +76,7 @@ export default function MissionApp() {
   const mag = useMag(); const wind = useWind(); const kp = useKp(); const ov = useOvation(); const hp = useHp30();
   const [now, setNow] = useState(() => Date.now());
   const [initQ] = useState(() => new URLSearchParams(typeof window === "undefined" ? "" : window.location.search));
+  const [savedPrefs] = useState(() => loadPrefs());
   const [layers, setLayers] = useState<Record<LayerKey, boolean>>(() => {
     const l = initQ.get("layers");
     const on = l !== null ? l.split(",") : DEFAULT_ON;
@@ -79,27 +87,69 @@ export default function MissionApp() {
     return v === "earth" || v === "tail" || v === "saa" || v === "arctic" ? v : "global";
   });
   const [nonce, setNonce] = useState(0);
-  const [cinematic, setCinematic] = useState(false);
+  const [cinematic, setCinematic] = useState(() => initQ.get("cine") === "1");
   const [selIdx, setSelIdx] = useState<number | null>(null);
   const [pendingT, setPendingT] = useState<number | null>(null);
   const [playing, setPlaying] = useState(false);
   const [drawer, setDrawer] = useState(false);
-  const [reducedMotion, setReducedMotion] = useState(false);
-  const [lowPower, setLowPower] = useState(false);
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [fieldOpen, setFieldOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [tourOpen, setTourOpen] = useState(false);
+  const [fieldTarget, setFieldTarget] = useState<Target | null>(null);
+  const [focus, setFocus] = useState(() => initQ.has("focus") ? initQ.get("focus") === "1" : savedPrefs.focus ?? false);
+  const [earthOnly, setEarthOnly] = useState(() => initQ.get("earth") === "1");
+  const [osReduced, setOsReduced] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(() => savedPrefs.reducedMotion ?? false);
+  const [lowPower, setLowPower] = useState(() => savedPrefs.lowPower ?? false);
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 15_000);
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReducedMotion(mq.matches);
-    const onMq = () => setReducedMotion(mq.matches);
+    setOsReduced(mq.matches);
+    const onMq = () => setOsReduced(mq.matches);
     mq.addEventListener("change", onMq);
-    setLowPower(window.innerWidth < 768 || (navigator.hardwareConcurrency ?? 8) <= 4);
-    const q = initQ;
-    if (q.get("cine") === "1") setCinematic(true);
-    const t = Number(q.get("t")); if (t > 0) setPendingT(t);
+    if (savedPrefs.lowPower === undefined) setLowPower(window.innerWidth < 768 || (navigator.hardwareConcurrency ?? 8) <= 4);
+    const t = Number(initQ.get("t")); if (t > 0) setPendingT(t);
     return () => { clearInterval(id); mq.removeEventListener("change", onMq); };
-  }, [initQ]);
+  }, [initQ, savedPrefs]);
+
+  const motionOff = reducedMotion || osReduced;
+  const displayedLayers = useMemo(() => earthOnly
+    ? Object.fromEntries(Object.keys(layers).map((k) => [k, false])) as Record<LayerKey, boolean>
+    : layers, [earthOnly, layers]);
+
+  // Save only accessibility/display preferences; shared URLs override them on arrival.
+  useEffect(() => { savePrefs({ focus, lowPower, reducedMotion }); }, [focus, lowPower, reducedMotion]);
+
+  useEffect(() => {
+    document.title = "MAGNETOSPHERE / EARTH NOW · " + (earthOnly ? "Earth only" : preset.toUpperCase()) + " view";
+  }, [preset, earthOnly]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+      if (e.key === "Escape") {
+        setGalleryOpen(false); setFieldOpen(false); setHelpOpen(false); setTourOpen(false); setDrawer(false);
+        return;
+      }
+      const t = e.target;
+      if (t instanceof HTMLElement && (["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName) || t.isContentEditable)) return;
+      const k = e.key.toLowerCase();
+      const views: Record<string, Preset> = { "1": "global", "2": "earth", "3": "tail", "4": "saa", "5": "arctic" };
+      if (k === "?" || k === "h") { e.preventDefault(); setHelpOpen((v) => !v); }
+      else if (k in views) { setPreset(views[k]!); setNonce((n) => n + 1); }
+      else if (k === "l") { setPlaying(false); setSelIdx(null); }
+      else if (k === "f") setFocus((v) => !v);
+      else if (k === "e") { setEarthOnly((v) => !v); setPreset("earth"); setNonce((n) => n + 1); }
+      else if (k === "g") setGalleryOpen(true);
+      else if (k === "i") setFieldOpen(true);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
 
   const [core, setCore] = useState<(CoreField & { m1900: number; mNow: number; northSpeed1990: number }) | null>(null);
   useEffect(() => {
@@ -179,22 +229,36 @@ export default function MissionApp() {
     q.set("layers", (Object.keys(layers) as LayerKey[]).filter((k) => layers[k]).join(","));
     q.set("view", preset);
     if (cinematic) q.set("cine", "1");
+    if (focus) q.set("focus", "1");
+    if (earthOnly) q.set("earth", "1");
     if (!live && sample) q.set("t", String(sample.t));
     window.history.replaceState(null, "", `${window.location.pathname}?${q.toString()}`);
-  }, [layers, preset, cinematic, live, sample]);
+  }, [layers, preset, cinematic, focus, earthOnly, live, sample]);
 
   const flash = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2600); };
   const exportPng = useCallback(() => {
     const c = document.querySelector<HTMLCanvasElement>("#scene-wrap canvas");
     if (!c) return flash("Scene not ready");
-    const a = document.createElement("a");
-    a.href = c.toDataURL("image/png");
-    a.download = `magnetosphere-${new Date().toISOString().slice(0, 16).replace(":", "")}Z.png`;
-    a.click();
-    flash("PNG exported (3D scene only; HUD labels are not included)");
+    try {
+      const url = c.toDataURL("image/png");
+      if (!url.startsWith("data:image/png;base64,")) throw new Error("Canvas could not be captured");
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "magnetosphere-" + new Date().toISOString().slice(0, 16).replace(":", "") + "Z.png";
+      a.click();
+      flash("3D image exported (on-screen HTML labels not included)");
+    } catch { flash("PNG export unavailable: scene not ready or graphics restrictions"); }
   }, []);
   const share = async () => {
     try { await navigator.clipboard.writeText(window.location.href); flash("View link copied"); } catch { flash(window.location.href); }
+  };
+
+  const chooseView = (p: Preset) => { setPreset(p); setNonce((n) => n + 1); };
+  const pickGlobe = (lat: number, lon: number) => { setFieldTarget({ lat, lon }); setFieldOpen(true); };
+  const resetPrefs = () => {
+    clearPrefs(); setFocus(false); setEarthOnly(false); setReducedMotion(false);
+    setLowPower(window.innerWidth < 768 || (navigator.hardwareConcurrency ?? 8) <= 4);
+    flash("Display preferences reset");
   };
 
   const changes: string[] = [];
@@ -220,13 +284,18 @@ export default function MissionApp() {
   };
 
   return (
-    <div className="app-root">
+    <div className={"app-root" + (focus ? " focus-mode" : "")}>
       <header className="topbar">
         <div className="brand"><span className="brand-mark" aria-hidden />MAGNETOSPHERE <span>/ EARTH NOW</span></div>
         <div className="topbar-meta">
           <span className={live ? "mode mode-live" : "mode mode-hist"}>{live ? "LIVE" : "HISTORICAL"}</span>
           <span>L1 feed <StatusDot s={overall} /></span>
           <span className="hide-sm">Refreshed {lastRefresh ? fmtUtc(lastRefresh) : "—"}</span>
+          <button className="btn-ghost" onClick={() => setGalleryOpen(true)}>◉ Eyes on Earth</button>
+          <button className="btn-ghost" onClick={() => setFieldOpen(true)}>⌖ Field explorer</button>
+          <button className="btn-ghost" onClick={() => setTourOpen(true)}>Explore tour</button>
+          <button className="btn-ghost" aria-pressed={focus} onClick={() => setFocus((v) => !v)}>{focus ? "Exit focus" : "Focus"}</button>
+          <button className="btn-ghost" onClick={() => setHelpOpen(true)} aria-label="Keyboard shortcuts">?</button>
           <button className="btn-ghost" onClick={() => setDrawer(true)}>Sources & method</button>
         </div>
       </header>
@@ -234,15 +303,15 @@ export default function MissionApp() {
       <main className="stage">
         <div className="canvas-area">
           <Suspense fallback={<div className="loading">Initializing scene…</div>}>
-            <Scene layers={{ ...layers, aurora: layers.aurora && !!ovValid }} r0={model.r0} alpha={model.alpha} speed={sample?.v ?? null}
+            <Scene layers={{ ...displayedLayers, aurora: displayedLayers.aurora && !!ovValid }} r0={model.r0} alpha={model.alpha} speed={sample?.v ?? null}
               time={sceneTime} aurora={ovValid ? ov.data!.points : null} preset={preset} presetNonce={nonce} core={core}
-              cinematic={cinematic} reducedMotion={reducedMotion} lowPower={lowPower} baseline={baseline} />
+              cinematic={cinematic} reducedMotion={motionOff} lowPower={lowPower} baseline={baseline} onGlobePick={pickGlobe} />
           </Suspense>
           <div className="scene-banner">
-            {baseline
+            {earthOnly ? <span>Earth-only geographic view · fixed NASA Blue Marble texture, not a current global satellite photo · click Earth to inspect field</span> : baseline
               ? <span className="warn">{notPropagated ? "L1 observed, not yet propagated — " : "No live observations — "}geometry is an illustrative baseline (P = 2 nPa, Bz = 0)</span>
               : live
-                ? <span>Nowcast: L1 sample {fmtUtc(sample!.t)} propagated ~{Math.round(lagS! / 60)} min to Earth{arrivalGap > 20 * 60_000 && <b className="warn"> · data gap, last arrival {fmtAgo(arrivalGap)}</b>}</span>
+                ? <span>{arrivalGap > 20 * 60_000 ? "STALE model input" : "Estimated Earth arrival"}: L1 sample {fmtUtc(sample!.t)} propagated ~{Math.round(lagS! / 60)} min{bz === null && <b className="warn"> · Bz missing, 0 assumed</b>}{arrivalGap > 20 * 60_000 && <b className="warn"> · data gap, last arrival {fmtAgo(arrivalGap)}</b>}</span>
                 : <span className="hist">Historical wind, schematic geometry · L1 obs {fmtUtc(sample!.t)} → est. arrival {fmtUtc(arrival)}</span>}
           </div>
         </div>
@@ -258,11 +327,14 @@ export default function MissionApp() {
           </div>
           <div className="row">
             <button className="btn" onClick={() => setNonce((n) => n + 1)}>Reset camera</button>
-            <button className="btn" role="switch" aria-checked={cinematic} disabled={reducedMotion} onClick={() => setCinematic((c) => !c)}>{reducedMotion ? "Orbit off (reduced motion)" : cinematic ? "Cinematic on" : "Cinematic orbit"}</button>
+            <button className={"btn" + (earthOnly ? " active" : "")} role="switch" aria-checked={earthOnly} onClick={() => { setEarthOnly((v) => !v); chooseView("earth"); }}>{earthOnly ? "Restore science layers" : "Earth only"}</button>
+            <button className="btn" role="switch" aria-checked={cinematic} disabled={motionOff} onClick={() => setCinematic((c) => !c)}>{motionOff ? "Orbit off (reduced motion)" : cinematic ? "Cinematic on" : "Cinematic orbit"}</button>
           </div>
           <div className="row">
             <button className="btn" onClick={exportPng}>Export PNG</button>
             <button className="btn" onClick={share}>Copy view link</button>
+            <button className="btn" onClick={() => setGalleryOpen(true)}>Latest Earth photos</button>
+            <button className="btn" onClick={() => setFieldOpen(true)}>Inspect any location</button>
           </div>
           <div className="legend">
             <div><i className="sw sw-blue" />Magnetopause (empirical)</div>
@@ -289,7 +361,7 @@ export default function MissionApp() {
           <h2>Magnetopause <span className="prov">empirical · Shue 1998</span></h2>
           <div className="metrics">
             <Metric label="Standoff r₀" value={baseline ? null : model.r0.toFixed(2)} unit="R_E" src="model" note={!baseline && model.r0 < 6.6 ? "inside GEO orbit!" : baseline ? "baseline shown" : undefined} />
-            <Metric label="Flaring α" value={baseline ? null : model.alpha.toFixed(3)} src="model" />
+            <Metric label="Flaring α" value={baseline ? null : model.alpha.toFixed(3)} src="model" note={sample && bz === null ? "Bz absent: boundary assumes 0 nT" : undefined} />
           </div>
           <h2>Core field <span className="prov">IGRF-14 model</span></h2>
           {core ? (
@@ -305,6 +377,7 @@ export default function MissionApp() {
               </div>
             </>
           ) : <p className="sub">Computing field model…</p>}
+          <button className="btn full-inspector" onClick={() => { if (core) setFieldTarget({ lat: core.grid.min.lat, lon: core.grid.min.lon }); setFieldOpen(true); }}>Inspect the SAA minimum & surface field</button>
           <h2>Geomagnetic activity</h2>
           <div className="metrics">
             <Metric label={`Kp`} value={kpLatest ? kpLatest.kp.toFixed(2) : null} src="NOAA Kp" note={kpLatest ? `${kpLabel(kpLatest.kp)} · ${fmtUtc(kpLatest.t)}` : st.kp === "disconnected" ? "unavailable" : undefined} />
@@ -313,6 +386,7 @@ export default function MissionApp() {
           <h2>Aurora <span className="prov">OVATION model</span> <StatusDot s={st.ov} /></h2>
           <p className="sub">{ov.data ? `Obs. input ${fmtUtc(ov.data.observed)} · forecast for ${fmtUtc(ov.data.forecast)}` : "No nowcast available"}{!live && " · hidden in historical mode (no OVATION archive)"}</p>
 
+          <SolarActivity now={now} />
           <h2>What changed</h2>
           <ul className="changes">{changes.length ? changes.map((c, i) => <li key={i}>{c}</li>) : <li>Waiting for valid measurements.</li>}</ul>
           <details className="tip">
@@ -339,6 +413,25 @@ export default function MissionApp() {
       </main>
 
       {toast && <div className="toast" role="status">{toast}</div>}
+      {galleryOpen && <Gallery onClose={() => setGalleryOpen(false)} now={now} />}
+      {fieldOpen && <Overlay title="Inspect Earth's magnetic field" onClose={() => setFieldOpen(false)} wide><FieldExplorer core={core} target={fieldTarget} onTarget={setFieldTarget} /></Overlay>}
+      {tourOpen && <Guide onClose={() => setTourOpen(false)} onView={chooseView} onField={() => { setTourOpen(false); setFieldOpen(true); }} onPhotos={() => { setTourOpen(false); setGalleryOpen(true); }} />}
+      {helpOpen && (
+        <Overlay title="Controls, comfort & accessibility" onClose={() => setHelpOpen(false)}>
+          <p className="guide-copy">Drag the 3D view to orbit, scroll or pinch to zoom. Click the globe to inspect its IGRF-14 field at that geographic position.</p>
+          <div className="guide-shortcuts">
+            <p><kbd>1</kbd> Global · <kbd>2</kbd> Earth · <kbd>3</kbd> Tail · <kbd>4</kbd> SAA · <kbd>5</kbd> Arctic</p>
+            <p><kbd>L</kbd> Live · <kbd>E</kbd> Earth only · <kbd>F</kbd> Focus · <kbd>G</kbd> Satellite photos · <kbd>I</kbd> Field explorer</p>
+            <p><kbd>?</kbd> or <kbd>H</kbd> Help · <kbd>Esc</kbd> Close overlays</p>
+          </div>
+          <div className="guide-actions">
+            <button className="btn" role="switch" aria-checked={lowPower} onClick={() => setLowPower((v) => !v)}>{lowPower ? "✓ Low-power mode" : "Low-power mode"}</button>
+            <button className="btn" role="switch" aria-checked={motionOff} onClick={() => setReducedMotion((v) => !v)}>{motionOff ? "✓ Reduce motion" : "Reduce motion"}</button>
+            <button className="btn" onClick={resetPrefs}>Reset display settings</button>
+          </div>
+          <p className="caveat">The operating system's reduced-motion setting is always honored. Only display preferences are saved in this browser. Shared view links can override focus, Earth-only and camera settings.</p>
+        </Overlay>
+      )}
 
       {drawer && (
         <div className="drawer-bg" onClick={() => setDrawer(false)}>
@@ -352,6 +445,10 @@ export default function MissionApp() {
               <li><a href={URLS.kp} target="_blank" rel="noreferrer">NOAA planetary K-index</a> <StatusDot s={st.kp} /></li>
               <li><a href={URLS.ovation} target="_blank" rel="noreferrer">NOAA OVATION aurora nowcast</a> (model) <StatusDot s={st.ov} /></li>
               <li><a href="https://kp.gfz.de/en/hp30-hp60" target="_blank" rel="noreferrer">GFZ Potsdam Hp30</a> (optional; may be blocked by browser CORS) <StatusDot s={st.hp} /></li>
+              <li><a href="https://services.swpc.noaa.gov/json/goes/primary/xrays-1-day.json" target="_blank" rel="noreferrer">NOAA GOES X-ray sensor, 0.1–0.8 nm long band</a> — measured flare flux, not forecast.</li>
+              <li><a href="https://epic.gsfc.nasa.gov/" target="_blank" rel="noreferrer">NASA DSCOVR EPIC latest natural-color images</a> — real photographs released after processing, timestamped.</li>
+              <li><a href="https://www.star.nesdis.noaa.gov/GOES/fulldisk.php?sat=G19" target="_blank" rel="noreferrer">NOAA GOES-East / GOES-19 GeoColor full disk</a> — daytime true-color / nighttime IR composite.</li>
+              <li><a href="https://www.star.nesdis.noaa.gov/GOES/fulldisk.php?sat=G18" target="_blank" rel="noreferrer">NOAA GOES-West / GOES-18 GeoColor full disk</a>.</li>
             </ul>
             <h3>Model</h3>
             <p>P = n · 1.6726×10⁻⁶ · v² nPa. Shue et al. (1998): r₀ = (10.22 + 1.29 tanh(0.184(Bz + 8.14))) · P<sup>−1/6.6</sup>, α = (0.58 − 0.007 Bz)(1 + 0.024 ln P), r(θ) = r₀ (2/(1+cos θ))<sup>α</sup>. Inputs clamped (P 0.1–100 nPa, Bz ±50 nT). Propagation: flat delay 1.5×10⁶ km ÷ v; the live view uses the newest L1 sample whose estimated arrival has already happened. Missing values are dropped, never filled. Bow shock (1.32 × r₀), field lines and tail are schematic.</p>
@@ -366,7 +463,7 @@ export default function MissionApp() {
             </ul>
             <h3>Imagery & credits</h3>
             <p>Earth day/night textures: NASA Blue Marble / Earth at Night (public domain), via the three.js examples. Data courtesy of NOAA SWPC and GFZ Potsdam. Conceptual inspiration: <a href="https://github.com/Kracht/AEGIS" target="_blank" rel="noreferrer">AEGIS</a> (MIT) and <a href="https://terra.terryelemans.nl/" target="_blank" rel="noreferrer">TERRA</a>; implemented independently, no code copied.</p>
-            <p className="caveat">Not an operational forecast. For alerts use NOAA SWPC.</p>
+            <p className="caveat">Scientific status: NOAA L1/X-ray are measured upstream/sun sensors; Shue, OVATION and IGRF are models or forecasts; the bow shock/field lines are schematic. The Earth texture is historical imagery; EPIC/GOES are dated satellite observations. Not an operational forecast. For official alerts use <a href="https://www.swpc.noaa.gov/" target="_blank" rel="noreferrer">NOAA SWPC</a>.</p>
           </aside>
         </div>
       )}
