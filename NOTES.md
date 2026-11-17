@@ -17,3 +17,9 @@ Live 3D magnetosphere driven by NOAA SWPC real-time L1 solar wind (RTSW 1-min ma
 - Dip poles found where the field is vertical; speed = distance between the pole now and 1 year earlier. Trails show every 5 years since 1900.
 - After 2025 the model is extrapolated with the official secular variation (valid to 2030). These are model values, not live measurements.
 - Views: `view=saa`, `view=arctic`; layers `saa`, `poles`.
+
+## 2026-11-17 GitHub release
+- This dedicated GitHub repository is the development source of truth; it is not yet verified as linked to the earlier Lovable workspace. Reconcile, do not overwrite newer Lovable changes.
+- EPIC, GOES-East/West, NOAA X-ray and IGRF explorer components from Lovable release 2 are now wired into the visible app on this branch.
+- Earth-only view hides model layers temporarily without changing their switches. Clicking the geographic globe opens the IGRF inspector. Focus mode, shortcuts, saved preferences, robust PNG export and a short guided science tour were added.
+- Browser smoke testing still required against real feed CORS and actual GPU devices; GitHub CI checks typecheck/tests/build on pull requests.
