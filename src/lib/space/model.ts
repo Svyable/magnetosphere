@@ -165,7 +165,8 @@ export type Freshness = "live" | "stale" | "disconnected" | "loading";
 export function freshness(latest: number | null, now: number, liveMs: number, error: boolean): Freshness {
   if (error) return "disconnected";
   if (latest === null) return "loading";
-  return now - latest <= liveMs ? "live" : "stale";
+  // Clock skew or a future timestamp must never count as a fresh observation.
+  return latest <= now + 60_000 && now - latest <= liveMs ? "live" : "stale";
 }
 
 /** Approximate sun geometry (no equation of time; ±4° lon). */

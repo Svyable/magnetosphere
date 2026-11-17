@@ -50,7 +50,7 @@ export default function FieldExplorer({ core, target, onTarget }: { core: CoreFi
           <p className="metric-note">
             {res.insideWeak ? "Inside the weak-field (< 32,000 nT) region. " : ""}
             {res.saaKm !== null ? `${fmt(res.saaKm)} km from the modeled SAA minimum. ` : ""}
-            Epoch {res.year.toFixed(2)} ({res.epoch === "predicted" ? "predicted secular variation 2025→2030" : res.epoch === "clamped" ? "clamped to model range" : "definitive/IGRF"}). Change vs. one year earlier.
+            Epoch {res.year.toFixed(2)} ({res.epoch === "predicted" ? "forecast secular variation 2025→2030" : res.epoch === "provisional" ? "non-definitive IGRF 2025/interpolated" : res.epoch === "historical" ? "historical non-definitive IGRF" : res.epoch === "clamped" ? "clamped to model range" : "definitive DGRF 1945→2020"}). Change vs. one year earlier.
           </p>
           <p className="caveat">IGRF-14 internal core field at geocentric r = 6371.2 km on a spherical Earth: no crustal, ionospheric or magnetospheric contributions; not a live magnetometer. A weak surface field is associated with more trapped-particle exposure in low orbit, but radiation dose depends on altitude, shielding and activity.</p>
         </>

@@ -5,7 +5,8 @@ import SolarActivity from "./SolarActivity";
 import Guide from "./Guide";
 import { Overlay } from "./ui";
 import { loadPrefs, savePrefs, clearPrefs } from "@/lib/space/prefs";
-import type { Target } from "@/lib/space/explorer";
+import { validateTarget, type Target } from "@/lib/space/explorer";
+import { measuredWindCsv } from "@/lib/space/export";
 import { useHp30, useKp, useMag, useOvation, useWind, URLS } from "@/lib/space/data";
 import {
   bzNear, dynamicPressure, freshness, joinL1, kpLabel, laggedSample, propagationSeconds, shue,
@@ -93,10 +94,15 @@ export default function MissionApp() {
   const [playing, setPlaying] = useState(false);
   const [drawer, setDrawer] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
-  const [fieldOpen, setFieldOpen] = useState(false);
+  const [fieldTarget, setFieldTarget] = useState<Target | null>(() => {
+    const la = initQ.get("lat"), lo = initQ.get("lon");
+    if (la === null || lo === null) return null;
+    const input = validateTarget(la, lo);
+    return input.ok ? input.target : null;
+  });
+  const [fieldOpen, setFieldOpen] = useState(() => initQ.get("inspect") === "1");
   const [helpOpen, setHelpOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
-  const [fieldTarget, setFieldTarget] = useState<Target | null>(null);
   const [focus, setFocus] = useState(() => initQ.has("focus") ? initQ.get("focus") === "1" : savedPrefs.focus ?? false);
   const [earthOnly, setEarthOnly] = useState(() => initQ.get("earth") === "1");
   const [osReduced, setOsReduced] = useState(false);
@@ -231,9 +237,14 @@ export default function MissionApp() {
     if (cinematic) q.set("cine", "1");
     if (focus) q.set("focus", "1");
     if (earthOnly) q.set("earth", "1");
+    if (fieldTarget) {
+      q.set("lat", String(Number(fieldTarget.lat.toFixed(4))));
+      q.set("lon", String(Number(fieldTarget.lon.toFixed(4))));
+      if (fieldOpen) q.set("inspect", "1");
+    }
     if (!live && sample) q.set("t", String(sample.t));
     window.history.replaceState(null, "", `${window.location.pathname}?${q.toString()}`);
-  }, [layers, preset, cinematic, focus, earthOnly, live, sample]);
+  }, [layers, preset, cinematic, focus, earthOnly, fieldTarget, fieldOpen, live, sample]);
 
   const flash = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2600); };
   const exportPng = useCallback(() => {
@@ -249,6 +260,19 @@ export default function MissionApp() {
       flash("3D image exported (on-screen HTML labels not included)");
     } catch { flash("PNG export unavailable: scene not ready or graphics restrictions"); }
   }, []);
+  const exportMeasuredCsv = () => {
+    if (!timeline.length) { flash("No valid NOAA L1 measurements to export"); return; }
+    try {
+      const text = measuredWindCsv(timeline);
+      const url = URL.createObjectURL(new Blob([text], { type: "text/csv;charset=utf-8" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "magnetosphere-noaa-l1-" + new Date().toISOString().slice(0, 10) + ".csv";
+      a.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 2000);
+      flash("Measured NOAA upstream samples exported with estimated arrival times");
+    } catch { flash("CSV download is unavailable in this browser"); }
+  };
   const share = async () => {
     try { await navigator.clipboard.writeText(window.location.href); flash("View link copied"); } catch { flash(window.location.href); }
   };
@@ -305,7 +329,7 @@ export default function MissionApp() {
           <Suspense fallback={<div className="loading">Initializing scene…</div>}>
             <Scene layers={{ ...displayedLayers, aurora: displayedLayers.aurora && !!ovValid }} r0={model.r0} alpha={model.alpha} speed={sample?.v ?? null}
               time={sceneTime} aurora={ovValid ? ov.data!.points : null} preset={preset} presetNonce={nonce} core={core}
-              cinematic={cinematic} reducedMotion={motionOff} lowPower={lowPower} baseline={baseline} onGlobePick={pickGlobe} />
+              cinematic={cinematic} reducedMotion={motionOff} lowPower={lowPower} baseline={baseline} onGlobePick={pickGlobe} selected={fieldTarget} />
           </Suspense>
           <div className="scene-banner">
             {earthOnly ? <span>Earth-only geographic view · fixed NASA Blue Marble texture, not a current global satellite photo · click Earth to inspect field</span> : baseline
@@ -399,6 +423,7 @@ export default function MissionApp() {
           <div className="tl-controls">
             <button className="btn" onClick={() => { if (playing) setPlaying(false); else { if (selIdx === null || selIdx >= timeline.length - 2) setSelIdx(0); setPlaying(true); } }} disabled={timeline.length < 2} aria-label={playing ? "Pause" : "Play"}>{playing ? "❚❚ Pause" : "▶ Play"}</button>
             <button className={live ? "btn btn-live on" : "btn btn-live"} onClick={() => { setPlaying(false); setSelIdx(null); }}>● LIVE</button>
+            <button className="btn" disabled={!timeline.length} onClick={exportMeasuredCsv} title="Download observed NOAA L1 measurements and separately labeled estimated Earth arrival UTC">↓ CSV</button>
             <div className="tl-stamp">{live ? (sample ? `Earth arrival of L1 obs ${fmtTime(sample.t)} UTC` : "Live") : sample ? `L1 observation ${fmtUtc(sample.t)}` : ""}</div>
           </div>
           <div className="tl-track">
@@ -452,7 +477,7 @@ export default function MissionApp() {
             </ul>
             <h3>Model</h3>
             <p>P = n · 1.6726×10⁻⁶ · v² nPa. Shue et al. (1998): r₀ = (10.22 + 1.29 tanh(0.184(Bz + 8.14))) · P<sup>−1/6.6</sup>, α = (0.58 − 0.007 Bz)(1 + 0.024 ln P), r(θ) = r₀ (2/(1+cos θ))<sup>α</sup>. Inputs clamped (P 0.1–100 nPa, Bz ±50 nT). Propagation: flat delay 1.5×10⁶ km ÷ v; the live view uses the newest L1 sample whose estimated arrival has already happened. Missing values are dropped, never filled. Bow shock (1.32 × r₀), field lines and tail are schematic.</p>
-            <p>Core field: IGRF-14 spherical harmonics (degree 13) on a spherical Earth (r = 6371.2 km; geodetic correction ignored, error ≲0.2°). Dip poles = points where the field is vertical, found by numerical search; speed = great-circle distance between the pole now and one year earlier. SAA = minimum of surface total intensity on a 2° grid. These are model values, not live measurements, and change over years.</p>
+            <p>Core field: IGRF-14 spherical harmonics (degree 13) on a spherical Earth (r = 6371.2 km; geodetic correction ignored). Dip poles = points where the field is vertical, found by numerical search; speed = great-circle distance between the pole now and one year earlier. SAA = minimum of surface total intensity on a 2° grid. These are model values, not live measurements, and change over years.</p>
             <h3>Citations</h3>
             <ul>
               <li>IAGA Working Group V-MOD, IGRF-14 (2024). <a href="https://www.ncei.noaa.gov/products/international-geomagnetic-reference-field" target="_blank" rel="noreferrer">NOAA NCEI IGRF</a> — coefficients bundled, evaluated to degree 13 in-browser.</li>
@@ -463,6 +488,7 @@ export default function MissionApp() {
             </ul>
             <h3>Imagery & credits</h3>
             <p>Earth day/night textures: NASA Blue Marble / Earth at Night (public domain), via the three.js examples. Data courtesy of NOAA SWPC and GFZ Potsdam. Conceptual inspiration: <a href="https://github.com/Kracht/AEGIS" target="_blank" rel="noreferrer">AEGIS</a> (MIT) and <a href="https://terra.terryelemans.nl/" target="_blank" rel="noreferrer">TERRA</a>; implemented independently, no code copied.</p>
+            <p>IGRF-14 model status: definitive DGRF 1945–2020, earlier historical IGRF non-definitive; 2025 IGRF non-definitive and 2025–2030 secular variation predictive (<a href="https://doi.org/10.1186/s40623-025-02360-0" target="_blank" rel="noreferrer">IAGA IGRF-14 technical description</a>). The field inspector gives internal main field at geocentric radius, not a street-level compass calibration.</p>
             <p className="caveat">Scientific status: NOAA L1/X-ray are measured upstream/sun sensors; Shue, OVATION and IGRF are models or forecasts; the bow shock/field lines are schematic. The Earth texture is historical imagery; EPIC/GOES are dated satellite observations. Not an operational forecast. For official alerts use <a href="https://www.swpc.noaa.gov/" target="_blank" rel="noreferrer">NOAA SWPC</a>.</p>
           </aside>
         </div>

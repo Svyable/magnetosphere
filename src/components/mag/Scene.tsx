@@ -27,6 +27,7 @@ export interface SceneProps {
   core: CoreField | null;
   /** Earth-only picking: geographic latitude/longitude in degrees. */
   onGlobePick?: (lat: number, lon: number) => void;
+  selected?: { lat: number; lon: number } | null;
 }
 
 const D2R = Math.PI / 180;
@@ -439,6 +440,19 @@ function World(p: SceneProps) {
           p.onGlobePick(lat, lon);
         }}>
           <Suspense fallback={null}><Globe /></Suspense>
+          {p.selected && (
+            <group>
+              <mesh position={geoDir(p.selected.lat, p.selected.lon, 1.045)}>
+                <sphereGeometry args={[0.027, 16, 12]} />
+                <meshBasicMaterial color="#ffe58c" />
+              </mesh>
+              {L.labels && (
+                <Label surface position={geoDir(p.selected.lat, p.selected.lon, 1.12)} tone="orange">
+                  Selected · {Math.abs(p.selected.lat).toFixed(2)}°{p.selected.lat >= 0 ? "N" : "S"}, {Math.abs(p.selected.lon).toFixed(2)}°{p.selected.lon >= 0 ? "E" : "W"}
+                </Label>
+              )}
+            </group>
+          )}
           {L.aurora && p.aurora && <AuroraDots points={p.aurora} />}
           {L.saa && p.core && <FieldMap grid={p.core.grid} />}
           {L.saa && p.core && L.labels && <SaaLabel grid={p.core.grid} />}

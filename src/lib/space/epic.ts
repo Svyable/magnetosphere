@@ -9,7 +9,12 @@ function parseEpicDate(v: unknown): number | null {
   const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})$/.exec(v.trim());
   if (!m) return null;
   const t = Date.UTC(+m[1]!, +m[2]! - 1, +m[3]!, +m[4]!, +m[5]!, +m[6]!);
-  return Number.isFinite(t) ? t : null;
+  if (!Number.isFinite(t)) return null;
+  const d = new Date(t);
+  // Date.UTC normalizes invalid calendar dates; reject instead of silently shifting a capture.
+  if (d.getUTCFullYear() !== +m[1]! || d.getUTCMonth() + 1 !== +m[2]! || d.getUTCDate() !== +m[3]! ||
+    d.getUTCHours() !== +m[4]! || d.getUTCMinutes() !== +m[5]! || d.getUTCSeconds() !== +m[6]!) return null;
+  return t;
 }
 
 export function parseEpic(json: unknown): EpicImage[] {

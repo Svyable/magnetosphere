@@ -19,6 +19,7 @@ describe("EPIC parser", () => {
   });
   it("non-array -> empty; age text is honest about days", () => {
     expect(parseEpic({ error: 1 })).toEqual([]);
+    expect(parseEpic([{ image: "epic_invalid", date: "2026-02-30 12:00:00" }])).toEqual([]);
     expect(formatAge(3 * 86400_000)).toBe("3.0 days old");
   });
 });
@@ -48,6 +49,7 @@ describe("GOES X-ray", () => {
     const now = Date.UTC(2026, 10, 17, 22);
     expect(freshness(now - 30 * 60_000, now, 10 * 60_000, false)).toBe("stale");
     expect(freshness(null, now, 10 * 60_000, true)).toBe("disconnected");
+    expect(freshness(now + 2 * 60_000, now, 10 * 60_000, false)).toBe("stale");
   });
 });
 
@@ -80,7 +82,10 @@ describe("Field explorer", () => {
   });
   it("epoch boundaries", () => {
     expect(epochKind(2020)).toBe("definitive");
-    expect(epochKind(2025)).toBe("definitive");
+    expect(epochKind(2025)).toBe("provisional");
+    expect(epochKind(1900)).toBe("historical");
+    expect(epochKind(1945)).toBe("definitive");
+    expect(epochKind(2022)).toBe("provisional");
     expect(epochKind(2027)).toBe("predicted");
     expect(epochKind(2031)).toBe("clamped");
     expect(explore({ lat: 0, lon: 0 }, 2040).year).toBe(2030);
