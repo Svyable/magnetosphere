@@ -5,7 +5,8 @@ import SolarActivity from "./SolarActivity";
 import Guide from "./Guide";
 import { Overlay } from "./ui";
 import { loadPrefs, savePrefs, clearPrefs } from "@/lib/space/prefs";
-import type { Target } from "@/lib/space/explorer";
+import { validateTarget, type Target } from "@/lib/space/explorer";
+import { measuredWindCsv } from "@/lib/space/export";
 import { useHp30, useKp, useMag, useOvation, useWind, URLS } from "@/lib/space/data";
 import {
   bzNear, dynamicPressure, freshness, joinL1, kpLabel, laggedSample, propagationSeconds, shue,
@@ -93,10 +94,15 @@ export default function MissionApp() {
   const [playing, setPlaying] = useState(false);
   const [drawer, setDrawer] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
-  const [fieldOpen, setFieldOpen] = useState(false);
+  const [fieldTarget, setFieldTarget] = useState<Target | null>(() => {
+    const la = initQ.get("lat"), lo = initQ.get("lon");
+    if (la === null || lo === null) return null;
+    const input = validateTarget(la, lo);
+    return input.ok ? input.target : null;
+  });
+  const [fieldOpen, setFieldOpen] = useState(() => initQ.get("inspect") === "1");
   const [helpOpen, setHelpOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
-  const [fieldTarget, setFieldTarget] = useState<Target | null>(null);
   const [focus, setFocus] = useState(() => initQ.has("focus") ? initQ.get("focus") === "1" : savedPrefs.focus ?? false);
   const [earthOnly, setEarthOnly] = useState(() => initQ.get("earth") === "1");
   const [osReduced, setOsReduced] = useState(false);
@@ -231,9 +237,14 @@ export default function MissionApp() {
     if (cinematic) q.set("cine", "1");
     if (focus) q.set("focus", "1");
     if (earthOnly) q.set("earth", "1");
+    if (fieldTarget) {
+      q.set("lat", String(Number(fieldTarget.lat.toFixed(4))));
+      q.set("lon", String(Number(fieldTarget.lon.toFixed(4))));
+      if (fieldOpen) q.set("inspect", "1");
+    }
     if (!live && sample) q.set("t", String(sample.t));
     window.history.replaceState(null, "", `${window.location.pathname}?${q.toString()}`);
-  }, [layers, preset, cinematic, focus, earthOnly, live, sample]);
+  }, [layers, preset, cinematic, focus, earthOnly, fieldTarget, fieldOpen, live, sample]);
 
   const flash = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2600); };
   const exportPng = useCallback(() => {
@@ -249,6 +260,19 @@ export default function MissionApp() {
       flash("3D image exported (on-screen HTML labels not included)");
     } catch { flash("PNG export unavailable: scene not ready or graphics restrictions"); }
   }, []);
+  const exportMeasuredCsv = () => {
+    if (!timeline.length) { flash("No valid NOAA L1 measurements to export"); return; }
+    try {
+      const text = measuredWindCsv(timeline);
+      const url = URL.createObjectURL(new Blob([text], { type: "text/csv;charset=utf-8" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "magnetosphere-noaa-l1-" + new Date().toISOString().slice(0, 10) + ".csv";
+      a.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 2000);
+      flash("Measured NOAA upstream samples exported with estimated arrival times");
+    } catch { flash("CSV download is unavailable in this browser"); }
+  };
   const share = async () => {
     try { await navigator.clipboard.writeText(window.location.href); flash("View link copied"); } catch { flash(window.location.href); }
   };
@@ -305,7 +329,7 @@ export default function MissionApp() {
           <Suspense fallback={<div className="loading">Initializing scene…</div>}>
             <Scene layers={{ ...displayedLayers, aurora: displayedLayers.aurora && !!ovValid }} r0={model.r0} alpha={model.alpha} speed={sample?.v ?? null}
               time={sceneTime} aurora={ovValid ? ov.data!.points : null} preset={preset} presetNonce={nonce} core={core}
-              cinematic={cinematic} reducedMotion={motionOff} lowPower={lowPower} baseline={baseline} onGlobePick={pickGlobe} />
+              cinematic={cinematic} reducedMotion={motionOff} lowPower={lowPower} baseline={baseline} onGlobePick={pickGlobe} selected={fieldTarget} />
           </Suspense>
           <div className="scene-banner">
             {earthOnly ? <span>Earth-only geographic view · fixed NASA Blue Marble texture, not a current global satellite photo · click Earth to inspect field</span> : baseline
@@ -399,6 +423,7 @@ export default function MissionApp() {
           <div className="tl-controls">
             <button className="btn" onClick={() => { if (playing) setPlaying(false); else { if (selIdx === null || selIdx >= timeline.length - 2) setSelIdx(0); setPlaying(true); } }} disabled={timeline.length < 2} aria-label={playing ? "Pause" : "Play"}>{playing ? "❚❚ Pause" : "▶ Play"}</button>
             <button className={live ? "btn btn-live on" : "btn btn-live"} onClick={() => { setPlaying(false); setSelIdx(null); }}>● LIVE</button>
+            <button className="btn" disabled={!timeline.length} onClick={exportMeasuredCsv} title="Download observed NOAA L1 measurements and separately labeled estimated Earth arrival UTC">↓ CSV</button>
             <div className="tl-stamp">{live ? (sample ? `Earth arrival of L1 obs ${fmtTime(sample.t)} UTC` : "Live") : sample ? `L1 observation ${fmtUtc(sample.t)}` : ""}</div>
           </div>
           <div className="tl-track">
