@@ -24,7 +24,7 @@ describe("public feed audit: deterministic payload parsing", () => {
   });
   it("EPIC is an image released with a delay, never an instantaneous measurement", () => {
     const a = evaluateJson(spec("epic"), [{ image:"epic_1b_20261114010000",date:"2026-11-14 01:00:00" }], t);
-    expect(a.status).toBe("current");
+    expect(a.status).toBe("released");
     expect(a.note).toMatch(/never a live image/);
     expect(a.ageMinutes).toBeGreaterThan(3 * 24 * 60);
   });
