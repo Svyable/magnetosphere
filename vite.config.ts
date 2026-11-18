@@ -9,7 +9,7 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
-const onPages = process.env.GITHUB_PAGES === "1";
+const onPages = process.env["GITHUB_PAGES"] === "1";
 
 export default defineConfig({
   // Project Pages lives under /magnetosphere/; Lovable's normal root build stays unchanged.
