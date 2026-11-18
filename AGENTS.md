@@ -23,3 +23,9 @@ This repository is the dedicated GitHub source workspace. Its code was migrated 
 - Maintain `src/lib/space/health.ts` and `feed-audit.ts` tests when changing parsing, source URLs or freshness thresholds.
 - Source-audit workflows are evidence of GitHub runner accessibility only. Do not call source failures a global outage or substitute stale/dummy measurements; distinguish last fetch from acquisition/forecast time.
 - Operational checks run in `.github/workflows/feed-health.yml`; attach factual reports as Actions artifacts, not speculative user-facing incident statements.
+
+
+## GitHub Pages publishing
+- The Pages build is **opt-in by environment**: `GITHUB_PAGES=1`. Keep Lovable root-path and Nitro behavior unchanged for all other builds.
+- When adding globe textures/assets, use Vite's `import.meta.env.BASE_URL` so project Pages can load them under `/magnetosphere/`.
+- The `src/router.tsx` basepath must match the Vite base for deep links. Never claim a Pages URL is live until its deployment check passes.
