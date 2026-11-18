@@ -16,7 +16,7 @@ permissions:
   contents: read
 jobs:
   chromium:
-    name: Headless Chromium WebGL and user-journey smoke
+    name: Chromium WebGL and user-journey smoke
     runs-on: ubuntu-24.04  # Playwright 1.56 ships tested Chromium deps for 24.04, not ubuntu-latest 26.04
     timeout-minutes: 15
     steps:
@@ -34,9 +34,9 @@ jobs:
           bunx playwright install chromium --with-deps
       - name: Production build
         run: bun run build
-      - name: Start preview server
+      - name: Start Vite app runtime (production build checked separately)
         run: |
-          (bunx vite preview --host 127.0.0.1 --port 4173 > /tmp/magnetosphere-preview.log 2>&1 &)
+          (bunx vite dev --host 127.0.0.1 --port 4173 > /tmp/magnetosphere-preview.log 2>&1 &)
           for i in $(seq 1 50); do
             if curl -fsS http://127.0.0.1:4173/ -o /tmp/magnetosphere-home.html; then break; fi
             sleep 2
@@ -53,6 +53,6 @@ jobs:
           path: artifacts/browser-smoke/
           if-no-files-found: warn
           retention-days: 14
-      - name: Preview server log on failure
+      - name: Dev server log on failure
         if: failure()
         run: tail -100 /tmp/magnetosphere-preview.log || true
