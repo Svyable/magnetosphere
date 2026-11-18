@@ -47,6 +47,10 @@ jobs:
       - name: Inspect generated static entry and assets
         run: |
           find .output/public -maxdepth 2 -type f | head -30
+          if [ ! -f .output/public/index.html ] && [ -f .output/public/_shell.html ]; then
+            # TanStack SPA prerender emits _shell.html, not index.html, in this build preset.
+            cp .output/public/_shell.html .output/public/index.html
+          fi
           if [ ! -f .output/public/index.html ] && [ -f .output/public/magnetosphere/index.html ]; then
             cp .output/public/magnetosphere/index.html .output/public/index.html
           fi
