@@ -1,0 +1,118 @@
+// Browser-level test of the real bundled app; live feeds may be inaccessible from a runner.
+// Run with: BROWSER_BASE_URL=http://127.0.0.1:4173 bun scripts/browser-smoke.mjs
+import { chromium } from "playwright";
+import { mkdir, writeFile } from "node:fs/promises";
+
+const url = process.env.BROWSER_BASE_URL || "http://127.0.0.1:4173/";
+const out = "artifacts/browser-smoke";
+await mkdir(out, { recursive: true });
+const checks = [], pageErrors = [], externalFailures = [];
+let browser = null;
+async function check(title, fn) {
+  try { await fn(); checks.push({ title, status: "passed" }); console.log("PASS", title); }
+  catch (e) { const error = e instanceof Error ? e.message : String(e); checks.push({ title, status: "failed", error }); console.error("FAIL", title, error); }
+}
+async function closeOverlay(page) {
+  const btn = page.getByRole("button", { name: /Close · Esc/ });
+  if (await btn.count()) await btn.first().click();
+}
+try {
+  browser = await chromium.launch({
+    headless: true,
+    args: ["--enable-webgl", "--enable-unsafe-swiftshader", "--use-gl=angle", "--use-angle=swiftshader"],
+  });
+  const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1, reducedMotion: "reduce" });
+  page.on("pageerror", err => pageErrors.push(err.message));
+  page.on("requestfailed", request => {
+    if (/services\.swpc\.noaa\.gov|epic\.gsfc\.nasa\.gov|nesdis\.noaa\.gov|kp\.gfz\.de/.test(request.url())) {
+      externalFailures.push({ url: request.url(), error: request.failure()?.errorText || "failed" });
+    }
+  });
+  await check("Home route and observable header", async () => {
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 35_000 });
+    await page.locator(".topbar").waitFor({ timeout: 20_000 });
+    const h = await page.locator(".brand").innerText();
+    if (!h.includes("MAGNETOSPHERE")) throw new Error("Missing observatory brand");
+  });
+  await check("3D WebGL canvas is present and sized", async () => {
+    await page.locator("#scene-wrap canvas").waitFor({ state:"attached", timeout: 25_000 });
+    const box = await page.locator("#scene-wrap canvas").boundingBox();
+    if (!box || box.width < 400 || box.height < 300) throw new Error("3D canvas has invalid dimensions: " + JSON.stringify(box));
+  });
+  await page.screenshot({ path: out + "/desktop.png", fullPage: true });
+
+  await check("Data passport shows NOAA/GOES/GFZ source details", async () => {
+    await page.getByRole("button", { name: /Data passport/i }).click();
+    await page.getByRole("dialog", { name: /Data passport/i }).waitFor();
+    const count = await page.locator(".passport-table tbody tr").count();
+    if (count < 6) throw new Error("Expected 6 provenance sources, found " + count);
+    await closeOverlay(page);
+  });
+  await check("Satellite gallery has EPIC and two GOES controls", async () => {
+    await page.getByRole("button", { name: /Eyes on Earth/i }).click();
+    await page.getByRole("dialog", { name: /Eyes on Earth/i }).waitFor();
+    const count = await page.getByRole("tab").count();
+    if (count < 3) throw new Error("Satellite tabs missing");
+    await closeOverlay(page);
+  });
+  await check("IGRF field inspector accepts geographic coordinates", async () => {
+    await page.getByRole("button", { name: /Field explorer/i }).click();
+    await page.getByRole("dialog", { name: /Inspect Earth's magnetic field/i }).waitFor();
+    await page.getByRole("textbox", { name: /Latitude/i }).fill("40");
+    await page.getByRole("textbox", { name: /Longitude/i }).fill("-105.25");
+    await page.getByRole("button", { name: "Inspect", exact: true }).click();
+    await page.locator(".fx-table").waitFor({ timeout: 15_000 });
+    if (!(await page.locator(".fx-table").innerText()).includes("Total F")) throw new Error("Model field values absent");
+    await closeOverlay(page);
+  });
+  await check("Earth-only and keyboard help work", async () => {
+    await page.keyboard.press("e");
+    await page.getByText(/Earth-only geographic view/).waitFor();
+    await page.keyboard.press("h");
+    await page.getByRole("dialog", { name: /Controls, comfort/i }).waitFor();
+    await closeOverlay(page);
+    await page.keyboard.press("e");
+  });
+
+  // CORS and network are recorded, never silently represented as current data.
+  const browserCors = await page.evaluate(async () => {
+    const urls = [
+      "https://services.swpc.noaa.gov/json/rtsw/rtsw_wind_1m.json",
+      "https://services.swpc.noaa.gov/json/rtsw/rtsw_mag_1m.json",
+      "https://epic.gsfc.nasa.gov/api/natural",
+    ];
+    return Promise.all(urls.map(async url => {
+      try { const r = await fetch(url, { signal: AbortSignal.timeout(8000) }); return { url, browserReached: r.ok, status: r.status }; }
+      catch (e) { return { url, browserReached: false, error: String(e) }; }
+    }));
+  });
+  console.log("CORS/Browser access:", JSON.stringify(browserCors));
+
+  await page.close();
+  const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, reducedMotion: "reduce", isMobile: true, hasTouch: true });
+  mobile.on("pageerror", err => pageErrors.push("mobile: " + err.message));
+  await check("Mobile controls, canvas and provenance", async () => {
+    await mobile.goto(url, { waitUntil: "domcontentloaded", timeout: 35_000 });
+    await mobile.locator("#scene-wrap canvas").waitFor({ state:"attached", timeout: 25_000 });
+    await mobile.getByRole("button", { name: /Data passport/i }).click();
+    await mobile.getByRole("dialog", { name: /Data passport/i }).waitFor();
+    await closeOverlay(mobile);
+  });
+  await mobile.screenshot({ path: out + "/mobile.png", fullPage: true });
+  await mobile.close();
+
+  const report = {
+    checkAtUtc: new Date().toISOString(), url, tests: checks, pageErrors,
+    browserCors, externalFailures,
+    interpretation: "Headless Chromium/SwiftShader runner, not a visual quality sign-off or worldwide feed status.",
+  };
+  await writeFile(out + "/report.json", JSON.stringify(report, null, 2) + "\n");
+  const fail = checks.filter(x => x.status === "failed").length + pageErrors.length;
+  console.log("Browser smoke:", checks.length - checks.filter(x => x.status === "failed").length + "/" + checks.length + " checks passed; " + pageErrors.length + " JS page errors");
+  if (fail) process.exitCode = 1;
+} catch (e) {
+  const message = e instanceof Error ? e.stack || e.message : String(e);
+  console.error("Browser harness failed:", message);
+  await writeFile(out + "/harness-error.txt", message + "\n");
+  process.exitCode = 1;
+} finally { await browser?.close(); }

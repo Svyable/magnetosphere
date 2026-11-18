@@ -1,0 +1,58 @@
+name: Browser smoke – desktop and mobile observatory
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - scripts/browser-smoke.mjs
+      - .github/workflows/browser-smoke.yml
+      - src/components/mag/**
+      - src/lib/space/**
+  push:
+    branches: [main]
+    paths:
+      - scripts/browser-smoke.mjs
+      - .github/workflows/browser-smoke.yml
+permissions:
+  contents: read
+jobs:
+  chromium:
+    name: Chromium WebGL and user-journey smoke
+    runs-on: ubuntu-24.04  # Playwright 1.56 ships tested Chromium deps for 24.04, not ubuntu-latest 26.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+      - name: Install locked project dependencies
+        run: bun install --frozen-lockfile
+      - name: Install browser test harness (runner only)
+        run: |
+          bun add --dev playwright@1.56.1
+          bunx playwright install chromium --with-deps
+      - name: Production build
+        run: bun run build
+      - name: Start Vite app runtime (production build checked separately)
+        run: |
+          (bunx vite dev --host 127.0.0.1 --port 4173 > /tmp/magnetosphere-preview.log 2>&1 &)
+          for i in $(seq 1 50); do
+            if curl -fsS http://127.0.0.1:4173/ -o /tmp/magnetosphere-home.html; then break; fi
+            sleep 2
+          done
+          test -s /tmp/magnetosphere-home.html
+      - name: Exercise desktop/mobile observatory with WebGL
+        run: bun scripts/browser-smoke.mjs
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
+      - name: Upload screenshots and browser diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: magnetosphere-browser-smoke
+          path: artifacts/browser-smoke/
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Dev server log on failure
+        if: failure()
+        run: tail -100 /tmp/magnetosphere-preview.log || true
