@@ -135,7 +135,7 @@ void main(){
 }`;
 
 function Globe() {
-  const [day, night] = useLoader(THREE.TextureLoader, ["/textures/earth_atmos_2048.jpg", "/textures/earth_lights_2048.png"]) as [THREE.Texture, THREE.Texture];
+  const [day, night] = useLoader(THREE.TextureLoader, [import.meta.env.BASE_URL + "textures/earth_atmos_2048.jpg", import.meta.env.BASE_URL + "textures/earth_lights_2048.png"]) as [THREE.Texture, THREE.Texture];
   day.colorSpace = THREE.SRGBColorSpace;
   night.colorSpace = THREE.SRGBColorSpace;
   day.anisotropy = 4;
