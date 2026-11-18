@@ -17,7 +17,7 @@ permissions:
 jobs:
   chromium:
     name: Headless Chromium WebGL and user-journey smoke
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # Playwright 1.56 ships tested Chromium deps for 24.04, not ubuntu-latest 26.04
     timeout-minutes: 15
     steps:
       - name: Check out
