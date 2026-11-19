@@ -57,3 +57,11 @@ This repository is the dedicated GitHub source workspace. Its code was migrated 
 - The displayed 5-minute sampling should not smooth over missing data. CSV exports must retain all qualifying 1-minute observations, their original timestamps, satellite sources, and separate derived quantities.
 - Short-lived L1 advection forecasts cannot be used to validate a three-day Kp forecast or to imply probabilistic precision. Forecast verification needs an immutable issuance-time snapshot and later independent observations.
 - Browser smoke tests must cover provenance, absent live feeds, preview and return to live. Keep all changes CI-gated, merge only after validated.
+
+## Open forecast accountability data
+- `src/lib/space/ledger.ts` is the deterministic archive/verification policy; `scripts/collect-kp-ledger.ts` fetches real NOAA SWPC Kp; `.github/workflows/forecast-ledger.yml` runs only on trusted main/manual/scheduled jobs.
+- Source versioning: `forecast-ledger/archive/YYYY-MM.json` stores *pre-event* predicted Kp captures, source retrieval UTC and later SWPC records explicitly marked `observed`. Never reconstruct an archived forecast from the current feed, include estimates as truth, or score a forecast from a snapshot taken after its target began.
+- Score by fixed Kp target 3-hour window and lead bucket, one forecast per target/bucket, report paired counts, MAE, bias, G1+ contingency counts and an at-capture persistence baseline. **No invented confidence percentages, backtests or certainty.**
+- Source observations may be revised. Keep revisions, Git history and source/provenance links; describe results as measured against NOAA's later *source-labelled* observed Kp, not independent certification.
+- The collector stores only public NOAA products on the evidence-only `forecast-ledger` branch. Permission `contents:write` is reserved for this trusted scheduled workflow. Do not give an untrusted PR or external payload a GitHub write token.
+- The UI must handle an empty/unavailable archive with zero score claims and show visible collection age and source distinctions. Browser smoke and unit tests protect that behavior.
