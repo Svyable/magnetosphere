@@ -433,6 +433,29 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px soli
 @keyframes earth-loading-orbit { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .globe-loading-orbit { animation: none; } }
 
+/* Layout fit: panels stop at the measured timeline height (set by MissionApp via ResizeObserver)
+   and fade at their scroll edge so clipped content reads as scrollable, not overlapped. */
+@media (min-width: 861px) {
+  .panel { bottom: var(--tl-h, 8.6rem); padding-bottom: 2rem;
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 2.2rem), transparent);
+            mask-image: linear-gradient(to bottom, #000 calc(100% - 2.2rem), transparent); }
+  .toast { bottom: calc(var(--tl-h, 8.6rem) + 1rem); }
+}
+
+/* Phones: one compact header row of tools that scrolls sideways instead of stacking three rows,
+   and a smaller arrival banner so Earth stays the subject. */
+@media (max-width: 860px) {
+  .topbar { flex-wrap: nowrap; flex-direction: column; align-items: stretch; gap: .45rem; padding: .5rem .7rem .45rem; }
+  .brand { font-size: 1rem; }
+  .topbar-meta { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; gap: .4rem;
+    padding-bottom: .1rem; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 1.5rem), transparent);
+            mask-image: linear-gradient(to right, #000 calc(100% - 1.5rem), transparent); }
+  .topbar-meta::-webkit-scrollbar { display: none; }
+  .topbar-meta > * { flex: none; white-space: nowrap; }
+  .topbar-meta .btn-ghost { font-size: .68rem; padding: .32rem .55rem; }
+  .scene-banner { top: .5rem; font-size: .6rem; line-height: 1.35; padding: .25rem .5rem; max-width: 92vw; }
+  .canvas-area { height: 62vh; }
+}
 
 /* Public space-weather forecasts: source-linked temporal evidence, never invented future geometry. */
 .forecast-teaser { border: 1px solid color-mix(in oklab, var(--cyan) 35%, var(--border)); border-radius: .4rem; padding: .7rem; background: linear-gradient(135deg, color-mix(in oklab, var(--cyan) 10%, var(--card)), var(--card)); margin: 0 0 1.25rem; }
@@ -502,3 +525,10 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px soli
   .forecast-bars {height:135px;gap:2px;}
   .forecast-mission {padding:.6rem;}
 }
+
+/* Header fit: brand never wraps; forecast leads the toolbar; the refresh stamp (also in the
+   Data Passport) yields its space before the toolbar would wrap onto a second row. */
+.brand { white-space: nowrap; flex: none; }
+.topbar-meta .forecast-topbar { color: var(--cyan); border-color: color-mix(in oklab, var(--cyan) 55%, var(--border)); }
+@media (max-width: 1600px) and (min-width: 861px) { .topbar-refreshed { display: none; } }
+@media (max-width: 1360px) and (min-width: 861px) { .topbar-meta { gap: .3rem; } .topbar-meta .btn-ghost { padding: .22rem .35rem; letter-spacing: .03em; } }
