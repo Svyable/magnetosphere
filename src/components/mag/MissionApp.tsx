@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Gallery from "./Gallery";
 import FieldExplorer from "./FieldExplorer";
 import SolarActivity from "./SolarActivity";
@@ -122,6 +122,19 @@ export default function MissionApp() {
   const [lowPower, setLowPower] = useState(() => savedPrefs.lowPower ?? false);
   const [fieldDetail, setFieldDetail] = useState<FieldDetail>(() => parseFieldDetail(initQ.get("detail")) ?? parseFieldDetail(savedPrefs.fieldDetail) ?? "quiet");
   const [toast, setToast] = useState<string | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const timelineRef = useRef<HTMLElement>(null);
+
+  // Side panels end where the measured timeline begins, whatever its real height.
+  useEffect(() => {
+    const root = rootRef.current, tl = timelineRef.current;
+    if (!root || !tl || typeof ResizeObserver === "undefined") return;
+    const sync = () => root.style.setProperty("--tl-h", `${Math.ceil(tl.getBoundingClientRect().height)}px`);
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(tl);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 15_000);
@@ -344,7 +357,7 @@ export default function MissionApp() {
   };
 
   return (
-    <div className={"app-root" + (focus ? " focus-mode" : "")}>
+    <div ref={rootRef} className={"app-root" + (focus ? " focus-mode" : "")}>
       <header className="topbar">
         <div className="brand"><span className="brand-mark" aria-hidden />MAGNETOSPHERE <span>/ EARTH NOW</span></div>
         <div className="topbar-meta">
@@ -475,7 +488,7 @@ export default function MissionApp() {
           </details>
         </aside>
 
-        <section className="timeline" aria-label="Measured timeline">
+        <section ref={timelineRef} className="timeline" aria-label="Measured timeline">
           <div className="tl-controls">
             <button className="btn" onClick={() => { if (playing) setPlaying(false); else { if (selIdx === null || selIdx >= timeline.length - 2) setSelIdx(0); setPlaying(true); } }} disabled={timeline.length < 2} aria-label={playing ? "Pause" : "Play"}>{playing ? "❚❚ Pause" : "▶ Play"}</button>
             <button className={live ? "btn btn-live on" : "btn btn-live"} onClick={() => { setPlaying(false); setSelIdx(null); }}>● LIVE</button>

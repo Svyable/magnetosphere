@@ -432,3 +432,27 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px soli
 }
 @keyframes earth-loading-orbit { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .globe-loading-orbit { animation: none; } }
+
+/* Layout fit: panels stop at the measured timeline height (set by MissionApp via ResizeObserver)
+   and fade at their scroll edge so clipped content reads as scrollable, not overlapped. */
+@media (min-width: 861px) {
+  .panel { bottom: var(--tl-h, 8.6rem); padding-bottom: 2rem;
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 2.2rem), transparent);
+            mask-image: linear-gradient(to bottom, #000 calc(100% - 2.2rem), transparent); }
+  .toast { bottom: calc(var(--tl-h, 8.6rem) + 1rem); }
+}
+
+/* Phones: one compact header row of tools that scrolls sideways instead of stacking three rows,
+   and a smaller arrival banner so Earth stays the subject. */
+@media (max-width: 860px) {
+  .topbar { flex-wrap: nowrap; flex-direction: column; align-items: stretch; gap: .45rem; padding: .5rem .7rem .45rem; }
+  .brand { font-size: 1rem; }
+  .topbar-meta { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; gap: .4rem;
+    padding-bottom: .1rem; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 1.5rem), transparent);
+            mask-image: linear-gradient(to right, #000 calc(100% - 1.5rem), transparent); }
+  .topbar-meta::-webkit-scrollbar { display: none; }
+  .topbar-meta > * { flex: none; white-space: nowrap; }
+  .topbar-meta .btn-ghost { font-size: .68rem; padding: .32rem .55rem; }
+  .scene-banner { top: .5rem; font-size: .6rem; line-height: 1.35; padding: .25rem .5rem; max-width: 92vw; }
+  .canvas-area { height: 62vh; }
+}
