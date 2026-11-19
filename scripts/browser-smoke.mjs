@@ -89,9 +89,34 @@ try {
     if (!(await page.locator(".fx-table").innerText()).includes("Total F")) throw new Error("Model field values absent");
     await closeOverlay(page);
   });
+  await check("Incoming L1 advection separates measured upstream data from future 3D scenario", async () => {
+    await page.getByRole("button", { name: /Incoming & future/i }).click();
+    await page.getByRole("dialog", { name: /FORECAST \/ EARTH AHEAD/i }).waitFor();
+    await page.getByRole("tab", { name: /Incoming L1/i }).waitFor();
+    await page.getByText(/Measured upstream\. Not yet at Earth\./i).waitFor();
+    await page.getByText(/not an independently issued NOAA forecast/i).waitFor();
+    await page.getByRole("tab", { name: /Now.*72h/i }).click();
+    await page.getByRole("heading", { name: /Planetary Kp · next three days/i }).waitFor();
+    await page.getByRole("tab", { name: /Incoming L1/i }).click();
+    // A real feed may have no future arrivals; the interface must then show a data gap.
+    const pulse = page.locator(".incoming-table tbody tr");
+    if (await pulse.count() === 0) await page.getByText(/No not-yet-arrived valid L1 samples/i).waitFor();
+    else {
+      const csv = page.getByRole("button", { name: /Export every incoming L1 sample/i });
+      await csv.waitFor();
+      const enabledPreview = page.locator(".incoming-table tbody button:not([disabled])").first();
+      if (await enabledPreview.count()) {
+        await enabledPreview.click();
+        await page.getByText(/UPSTREAM SCENARIO · NOT YET OBSERVED AT EARTH/).waitFor();
+        await page.getByRole("button", { name: /Return live geometry/i }).click();
+      }
+    }
+    await closeOverlay(page);
+  });
   await check("Real NOAA future forecast center distinguishes 72h predictions from 27-day outlook", async () => {
-    await page.getByRole("button", { name: /Future forecast/i }).click();
+    await page.getByRole("button", { name: /Incoming & future/i }).click();
     await page.getByRole("dialog", { name: /FORECAST \/ EARTH AHEAD/i }).waitFor({ timeout: 15_000 });
+    await page.getByRole("tab", { name: /Now.*72h/i }).click();
     await page.getByRole("heading", { name: /Planetary Kp · next three days/i }).waitFor();
     await page.getByText(/NOAA daily geomagnetic storm probabilities/i).waitFor();
     await page.getByText(/0–30 minute aurora forecast/i).waitFor();

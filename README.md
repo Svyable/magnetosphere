@@ -123,3 +123,15 @@ The app fetches NOAA SWPC's independently published products directly into the b
 If a product fails to load or expires, it is visibly unavailable or marked outdated. There are **no invented forecast values** or assumed confidence intervals. The "G1–G5" indicator is derived from NOAA's **predicted Kp** thresholds and is explicitly *not* an issued official watch or warning. Open [NOAA SWPC](https://www.swpc.noaa.gov/) for safety-critical decisions.
 
 All plots show UTC and source provenance. The 4D historical atlas continues to work, but predicted geomagnetic activity is **not projected onto the 3D Shue magnetopause geometry** without the required forecast wind/IMF inputs. See `src/lib/space/forecast.ts`, `src/lib/space/ops.ts` (issued products and S/R odds, tested against real NOAA fixtures in `src/lib/space/fixtures/`), `ForecastCenter.tsx`, `OfficialProducts.tsx` and corresponding unit/browser tests.
+
+## Arrival Intelligence: measured solar wind that has not yet reached Earth
+
+The **first tab** of *Incoming & Future* (`P`) is an interactive NOAA L1 → Earth arrival outlook. The dashboard also shows the next predicted arrival prominently alongside official 72-hour Kp forecasts.
+
+- Uses **real 1-minute spacecraft measurements** of solar-wind speed, proton density, and matched GSM IMF Bz. Solar-wind travel time is estimated by `1,500,000 km / measured speed`; each sample gets its own *nominal* Earth-arrival UTC. Only genuinely unarrived samples appear. Input age and independent source links are shown.
+- Shows pressure, matched Bz, and an optional **Shue (1998) empirical magnetopause standoff radius** from those measured inputs. **If Bz was not observed, the forecast-mode Shue estimate is absent**, never silently substituted as zero.
+- An interactive timeline is time-ordered by estimated arrival, color-coded for measured southward Bz, and sampled into five-minute display buckets. The downloadable CSV preserves **every** eligible one-minute input and evidence/source timestamps.
+- Click **Preview** for a scientifically labeled *upstream advection scenario* rendered on the actual 3D magnetopause. The planet's current live telemetry stays unchanged; the aurora nowcast is hidden in preview to avoid mixing times. **Return live geometry** restores the measured/current magnetopause, and a preview ceases automatically once its nominal arrival has passed.
+- Freshness gates distinguish live source from stale/missing upstream products. A stale preview cannot be initiated. The advection method does not solve tilted shock fronts, CME propagation, variable L1 spacecraft distance, magnetic-field evolution during transit, or uncertainty-calibrated arrival distributions. Its 130-minute horizon is limited to *already measured* upstream plasma, not a 130-minute speculative solar forecast.
+
+**Important:** This is not NOAA's official CME arrival model, not a future 3D MHD reconstruction, not a valid prediction of ground-level Kp from Bz alone, and not a promise that the nominal arrival will be exact. The broader *next 72 hours* and *27 days* tabs continue to use the actual NOAA-issued forecasts.
