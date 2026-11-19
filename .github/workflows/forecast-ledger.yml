@@ -1,6 +1,11 @@
 name: Archive NOAA predictions before they become observations
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - scripts/collect-kp-ledger.ts
+      - src/lib/space/ledger.ts
+      - .github/workflows/forecast-ledger.yml
   schedule:
     - cron: "15 */6 * * *"
   push:
@@ -10,12 +15,35 @@ on:
       - scripts/collect-kp-ledger.ts
       - .github/workflows/forecast-ledger.yml
 permissions:
-  contents: write
+  contents: read
 concurrency:
   group: magnetosphere-public-kp-ledger
   cancel-in-progress: false
 jobs:
+  validate:
+    name: Read-only NOAA collection and ledger schema dry run
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - name: Check out untrusted PR without write token
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile
+      - name: Fetch public NOAA product, validate forecast receipt and generated summary
+        run: |
+          mkdir -p "$RUNNER_TEMP/forecast-ledger"
+          bun scripts/collect-kp-ledger.ts "$RUNNER_TEMP/forecast-ledger"
+          test -s "$RUNNER_TEMP/forecast-ledger/forecast-ledger/summary.json"
+          test -s "$RUNNER_TEMP/forecast-ledger/forecast-ledger/archive/$(date -u +%Y-%m).json"
   archive:
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: write
     name: Collect public, source-stamped Kp forecast receipt
     runs-on: ubuntu-24.04
     timeout-minutes: 8
