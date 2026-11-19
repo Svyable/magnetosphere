@@ -65,6 +65,16 @@ try {
     if (!(await page.locator(".fx-table").innerText()).includes("Total F")) throw new Error("Model field values absent");
     await closeOverlay(page);
   });
+  await check("4D Time Atlas reconstructs 2012 core field and opens 500 Ma evidence", async () => {
+    await page.getByRole("button", { name: /4D Time Atlas/i }).click();
+    await page.getByRole("dialog", { name: /Temporal Observatory/i }).waitFor({ timeout: 15_000 });
+    await page.getByRole("button", { name: "2012", exact: true }).click();
+    await page.getByText(/Epoch 2012\.00/).waitFor({ timeout: 20_000 });
+    await page.getByRole("tab", { name: /500 million years/i }).click();
+    await page.locator(".deep-ribbon").waitFor();
+    await page.getByText(/Cretaceous Normal Superchron/).first().waitFor();
+    await closeOverlay(page);
+  });
   await check("Earth-only and keyboard help work", async () => {
     await page.keyboard.press("e");
     await page.getByText(/Earth-only geographic view/).waitFor();
