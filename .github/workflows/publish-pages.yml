@@ -59,6 +59,9 @@ jobs:
           test -f .output/public/textures/earth_lights_2048.png
           touch .output/public/.nojekyll
           cp .output/public/index.html .output/public/404.html
+          # Prove which Git commit is actually served by GitHub Pages.
+          printf '{"commit":"%s","built_at_utc":"%s","origin":"github-actions"}\n' "$GITHUB_SHA" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > .output/public/build-info.json
+          test -s .output/public/build-info.json
       - name: Upload static public files for review/deploy
         uses: actions/upload-pages-artifact@v4
         with:
@@ -79,3 +82,38 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+
+  verify:
+    name: Confirm actual published GitHub Pages revision
+    if: github.event_name != 'pull_request'
+    needs: deploy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Verify Pages CDN is serving the latest source commit and textures
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+          SITE_ROOT: https://svyable.github.io/magnetosphere
+        run: |
+          set -euo pipefail
+          found=0
+          for attempt in $(seq 1 15); do
+            # Cache busting is only for the build marker; it does not alter satellite data.
+            marker=$(curl --fail --silent --show-error --location --max-time 12 -H 'Cache-Control: no-cache' "$SITE_ROOT/build-info.json?revision=$EXPECTED_SHA" || true)
+            if [[ "$marker" == *"$EXPECTED_SHA"* ]]; then
+              echo "Pages serves expected commit: $EXPECTED_SHA"
+              found=1
+              break
+            fi
+            echo "Attempt $attempt/15: the Pages CDN has not served the expected build marker yet"
+            sleep 8
+          done
+          if [[ "$found" -ne 1 ]]; then
+            echo 'ERROR: Production Pages is stale, unreachable, or configured for a different publication source.' >&2
+            exit 1
+          fi
+          for path in '' 'favicon.svg' 'textures/earth_atmos_2048.jpg' 'textures/earth_lights_2048.png'; do
+            curl --fail --silent --show-error --location --max-time 20 --output /dev/null "$SITE_ROOT/$path"
+            echo "Verified public asset: /magnetosphere/$path"
+          done
+          echo 'Production Pages revision and critical assets verified.'
