@@ -27,7 +27,7 @@ function download(text:string) {
 export default function IncomingConditions({ now,samples,previewedAt,onPreview,onClose }:Props) {
   const o=useMemo(()=>incomingOutlook(samples,now),[samples,now]);
   const first=o.pulses[0]??null;
-  const isFresh=o.freshness==="current";
+  const isFresh=o.freshness==="current" && o.magneticFreshness==="current";
   const maxP=Math.max(5,o.maximumPressureNPa??0);
   return <section className="incoming" aria-label="Incoming measured solar wind, estimated Earth arrival">
     <div className="incoming-identity">
@@ -41,9 +41,9 @@ export default function IncomingConditions({ now,samples,previewedAt,onPreview,o
       <div><span>Smallest modeled nose · Shue</span><strong>{num(o.lowestModeledNoseRE,2)} <small>Rₑ</small></strong><small>{o.currentModeledNoseRE===null?"Current model reference unavailable":"Current modeled nose "+num(o.currentModeledNoseRE,2)+" Rₑ"}</small></div>
     </div>
     <p className="forecast-source-line">
-      Last L1 measurement {fmtUtcS(o.latestObservationAt)}{o.latestObservationAt ? " · "+fmtAgo(Math.max(0,now-o.latestObservationAt))+" old":""} · {o.sampledCount} valid unarrived 1-min samples · display compressed into nominal 5-min groups
+      Last plasma {fmtUtcS(o.latestObservationAt)}{o.latestObservationAt ? " · "+fmtAgo(Math.max(0,now-o.latestObservationAt))+" old":""} · last paired GSM Bz {fmtUtcS(o.latestMagObservationAt)} · {o.magneticFreshness} magnetometer · {o.sampledCount} valid unarrived 1-min samples · display compressed into nominal 5-min groups
     </p>
-    {o.freshness!=="current" && <div className="incoming-notice" role="status">The latest L1 observation is {o.freshness==="missing"?"unavailable":"too old for a current look-ahead"}. Past samples may remain below for context, but future 3D preview is disabled. A stale input is not an all-clear.</div>}
+    {!isFresh && <div className="incoming-notice" role="status">The NOAA plasma or magnetometer source is {o.freshness==="missing"||o.magneticFreshness==="missing"?"unavailable / unmatched":"too old for a current paired Bz look-ahead"}. Available pressure/Bz samples remain for context, but future 3D preview is disabled. A stale input is not an all-clear.</div>}
     {o.pulses.length>0 ? <>
       <div className="incoming-plot" role="img" aria-label={"Estimated Earth-arrival pulses from the measured upstream feed, color-coded by measured Bz. First "+time(first!.arrivalAt)+", last "+time(o.pulses[o.pulses.length-1]!.arrivalAt)+". Pressure bar heights are relative only; exact values are listed below."}>
         <div className="incoming-plot-lines">
