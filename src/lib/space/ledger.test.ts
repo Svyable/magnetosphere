@@ -34,13 +34,13 @@ describe("immutable forecast receipts, never retroactive backtests",()=>{
    expect(s.rows.find(x=>x.band==="6–24h")!.missedStorms).toBe(0);
  });
  it("uses one latest pre-event forecast per target and lead band, not duplicate reruns",()=>{
-   const one=appendKpCapture(blankLedgerMonth(),[slot(-3,3,"observed"),slot(30,6,"predicted")],T);
+   const one=appendKpCapture(blankLedgerMonth(),[slot(-3,3,"observed"),slot(30,8,"predicted")],T);
    const two=appendKpCapture(one,[slot(-3,3,"observed"),slot(30,4,"predicted")],T+6*3_600_000);
    const three=appendKpCapture(two,[slot(-3,3,"observed"),slot(30,5,"predicted")],T+12*3_600_000);
    const truth=appendKpCapture(three,[slot(30,5,"observed"),slot(36,4,"predicted")],T+34*3_600_000);
    const s=verifyForecasts([truth],T+35*3_600_000);
    expect(s.verifiedTargetPeriods).toBe(1);
-   expect(s.rows.find(x=>x.band==="24–48h")!.maeKp).toBe(2);
+   expect(s.rows.find(x=>x.band==="24–48h")!.maeKp).toBe(1);
    expect(s.rows.find(x=>x.band==="6–24h")!.maeKp).toBe(0);
  });
  it("tracks later NOAA revisions and never overwrites original snapshots",()=>{
