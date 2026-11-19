@@ -89,6 +89,17 @@ try {
     if (!(await page.locator(".fx-table").innerText()).includes("Total F")) throw new Error("Model field values absent");
     await closeOverlay(page);
   });
+  await check("Real NOAA future forecast center distinguishes 72h predictions from 27-day outlook", async () => {
+    await page.getByRole("button", { name: /Future forecast/i }).click();
+    await page.getByRole("dialog", { name: /FORECAST \/ EARTH AHEAD/i }).waitFor({ timeout: 15_000 });
+    await page.getByRole("heading", { name: /Planetary Kp · next three days/i }).waitFor();
+    await page.getByText(/NOAA daily geomagnetic storm probabilities/i).waitFor();
+    await page.getByText(/0–30 minute aurora forecast/i).waitFor();
+    await page.getByRole("tab", { name: /Next 27 days/i }).click();
+    await page.getByRole("heading", { name: /27-day outlook/i }).waitFor();
+    await page.getByRole("tab", { name: /Next 72h/i }).click();
+    await closeOverlay(page);
+  });
   await check("4D Time Atlas reconstructs 2012 core field and opens 500 Ma evidence", async () => {
     await page.getByRole("button", { name: /4D Time Atlas/i }).click();
     await page.getByRole("dialog", { name: /Temporal Observatory/i }).waitFor({ timeout: 15_000 });
