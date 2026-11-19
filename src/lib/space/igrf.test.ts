@@ -33,6 +33,9 @@ describe("IGRF-14", () => {
     expect(s).toBeGreaterThan(3);
     expect(s).toBeLessThan(18);
   });
+  it("1900 boundary uses available forward secular variation, not a synthetic zero", () => {
+    expect(poleMotion(1900, true).speedKmYr).toBeGreaterThan(0);
+  });
   it("geomagnetic north pole ~80.8N", () => {
     expect(geomagneticPole(c).lat).toBeCloseTo(80.8, 0);
   });

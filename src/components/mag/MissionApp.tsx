@@ -18,6 +18,7 @@ import type { CoreField, LayerKey, Preset } from "./Scene";
 import { coeffsAt, decimalYear, geomagneticPole, intensityGrid, IGRF_LAST, IGRF_SV_END, poleMotion } from "@/lib/space/igrf";
 
 const Scene = lazy(() => import("./Scene"));
+const TimeAtlas = lazy(() => import("./TimeAtlas"));
 
 const LAYERS: { key: LayerKey; name: string; kind: string; hint: string }[] = [
   { key: "saa", name: "Field strength · SAA", kind: "IGRF-14 model", hint: "Surface total field intensity. Warm = below 32,000 nT; the South Atlantic Anomaly is the weak-field dent where the inner radiation belt dips closest to Earth." },
@@ -96,6 +97,7 @@ export default function MissionApp() {
   const [playing, setPlaying] = useState(false);
   const [drawer, setDrawer] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [timeOpen, setTimeOpen] = useState(false);
   const [passportOpen, setPassportOpen] = useState(false);
   const [fieldTarget, setFieldTarget] = useState<Target | null>(() => {
     const la = initQ.get("lat"), lo = initQ.get("lon");
@@ -108,6 +110,12 @@ export default function MissionApp() {
   const [tourOpen, setTourOpen] = useState(false);
   const [focus, setFocus] = useState(() => initQ.has("focus") ? initQ.get("focus") === "1" : savedPrefs.focus ?? false);
   const [earthOnly, setEarthOnly] = useState(() => initQ.get("earth") === "1");
+  const [coreYear, setCoreYear] = useState<number | null>(() => {
+    const text = initQ.get("coreYear");
+    if (text === null || text.trim() === "") return null;
+    const v = Number(text);
+    return Number.isFinite(v) && v >= 1900 && v <= 2030 ? v : null;
+  });
   const [osReduced, setOsReduced] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(() => savedPrefs.reducedMotion ?? false);
   const [lowPower, setLowPower] = useState(() => savedPrefs.lowPower ?? false);
@@ -125,9 +133,16 @@ export default function MissionApp() {
   }, [initQ, savedPrefs]);
 
   const motionOff = reducedMotion || osReduced;
-  const displayedLayers = useMemo(() => earthOnly
-    ? Object.fromEntries(Object.keys(layers).map((k) => [k, false])) as Record<LayerKey, boolean>
-    : layers, [earthOnly, layers]);
+  const historicCore = coreYear !== null && Math.abs(coreYear - decimalYear(now)) > 0.75;
+  const displayedLayers = useMemo(() => {
+    if (earthOnly) return Object.fromEntries(Object.keys(layers).map((k) => [k, false])) as Record<LayerKey, boolean>;
+    if (historicCore) {
+      // A NOAA solar-wind nowcast is not a reconstruction of 1900 space weather.
+      const hidden: LayerKey[] = ["mp", "bs", "fl", "tail", "wind", "aurora"];
+      return { ...layers, ...Object.fromEntries(hidden.map(k => [k, false])) } as Record<LayerKey, boolean>;
+    }
+    return layers;
+  }, [earthOnly, historicCore, layers]);
 
   // Save only accessibility/display preferences; shared URLs override them on arrival.
   useEffect(() => { savePrefs({ focus, lowPower, reducedMotion }); }, [focus, lowPower, reducedMotion]);
@@ -140,7 +155,7 @@ export default function MissionApp() {
     const onKey = (e: KeyboardEvent) => {
       if (e.altKey || e.ctrlKey || e.metaKey) return;
       if (e.key === "Escape") {
-        setGalleryOpen(false); setFieldOpen(false); setHelpOpen(false); setTourOpen(false); setDrawer(false); setPassportOpen(false);
+        setGalleryOpen(false); setFieldOpen(false); setHelpOpen(false); setTourOpen(false); setDrawer(false); setPassportOpen(false); setTimeOpen(false);
         return;
       }
       const t = e.target;
@@ -155,6 +170,7 @@ export default function MissionApp() {
       else if (k === "g") setGalleryOpen(true);
       else if (k === "i") setFieldOpen(true);
       else if (k === "d") setPassportOpen(true);
+      else if (k === "t") setTimeOpen(true);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -164,7 +180,7 @@ export default function MissionApp() {
   const [core, setCore] = useState<(CoreField & { m1900: number; mNow: number; northSpeed1990: number }) | null>(null);
   useEffect(() => {
     const id = setTimeout(() => {
-      const year = decimalYear(Date.now());
+      const year = coreYear ?? decimalYear(Date.now());
       const c = coeffsAt(year);
       const g = geomagneticPole(c);
       setCore({
@@ -173,7 +189,7 @@ export default function MissionApp() {
       });
     }, 50);
     return () => clearTimeout(id);
-  }, []);
+  }, [coreYear]);
 
   const all = useMemo(() => joinL1(wind.data ?? [], mag.data ?? []), [wind.data, mag.data]);
   const latestL1 = all.at(-1) ?? null;
@@ -252,6 +268,7 @@ export default function MissionApp() {
     if (cinematic) q.set("cine", "1");
     if (focus) q.set("focus", "1");
     if (earthOnly) q.set("earth", "1");
+    if (coreYear !== null) q.set("coreYear", String(coreYear));
     if (fieldTarget) {
       q.set("lat", String(Number(fieldTarget.lat.toFixed(4))));
       q.set("lon", String(Number(fieldTarget.lon.toFixed(4))));
@@ -259,7 +276,7 @@ export default function MissionApp() {
     }
     if (!live && sample) q.set("t", String(sample.t));
     window.history.replaceState(null, "", `${window.location.pathname}?${q.toString()}`);
-  }, [layers, preset, cinematic, focus, earthOnly, fieldTarget, fieldOpen, live, sample]);
+  }, [layers, preset, cinematic, focus, earthOnly, coreYear, fieldTarget, fieldOpen, live, sample]);
 
   const flash = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2600); };
   const exportPng = useCallback(() => {
@@ -333,6 +350,7 @@ export default function MissionApp() {
           <button className="btn-ghost" onClick={() => setGalleryOpen(true)}>◉ Eyes on Earth</button>
           <button className="btn-ghost" onClick={() => setFieldOpen(true)}>⌖ Field explorer</button>
           <button className="btn-ghost" onClick={() => setPassportOpen(true)}>▤ Data passport</button>
+          <button className="btn-ghost" onClick={() => setTimeOpen(true)}>◷ 4D Time Atlas</button>
           <button className="btn-ghost" onClick={() => setTourOpen(true)}>Explore tour</button>
           <button className="btn-ghost" aria-pressed={focus} onClick={() => setFocus((v) => !v)}>{focus ? "Exit focus" : "Focus"}</button>
           <button className="btn-ghost" onClick={() => setHelpOpen(true)} aria-label="Keyboard shortcuts">?</button>
@@ -348,7 +366,8 @@ export default function MissionApp() {
               cinematic={cinematic} reducedMotion={motionOff} lowPower={lowPower} baseline={baseline} onGlobePick={pickGlobe} selected={fieldTarget} />
           </Suspense>
           <div className="scene-banner">
-            {earthOnly ? <span>Earth-only geographic view · fixed NASA Blue Marble texture, not a current global satellite photo · click Earth to inspect field</span> : baseline
+            {earthOnly ? <span>Earth-only geographic view · fixed NASA Blue Marble texture, not a current global satellite photo · click Earth to inspect field</span>
+              : historicCore ? <span className="hist">HISTORIC CORE MODEL {coreYear?.toFixed(1)} · IGRF-14 SAA / poles only · present-day NOAA solar-wind geometry hidden (different time clocks)</span> : baseline
               ? <span className="warn">{notPropagated ? "L1 observed, not yet propagated — " : "No live observations — "}geometry is an illustrative baseline (P = 2 nPa, Bz = 0)</span>
               : live
                 ? <span>{arrivalGap > 20 * 60_000 ? "STALE model input" : "Estimated Earth arrival"}: L1 sample {fmtUtc(sample!.t)} propagated ~{Math.round(lagS! / 60)} min{bz === null && <b className="warn"> · Bz missing, 0 assumed</b>}{arrivalGap > 20 * 60_000 && <b className="warn"> · data gap, last arrival {fmtAgo(arrivalGap)}</b>}</span>
@@ -404,6 +423,7 @@ export default function MissionApp() {
             <Metric label="Flaring α" value={baseline ? null : model.alpha.toFixed(3)} src="model" note={sample && bz === null ? "Bz absent: boundary assumes 0 nT" : undefined} />
           </div>
           <h2>Core field <span className="prov">IGRF-14 model</span></h2>
+          <button className="btn full-inspector" onClick={() => setTimeOpen(true)}>◷ Scrub 1900–2030 core field · explore 500 Myr</button>
           {core ? (
             <>
               <p className="sub">Epoch {core.year.toFixed(2)}{core.year > IGRF_LAST ? ` · extrapolated with official secular variation (valid to ${IGRF_SV_END})` : ""}</p>
@@ -457,6 +477,7 @@ export default function MissionApp() {
 
       {toast && <div className="toast" role="status">{toast}</div>}
       {galleryOpen && <Gallery onClose={() => setGalleryOpen(false)} now={now} />}
+      {timeOpen && <Suspense fallback={<div className="loading" role="status">Loading temporal evidence…</div>}><TimeAtlas onClose={() => setTimeOpen(false)} coreYear={coreYear} onYear={setCoreYear}/></Suspense>}
       {passportOpen && <DataPassport now={now} feeds={feedLines} timeline={timeline} sample={sample} estimatedArrival={arrival} modelR0={model.r0} missingBz={bz === null} onClose={() => setPassportOpen(false)} onRefresh={requestRefresh} />}
       {fieldOpen && <Overlay title="Inspect Earth's magnetic field" onClose={() => setFieldOpen(false)} wide><FieldExplorer core={core} target={fieldTarget} onTarget={setFieldTarget} /></Overlay>}
       {tourOpen && <Guide onClose={() => setTourOpen(false)} onView={chooseView} onField={() => { setTourOpen(false); setFieldOpen(true); }} onPhotos={() => { setTourOpen(false); setGalleryOpen(true); }} />}
@@ -466,7 +487,7 @@ export default function MissionApp() {
           <div className="guide-shortcuts">
             <p><kbd>1</kbd> Global · <kbd>2</kbd> Earth · <kbd>3</kbd> Tail · <kbd>4</kbd> SAA · <kbd>5</kbd> Arctic</p>
             <p><kbd>L</kbd> Live · <kbd>E</kbd> Earth only · <kbd>F</kbd> Focus · <kbd>G</kbd> Satellite photos · <kbd>I</kbd> Field explorer · <kbd>D</kbd> Data passport</p>
-            <p><kbd>?</kbd> or <kbd>H</kbd> Help · <kbd>Esc</kbd> Close overlays</p>
+            <p><kbd>T</kbd> 4D Time Atlas · <kbd>?</kbd> or <kbd>H</kbd> Help · <kbd>Esc</kbd> Close overlays</p>
           </div>
           <div className="guide-actions">
             <button className="btn" role="switch" aria-checked={lowPower} onClick={() => setLowPower((v) => !v)}>{lowPower ? "✓ Low-power mode" : "Low-power mode"}</button>

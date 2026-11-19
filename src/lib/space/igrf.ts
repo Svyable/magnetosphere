@@ -130,11 +130,13 @@ export interface PoleMotion { now: LatLon; speedKmYr: number; bearing: number; p
 export function poleMotion(year: number, north: boolean): PoleMotion {
   const y = Math.min(year, IGRF_SV_END);
   const now = dipPole(coeffsAt(y), north);
-  const prev = dipPole(coeffsAt(y - 1), north);
+  // At the 1900 boundary use a forward difference; there is no IGRF data for 1899.
+  const firstEpoch = y <= IGRF_FIRST;
+  const prev = dipPole(coeffsAt(firstEpoch ? y + 1 : y - 1), north);
   const path: { year: number; p: LatLon }[] = [];
   for (let yr = IGRF_FIRST; yr < y; yr += 5) path.push({ year: yr, p: dipPole(coeffsAt(yr), north) });
   path.push({ year: y, p: now });
-  return { now, speedKmYr: greatCircleKm(prev, now), bearing: bearingDeg(prev, now), path };
+  return { now, speedKmYr: greatCircleKm(prev, now), bearing: firstEpoch ? bearingDeg(now, prev) : bearingDeg(prev, now), path };
 }
 
 export interface FieldGrid { w: number; h: number; F: Float32Array; min: { lat: number; lon: number; F: number }; lowFraction: number }

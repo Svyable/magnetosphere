@@ -81,3 +81,22 @@ Each run writes a UTC, source-attributed **feed-health.json** and a Markdown rep
 The [Pages workflow](.github/workflows/publish-pages.yml) has a special `GITHUB_PAGES=1` build mode, with the correct `/magnetosphere/` base path and static TanStack Start prerendering. Normal Lovable and local builds retain their original root path and runtime. Once [GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site) is enabled for this repository and the workflow completes successfully, the intended project address is `https://svyable.github.io/magnetosphere/`. **Do not advertise that address as live until the deployment action confirms it.**
 
 To test static output on an installed development machine: `GITHUB_PAGES=1 bun run build`, then inspect `.output/public/index.html` and assets. The deployed site is a client-side science observatory that requests public NOAA/NASA feeds directly from browsers; browser CORS and WebGL support still need independent verification. The build route has no private server functions.
+
+## 4D Temporal Observatory — 1900–2030 and 500 million years
+
+Use the **4D Time Atlas** header button or keyboard `T`.
+
+**Modern model (1900–2030)** computes Earth's global dipole moment from the *existing bundled IGRF-14 coefficients* at 5-year epochs and linear interpolation, with a vertical marker at 2012 and an explicitly dashed **2025–2030 forecast**. A second graph plots the degree-one Gauss coefficient vector change per year across each five-year interval (a long-term secular-variation proxy, **not** day-to-day solar-storm volatility). A CSV export contains precise coefficients-derived values, source epoch classifications, and rates.
+
+The modern time slider controls the actual 3D core-field sphere/South Atlantic Anomaly/dip pole positions, **not a fabricated satellite photograph of 1900**. If the selected core epoch is more than 0.75 years from today, the app temporarily hides NOAA-driven magnetopause, wind, tail, aurora and schematic field lines without changing the user's saved layer toggles. Returning to “Current core field” restores them. The NOAA real-time/historical four-hour upstream scrubber is **a separate clock**. Share links can preserve the core year as `coreYear=2012`.
+
+**Deep time (0–500 Ma)** has a separate evidence ribbon and age scrubber. It highlights **published intervals** such as the Cretaceous Normal (roughly 121–84 Ma), Kiaman reversed (318–267 Ma), Ordovician/Moyero reversed (485–463 Ma), Middle Jurassic frequent reversals (171–155 Ma), and recent Brunhes/Laschamp events. At unknown ages it says **“no reliable continuous global model”**, rather than drawing invented field strength. Ancient polarity regimes are **not** measurements of dipole amplitude; no deep-time Earth globe reconstruction is claimed.
+
+External datasets to integrate with appropriate rights and error models in future releases:
+
+- **gufm1**, 1590–1990: historical shipping/land observations, but axial strength is poorly constrained before ~1840 and the original gufm1 model imposed a historical extrapolation. [Published model](https://geomag.colorado.edu/gufm1).
+- **CALS10k.2** via GFZ: about 10,000 years of archeomagnetic and sedimentary global paleomagnetic reconstructions with dating uncertainty. [Official GFZ data](https://www.gfz.de/en/section/geomagnetism/data-products-services/mag-models/calsxk-10000-3000-years-bp).
+- **GGF100k / LSMOD.2**, up to 100,000 years: global field reconstructions based on sediments and volcanics, not direct measurements. [Review](https://doi.org/10.1029/2019RG000656).
+- **PINT v8.2.0**, ~50 ka to 4.2 Ga: 4,854 *local rock* paleointensity site records spanning heterogeneous ages, with reliability scores and serious sampling/dating biases. It is **not** a smooth global field series. [2026 study](https://doi.org/10.1093/gji/ggaf490) (link to source; the dataset is not redistributed in our app).
+
+**Important scientific inference:** From bundled IGRF-14 coefficients, the degree-one dipole declined about **7.6% over 1900–2025** and about **0.61% from 2012–2025**. There is no special abrupt 2012 break in this global moment trend. This does not deny regional anomalies or past changes in magnetic-pole drift speed. The measured/derived/reference meaning of each layer and time axis is shown on screen.

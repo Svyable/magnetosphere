@@ -29,3 +29,11 @@ This repository is the dedicated GitHub source workspace. Its code was migrated 
 - The Pages build is **opt-in by environment**: `GITHUB_PAGES=1`. Keep Lovable root-path and Nitro behavior unchanged for all other builds.
 - When adding globe textures/assets, use Vite's `import.meta.env.BASE_URL` so project Pages can load them under `/magnetosphere/`.
 - The `src/router.tsx` basepath must match the Vite base for deep links. Never claim a Pages URL is live until its deployment check passes.
+
+## Time-domain scientific integrity
+- 4D does not mean a uniformly reconstructed magnetic-field movie through geological time.
+- IGRF-14: modelled global internal field for 1900–2025, predicted secular variation through 2030 only. Use the bundled coefficients; never extrapolate IGRF-14 beyond 2030.
+- Global dipole moment is derived from degree-1 coefficients, in ZAm². Distinguish its decline from local field intensity and pole positions. Five-year mean dipole-vector change is NOT short-time geomagnetic volatility.
+- Palaeo event ribbon ages are approximate references from stratigraphy and volcanic rocks, with uneven data density. A polarity reversal rate is NOT intensity. No synthetic value for unknown million-year windows.
+- Rendering historic core field must hide modern solar-wind geometry unless specifically annotated as a cross-era comparison; do not mix core epoch with real-time L1 as though an accurate past magnetosphere.
+- Link source/licensing and uncertainty, especially for proposed future PINT/gufm1/CALS10k datasets. Never download and redistribute a protected geological collection without checking its data-use rights.
