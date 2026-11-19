@@ -16,8 +16,8 @@ export const FIELD_DETAIL: Record<FieldDetail, {
   openWidth: number;
 }> = {
   quiet: {
-    shells: [2.5, 4.7, 7.5],
-    azimuthSamples: 2,
+    shells: [3, 6.5],
+    azimuthSamples: 3,
     openLatitudes: [77],
     openOffsets: [-4, 4],
     closedOpacity: 0.25,
