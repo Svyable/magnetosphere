@@ -48,11 +48,11 @@ try {
     if (await quiet.getAttribute("aria-pressed") !== "true") throw new Error("Default field-line detail is not quiet");
     await quiet.click();
     if (await quiet.getAttribute("aria-pressed") !== "true") throw new Error("Quiet view did not activate");
-    if (new URL(page.url()).searchParams.get("detail") !== "quiet") throw new Error("Share link does not encode chosen clarity");
+    await page.waitForFunction(() => new URL(window.location.href).searchParams.get("detail") === "quiet", { timeout: 5000 });
     await page.screenshot({ path: out + "/quiet-magnetosphere.png", fullPage: true });
     await research.click();
     if (await research.getAttribute("aria-pressed") !== "true") throw new Error("Detailed view did not activate");
-    if (new URL(page.url()).searchParams.get("detail") !== "detailed") throw new Error("Detailed view did not update share link");
+    await page.waitForFunction(() => new URL(window.location.href).searchParams.get("detail") === "detailed", { timeout: 5000 });
     await balanced.click();
     if (await balanced.getAttribute("aria-pressed") !== "true") throw new Error("Balanced view did not restore");
   });
