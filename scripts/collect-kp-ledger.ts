@@ -55,22 +55,7 @@ for(const name of files){
 }
 const summary=verifyForecasts(months,capturedAt);
 await writeFile(path.join(ledgerRoot,"summary.json"),JSON.stringify(summary,null,2)+"\n");
-const readme=`# Magnetosphere · public NOAA forecast receipts
-
-This branch contains independently archived *copies of NOAA published predictions* and subsequent NOAA-labeled observed planetary Kp. The collector runs around every six hours, subject to GitHub Actions scheduling and public endpoint availability. Each commit is a dated, reviewable evidence trail.
-
-This dataset starts **only when the collector was first successfully deployed**. Past forecasts are NOT reconstructed from the current rolling product. A retrieval timestamp is **our GitHub runner's fetch time**, not NOAA's forecast issuance time (which the Kp JSON does not expose). `estimated` and future observed values are never used to manufacture verification samples.
-
-Data paths:
-- `forecast-ledger/archive/YYYY-MM.json`: immutable captured forecast snapshots and append-only first sightings of NOAA's later `observed` Kp, including revisions.
-- `forecast-ledger/summary.json`: descriptive MAE, mean signed error, Kp≥5 hit/false-alarm/miss counts, and a same-time **persistence baseline**, by four lead-time buckets.
-- The web UI only shows skill once there are source-matched periods; missing pairs or fewer than 20 pairs are **insufficient/preliminary**, never a claim of reliable calibrated accuracy.
-
-An observed product is subject to later SWPC revisions and is not final independent ground truth. Multiple horizon bands can refer to the same verifying period; do not add their counts as if independent. NOAA Kp is a 3-hour planetary index, not a future full-magnetosphere model, an event probability, or an operational warning.
-
-Official source: ${LEDGER_SOURCE_URL}
-Repository science implementation: `src/lib/space/ledger.ts` on `main`.
-`;
+const readme = ["# Magnetosphere — public NOAA Kp forecast receipts","","This branch contains public NOAA forecast snapshots captured before each target three-hour window and subsequent records marked observed. Scheduled collection runs roughly every six hours, subject to GitHub Actions/network availability. Every Git commit is evidence of when each snapshot existed.","","Data starts ONLY when the collector first runs successfully. Past predictions are never fabricated from the current rolling feed. A retrieval timestamp is the GitHub runner's fetch UTC, NOT NOAA's independently issued timestamp (which this JSON does not supply). Estimated Kp and future observations are excluded from forecast verification.","","Data paths:","- forecast-ledger/archive/YYYY-MM.json: captured predicted Kp and append-only initial and revised NOAA-observed values.","- forecast-ledger/summary.json: descriptive Kp MAE, signed bias, G1+ hits/misses/false alarms and at-capture persistence benchmark, grouped by lead interval.","","No score is reported until later observed target periods exist, and fewer than 20 distinct periods are explicitly preliminary. Multiple forecast horizons may share a target time; their counts are not independent.","","The source-observed Kp values may be revised, are not independent certified ground truth, and their errors are not probabilistic storm confidence or safety guidance.","Official NOAA source: https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json","Methodology: https://github.com/Svyable/magnetosphere/blob/main/src/lib/space/ledger.ts",""].join("\n");
 await writeFile(path.join(ledgerRoot,"README.md"),readme);
 console.log(JSON.stringify({
   capture:iso,observationsAdded:next.observations.length-month.observations.length,
