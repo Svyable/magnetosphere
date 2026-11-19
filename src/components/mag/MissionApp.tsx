@@ -9,7 +9,8 @@ import { loadPrefs, savePrefs, clearPrefs } from "@/lib/space/prefs";
 import { FIELD_DETAIL_CHOICES, parseFieldDetail, type FieldDetail } from "@/lib/space/visuals";
 import { validateTarget, type Target } from "@/lib/space/explorer";
 import { measuredWindCsv } from "@/lib/space/export";
-import { useHp30, useKp, useMag, useOvation, useWind, useXray, URLS } from "@/lib/space/data";
+import { useHp30, useKp, useMag, useOvation, useWind, useXray, useKpForecast, URLS } from "@/lib/space/data";
+import { forecastPeak, gFromKp } from "@/lib/space/forecast";
 import { XRAY_URL } from "@/lib/space/xray";
 import {
   bzNear, dynamicPressure, freshness, joinL1, kpLabel, laggedSample, propagationSeconds, shue,
@@ -20,6 +21,7 @@ import { coeffsAt, decimalYear, geomagneticPole, intensityGrid, IGRF_LAST, IGRF_
 
 const Scene = lazy(() => import("./Scene"));
 const TimeAtlas = lazy(() => import("./TimeAtlas"));
+const ForecastCenter = lazy(() => import("./ForecastCenter"));
 
 const LAYERS: { key: LayerKey; name: string; kind: string; hint: string }[] = [
   { key: "saa", name: "Field strength · SAA", kind: "IGRF-14 model", hint: "Surface total field intensity. Warm = below 32,000 nT; the South Atlantic Anomaly is the weak-field dent where the inner radiation belt dips closest to Earth." },
@@ -78,7 +80,7 @@ function Spark({ data, sel, accessor, color, zero }: { data: L1Sample[]; sel: nu
 }
 
 export default function MissionApp() {
-  const mag = useMag(); const wind = useWind(); const kp = useKp(); const ov = useOvation(); const hp = useHp30(); const xr = useXray();
+  const mag = useMag(); const wind = useWind(); const kp = useKp(); const ov = useOvation(); const hp = useHp30(); const xr = useXray(); const kpForecast = useKpForecast();
   const [now, setNow] = useState(() => Date.now());
   const [initQ] = useState(() => new URLSearchParams(typeof window === "undefined" ? "" : window.location.search));
   const [savedPrefs] = useState(() => loadPrefs());
@@ -99,6 +101,7 @@ export default function MissionApp() {
   const [drawer, setDrawer] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [timeOpen, setTimeOpen] = useState(false);
+  const [forecastOpen, setForecastOpen] = useState(false);
   const [passportOpen, setPassportOpen] = useState(false);
   const [fieldTarget, setFieldTarget] = useState<Target | null>(() => {
     const la = initQ.get("lat"), lo = initQ.get("lon");
@@ -157,7 +160,7 @@ export default function MissionApp() {
     const onKey = (e: KeyboardEvent) => {
       if (e.altKey || e.ctrlKey || e.metaKey) return;
       if (e.key === "Escape") {
-        setGalleryOpen(false); setFieldOpen(false); setHelpOpen(false); setTourOpen(false); setDrawer(false); setPassportOpen(false); setTimeOpen(false);
+        setGalleryOpen(false); setFieldOpen(false); setHelpOpen(false); setTourOpen(false); setDrawer(false); setPassportOpen(false); setTimeOpen(false); setForecastOpen(false);
         return;
       }
       const t = e.target;
@@ -173,6 +176,7 @@ export default function MissionApp() {
       else if (k === "i") setFieldOpen(true);
       else if (k === "d") setPassportOpen(true);
       else if (k === "t") setTimeOpen(true);
+      else if (k === "p") setForecastOpen(true);
       else if (k === "v") setFieldDetail((d) => FIELD_DETAIL_CHOICES[(FIELD_DETAIL_CHOICES.indexOf(d) + 1) % FIELD_DETAIL_CHOICES.length]!);
     };
     window.addEventListener("keydown", onKey);
@@ -250,6 +254,7 @@ export default function MissionApp() {
   const hpLatest = hp.data?.at(-1) ?? null;
   const ovValid = live && st.ov === "live" && ov.data && ov.data.points.length > 0;
   const lastRefresh = Math.max(wind.dataUpdatedAt, mag.dataUpdatedAt, kp.dataUpdatedAt, ov.dataUpdatedAt);
+  const peakKpAhead = forecastPeak(kpForecast.data ?? [], now);
   const overall: Freshness = st.wind === "disconnected" && st.mag === "disconnected" ? "disconnected" : st.wind === "live" && st.mag === "live" ? "live" : st.wind === "loading" ? "loading" : "stale";
   const feedLines: ProvenanceFeed[] = [
     { id: "wind", title: "Upstream plasma", producer: "NOAA SWPC RTSW", role: "measurement", url: URLS.wind, observedAt: wind.data?.at(-1)?.t ?? null, browserUpdatedAt: wind.dataUpdatedAt || null, thresholdMinutes: 10, count: wind.data?.length ?? 0, failed: wind.isError, note: "In-situ spacecraft speed & proton density near L1" },
@@ -354,6 +359,7 @@ export default function MissionApp() {
           <button className="btn-ghost" onClick={() => setGalleryOpen(true)}>◉ Eyes on Earth</button>
           <button className="btn-ghost" onClick={() => setFieldOpen(true)}>⌖ Field explorer</button>
           <button className="btn-ghost" onClick={() => setPassportOpen(true)}>▤ Data passport</button>
+          <button className="btn-ghost forecast-topbar" onClick={() => setForecastOpen(true)}>◷ Future forecast</button>
           <button className="btn-ghost" onClick={() => setTimeOpen(true)}>◷ 4D Time Atlas</button>
           <button className="btn-ghost" onClick={() => setTourOpen(true)}>Explore tour</button>
           <button className="btn-ghost" aria-pressed={focus} onClick={() => setFocus((v) => !v)}>{focus ? "Exit focus" : "Focus"}</button>
@@ -427,6 +433,14 @@ export default function MissionApp() {
         </aside>
 
         <aside className="panel panel-right" aria-label="Live metrics">
+          <section className="forecast-teaser" aria-label="Published NOAA future predictions">
+            <div className="forecast-teaser-heading"><span>◷ NEXT 72 HOURS</span><span className="prov">NOAA PREDICTION</span></div>
+            <div className="forecast-teaser-body">
+              <strong>{peakKpAhead ? "Kp " + peakKpAhead.kp.toFixed(2) : kpForecast.isError ? "Unavailable" : "Loading forecast"}</strong>
+              <span>{peakKpAhead ? (gFromKp(peakKpAhead.kp) ?? "Below G1") + " · projected peak" : "Future slots only; no invented values"}</span>
+            </div>
+            <button type="button" className="btn forecast-teaser-cta" onClick={() => setForecastOpen(true)}>See predictions →</button>
+          </section>
           <h2>Solar wind at L1 <StatusDot s={st.wind} /></h2>
           <p className="sub">{sample ? `Sample ${fmtUtc(sample.t)} · ${sample.windSource ?? "?"} plasma / ${sample.magSource ?? "?"} mag` : "Awaiting valid propagated sample"}</p>
           <div className="metrics">
@@ -498,6 +512,7 @@ export default function MissionApp() {
       {toast && <div className="toast" role="status">{toast}</div>}
       {galleryOpen && <Gallery onClose={() => setGalleryOpen(false)} now={now} />}
       {timeOpen && <Suspense fallback={<div className="loading" role="status">Loading temporal evidence…</div>}><TimeAtlas onClose={() => setTimeOpen(false)} coreYear={coreYear} onYear={setCoreYear}/></Suspense>}
+      {forecastOpen && <Suspense fallback={<div className="loading" role="status">Loading NOAA predictions…</div>}><ForecastCenter now={now} data={kpForecast.data} fetchedAt={kpForecast.dataUpdatedAt} loading={kpForecast.isPending} error={kpForecast.isError} ovation={ov.data?.observed != null && ov.data.forecast != null ? {observed:ov.data.observed, forecast:ov.data.forecast} : null} onClose={() => setForecastOpen(false)} onRefresh={() => { void kpForecast.refetch(); }}/></Suspense>}
       {passportOpen && <DataPassport now={now} feeds={feedLines} timeline={timeline} sample={sample} estimatedArrival={arrival} modelR0={model.r0} missingBz={bz === null} onClose={() => setPassportOpen(false)} onRefresh={requestRefresh} />}
       {fieldOpen && <Overlay title="Inspect Earth's magnetic field" onClose={() => setFieldOpen(false)} wide><FieldExplorer core={core} target={fieldTarget} onTarget={setFieldTarget} /></Overlay>}
       {tourOpen && <Guide onClose={() => setTourOpen(false)} onView={chooseView} onField={() => { setTourOpen(false); setFieldOpen(true); }} onPhotos={() => { setTourOpen(false); setGalleryOpen(true); }} />}
@@ -507,7 +522,7 @@ export default function MissionApp() {
           <div className="guide-shortcuts">
             <p><kbd>1</kbd> Global · <kbd>2</kbd> Earth · <kbd>3</kbd> Tail · <kbd>4</kbd> SAA · <kbd>5</kbd> Arctic</p>
             <p><kbd>L</kbd> Live · <kbd>E</kbd> Earth only · <kbd>F</kbd> Focus · <kbd>G</kbd> Satellite photos · <kbd>I</kbd> Field explorer · <kbd>D</kbd> Data passport</p>
-            <p><kbd>T</kbd> 4D Time Atlas · <kbd>V</kbd> Cycle field-line detail · <kbd>?</kbd> or <kbd>H</kbd> Help · <kbd>Esc</kbd> Close overlays</p>
+            <p><kbd>P</kbd> Future NOAA predictions · <kbd>T</kbd> 4D Time Atlas · <kbd>V</kbd> Cycle field-line detail · <kbd>?</kbd> or <kbd>H</kbd> Help · <kbd>Esc</kbd> Close overlays</p>
           </div>
           <div className="guide-actions">
             <button className="btn" role="switch" aria-checked={lowPower} onClick={() => setLowPower((v) => !v)}>{lowPower ? "✓ Low-power mode" : "Low-power mode"}</button>

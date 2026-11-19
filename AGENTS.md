@@ -42,3 +42,10 @@ This repository is the dedicated GitHub source workspace. Its code was migrated 
 - The visitor-facing default is **Quiet** (maximum 10 candidate illustrative field lines) so Earth remains visible beneath the overlays. **Balanced** / **Detailed** are explicit user choices (maximum 28 / 80 candidate paths), driven by `src/lib/space/visuals.ts` with tests.
 - Treat path count and opacity purely as presentation complexity, NEVER geomagnetic model precision or real sampled field lines. Preserve original high-detail geometry as an opt-in research mode.
 - Honor the `detail` share URL and browser saved preference. Keep screenshots and browser CI checking the default clarity mode.
+
+## Forward space-weather predictions are the current product priority
+- Prefer **official published** NOAA short-range forecast products and true measurements. Present a recognizable hierarchy: L1 measured observations + estimated propagation → OVATION ~30-minute forecast → official 3-hour Kp and day-scale storm probabilities → separate lower-confidence 27-day outlook.
+- Never infer tomorrow's magnetopause shape/field lines from predicted Kp alone. Kp is a ground-derived planetary activity index, not upstream Bz, pressure, solar-wind speed, or full 3D geometry.
+- NOAA Kp JSON has a per-slot `observed` provenance flag (`observed`, `estimated`, `predicted`); never combine these under one label, and do not mistake successful browser fetch for source issue time.
+- Official 3-day probability bulletin and 27-day outlook have explicit `:Issued:` dates. Reject malformed forecasts and note stale publication; NOAA probabilities are not mechanically derived from storm threshold bar colors.
+- Expose uncertainty honestly: no numerical CI or CME arrival time if NOAA did not publish it, and Kp-derived G-levels are **not official watches**. Retain existing historic time atlas; do not spend default enhancement effort expanding deep-time model until requested again.

@@ -1,5 +1,6 @@
 import { EPIC_API, parseEpic } from "./epic";
 import { parseXray, XRAY_URL } from "./xray";
+import { FORECAST_URLS, parseKpForecast, parseGeomagBulletin, parse27DayOutlook } from "./forecast";
 import { useQuery } from "@tanstack/react-query";
 import { parseHp30, parseKp, parseMag, parseOvation, parseWind } from "./model";
 
@@ -22,6 +23,16 @@ async function getJson(url: string): Promise<unknown> {
   } finally {
     clearTimeout(timer);
   }
+}
+
+async function getText(url: string): Promise<string> {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 20_000);
+  try {
+    const r = await fetch(url, { signal: ctl.signal, cache: "no-store" });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return await r.text();
+  } finally { clearTimeout(timer); }
 }
 
 const opts = { refetchInterval: 60_000, refetchOnWindowFocus: false, retry: 1, staleTime: 30_000 } as const;
@@ -72,4 +83,32 @@ export const useGoesMeta = (k: GoesKey, enabled: boolean) =>
       const t = lm ? Date.parse(lm) : NaN;
       return { lastModified: Number.isFinite(t) ? t : null };
     },
+  });
+/**
+ * NOAA forecasters publish updated products at their own cadence.
+ * A successful browser fetch is never presented as the forecast issuance time.
+ * 3-day Kp JSON has time tags / provenance flags but no independent issue stamp.
+ */
+export const useKpForecast = () =>
+  useQuery({
+    queryKey: ["kp-forecast-72h"],
+    queryFn: async () => parseKpForecast(await getJson(FORECAST_URLS.kp)),
+    refetchInterval: 10 * 60_000, refetchOnWindowFocus: true,
+    retry: 1, staleTime: 5 * 60_000,
+  });
+
+export const useGeomagBulletin = (enabled: boolean) =>
+  useQuery({
+    queryKey: ["noaa-geomag-bulletin"], enabled,
+    queryFn: async () => parseGeomagBulletin(await getText(FORECAST_URLS.geomag)),
+    refetchInterval: enabled ? 30 * 60_000 : false, refetchOnWindowFocus: true,
+    retry: 1, staleTime: 20 * 60_000,
+  });
+
+export const use27DayOutlook = (enabled: boolean) =>
+  useQuery({
+    queryKey: ["noaa-27-day-outlook"], enabled,
+    queryFn: async () => parse27DayOutlook(await getText(FORECAST_URLS.outlook)),
+    refetchInterval: enabled ? 2 * 3600_000 : false, refetchOnWindowFocus: true,
+    retry: 1, staleTime: 60 * 60_000,
   });
