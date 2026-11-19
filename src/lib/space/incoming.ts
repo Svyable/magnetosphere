@@ -31,6 +31,8 @@ export type IncomingFreshness = "current" | "stale" | "missing";
 export interface IncomingOutlook {
   freshness: IncomingFreshness;
   latestObservationAt: number | null;
+  latestMagObservationAt: number | null;
+  magneticFreshness: IncomingFreshness;
   sampledCount: number;
   allPulses: IncomingPulse[];
   /** Latest observed sample per nominal 5-minute arrival bucket. */
@@ -57,6 +59,11 @@ export function incomingOutlook(samples: L1Sample[], now: number): IncomingOutlo
   const age = latestObservationAt === null ? null : now - latestObservationAt;
   const freshness: IncomingFreshness = age === null ? "missing"
     : age < -MINUTE || age > SOURCE_MAX_AGE_MINUTES * MINUTE ? "stale" : "current";
+
+  const latestMagObservationAt = valid.filter(s=>s.bz!==null).at(-1)?.t ?? null;
+  const magAge = latestMagObservationAt === null ? null : now-latestMagObservationAt;
+  const magneticFreshness: IncomingFreshness = magAge===null?"missing" :
+    magAge < -MINUTE || magAge > SOURCE_MAX_AGE_MINUTES*MINUTE ? "stale" : "current";
 
   // Current propagated state is an independent reference, not a backfilled Bz.
   const currentlyArrived = laggedSample(valid, now);
@@ -86,7 +93,7 @@ export function incomingOutlook(samples: L1Sample[], now: number): IncomingOutlo
   }
   const withBz = allPulses.filter(p=>p.sample.bz!==null);
   return {
-    freshness, latestObservationAt, sampledCount: allPulses.length, allPulses,
+    freshness, latestObservationAt, latestMagObservationAt, magneticFreshness, sampledCount: allPulses.length, allPulses,
     pulses:[...grouped.values()].sort((a,b)=>a.arrivalAt-b.arrivalAt),
     minimumBz: withBz.length ? Math.min(...withBz.map(p=>p.sample.bz!)) : null,
     maximumPressureNPa: allPulses.length ? Math.max(...allPulses.map(p=>p.pressureNPa)) : null,
