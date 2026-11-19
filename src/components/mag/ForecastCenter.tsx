@@ -6,6 +6,7 @@ import {
   type KpForecastSlot,
 } from "@/lib/space/forecast";
 import { Overlay, fmtUtc, fmtUtcS, fmtAgo } from "./ui";
+import { IssuedProducts, SolarRadioOdds } from "./OfficialProducts";
 
 interface Props {
   now: number;
@@ -69,6 +70,8 @@ function NextThreeDays({now,data,fetchedAt,loading,error,ovation}:{now:number;da
   const peak=data?forecastPeak(data,now):null;
   const issueState=issuanceStatus(b.data?.issuedAt??null,now,36*3_600_000);
   return <section aria-label="NOAA short range geomagnetic forecasts">
+    <IssuedProducts now={now}/>
+    <h3>Predicted geomagnetic activity</h3>
     <div className="forecast-overview">
       <div><span>Highest predicted Kp · 72h</span><strong>{peak?peak.kp.toFixed(2):"—"}</strong><small>{peak?dayFmt(peak.t)+" "+clockFmt(peak.t)+" · 3h slot":"No future prediction in product"}</small></div>
       <div><span>Indicative geomagnetic level</span><strong>{peak ? gFromKp(peak.kp)??"Below G1":"—"}</strong><small>Kp threshold only; not an official NOAA watch</small></div>
@@ -90,6 +93,7 @@ function NextThreeDays({now,data,fetchedAt,loading,error,ovation}:{now:number;da
             ["Active", "active"],["Minor storm", "minor"],["Moderate storm","moderate"],["Strong–extreme storm","strongExtreme"]
             ] as const).map(([label,key])=><tr key={key}><th>{label}</th>{b.data.probabilities.map(p=><td key={p.t}>{p[key]}%</td>)}</tr>)}</tbody>
         </table></div>}
+    <SolarRadioOdds now={now}/>
     <div className="forecast-nowcast">
       <span>0–30 minute aurora forecast · NOAA OVATION</span>
       {ovation ? <p>Model input {fmtUtcS(ovation.observed)} · predicted aurora for {fmtUtcS(ovation.forecast)}. {Math.abs(now-ovation.observed)>45*60_000?"This forecast input is old; check NOAA before relying on it.":"View the globe for modelled auroral oval probability."}</p>
@@ -107,7 +111,7 @@ export default function ForecastCenter(p:Props) {
       <p>Near-term measured solar wind reaches Earth in roughly an hour. Aurora predictions run tens of minutes ahead; global Kp forecasts extend about three days. A separate 27-day outlook is much less precise. None of these feeds directly measure tomorrow's global 3D magnetic field.</p>
     </div>
     <div className="ev-tabs forecast-tabs" role="tablist" aria-label="Forecast horizon">
-      <button role="tab" aria-selected={horizon==="72h"} className={"btn"+(horizon==="72h"?" active":"")} onClick={()=>setHorizon("72h")}>Next 72h · Kp + storms</button>
+      <button role="tab" aria-selected={horizon==="72h"} className={"btn"+(horizon==="72h"?" active":"")} onClick={()=>setHorizon("72h")}>Now → 72h · NOAA warnings, G/S/R</button>
       <button role="tab" aria-selected={horizon==="27d"} className={"btn"+(horizon==="27d"?" active":"")} onClick={()=>setHorizon("27d")}>Next 27 days · outlook</button>
     </div>
     <div className="forecast-time-horizons" role="list">
@@ -119,7 +123,7 @@ export default function ForecastCenter(p:Props) {
     {horizon==="72h" ?
       <NextThreeDays now={p.now} data={p.data} fetchedAt={p.fetchedAt} loading={p.loading} error={p.error} ovation={p.ovation}/> :
       <OutlookBars now={p.now}/>}
-    <button className="btn forecast-refetch" onClick={() => {p.onRefresh(); void queryClient.invalidateQueries({queryKey:["noaa-geomag-bulletin"]}); void queryClient.invalidateQueries({queryKey:["noaa-27-day-outlook"]});}}>↻ Refresh predictions from NOAA</button>
+    <button className="btn forecast-refetch" onClick={() => {p.onRefresh(); void queryClient.invalidateQueries({queryKey:["noaa-geomag-bulletin"]}); void queryClient.invalidateQueries({queryKey:["noaa-27-day-outlook"]}); void queryClient.invalidateQueries({queryKey:["noaa-swpc-alerts"]}); void queryClient.invalidateQueries({queryKey:["noaa-3-day-forecast"]});}}>↻ Refresh predictions from NOAA</button>
     <p className="caveat">Forecasts are fallible, especially following CMEs and changing southward IMF Bz. These values are published NOAA products, not our independently generated storm predictions. Kp ≥5 corresponds to G1 threshold, but **a threshold projection is not an issued NOAA watch or warning**. For operational decisions consult <a href="https://www.swpc.noaa.gov/" target="_blank" rel="noreferrer">NOAA SWPC ↗</a>.</p>
   </Overlay>;
 }

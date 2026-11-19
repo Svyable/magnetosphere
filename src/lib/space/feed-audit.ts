@@ -3,13 +3,14 @@ import { parseMag, parseWind, parseKp, parseOvation, type Ovation } from "./mode
 import { parseXray } from "./xray";
 import { parseEpic } from "./epic";
 import { assessHealth, type HealthState } from "./health";
+import { parseAlerts, OPS_URLS } from "./ops";
 
-export type AuditId = "wind" | "mag" | "kp" | "ovation" | "xray" | "epic";
+export type AuditId = "wind" | "mag" | "kp" | "ovation" | "xray" | "epic" | "alerts";
 export interface AuditSpec {
   id: AuditId;
   label: string;
   url: string;
-  origin: "measured" | "index" | "model forecast" | "photograph";
+  origin: "measured" | "index" | "model forecast" | "photograph" | "issued product";
   maxAgeMinutes: number;
   required: boolean;
 }
@@ -20,6 +21,8 @@ export const AUDIT_SPECS: readonly AuditSpec[] = [
   { id: "ovation", label: "NOAA OVATION aurora", url: "https://services.swpc.noaa.gov/json/ovation_aurora_latest.json", origin: "model forecast", maxAgeMinutes: 30, required: false },
   { id: "xray", label: "NOAA GOES X-ray long band", url: "https://services.swpc.noaa.gov/json/goes/primary/xrays-1-day.json", origin: "measured", maxAgeMinutes: 15, required: false },
   { id: "epic", label: "NASA DSCOVR EPIC photographs", url: "https://epic.gsfc.nasa.gov/api/natural", origin: "photograph", maxAgeMinutes: 7 * 24 * 60, required: false },
+  // Quiet space weather produces no messages for days, so message age checks schema/reachability, not activity.
+  { id: "alerts", label: "NOAA SWPC alerts, watches & warnings", url: OPS_URLS.alerts, origin: "issued product", maxAgeMinutes: 45 * 24 * 60, required: false },
 ];
 
 export interface PayloadSummary { count: number; newest: number | null; forecastFor?: number | null }
@@ -28,6 +31,10 @@ export function summarizePayload(id: AuditId, payload: unknown): PayloadSummary 
   if (id === "mag") { const rows = parseMag(payload); return { count: rows.length, newest: rows.at(-1)?.t ?? null }; }
   if (id === "kp") { const rows = parseKp(payload); return { count: rows.length, newest: rows.at(-1)?.t ?? null }; }
   if (id === "xray") { const rows = parseXray(payload).long; return { count: rows.length, newest: rows.at(-1)?.t ?? null }; }
+  if (id === "alerts") {
+    try { const msgs = parseAlerts(payload); return { count: msgs.length, newest: msgs[0]?.issuedAt ?? null }; }
+    catch { return { count: 0, newest: null }; } // reported as schema-error, not a network failure
+  }
   if (id === "epic") { const rows = parseEpic(payload); return { count: rows.length, newest: rows.at(-1)?.t ?? null }; }
   const ov: Ovation | null = parseOvation(payload);
   return { count: ov?.points.length ?? 0, newest: ov?.observed ?? null, forecastFor: ov?.forecast ?? null };
@@ -54,6 +61,7 @@ export function evaluateJson(spec: AuditSpec, payload: unknown, now: number, res
     note: spec.id === "epic" ? "Most recently released NASA capture; acquisition may lag by days; never a live image" :
       spec.id === "ovation" ? "Timestamp is model input observation; forecast target is separately recorded" :
       spec.id === "kp" ? "Ground-derived 3-hour index, not instantaneous" :
+      spec.id === "alerts" ? "Newest NOAA message issue time; quiet periods legitimately produce no new messages" :
       "Source timestamp is the measurement time (not the HTTP fetch time)",
   };
 }

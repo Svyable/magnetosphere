@@ -532,3 +532,45 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px soli
 .topbar-meta .forecast-topbar { color: var(--cyan); border-color: color-mix(in oklab, var(--cyan) 55%, var(--border)); }
 @media (max-width: 1600px) and (min-width: 861px) { .topbar-refreshed { display: none; } }
 @media (max-width: 1360px) and (min-width: 861px) { .topbar-meta { gap: .3rem; } .topbar-meta .btn-ghost { padding: .22rem .35rem; letter-spacing: .03em; } }
+
+/* NOAA-issued operational products (#17). Issued = solid accent; predictions keep the existing bar styles. */
+.teaser-issued { font-family: var(--font-mono); font-size: .62rem; line-height: 1.45; color: var(--muted-foreground); padding: .4rem .5rem; margin: 0 0 .55rem; border: 1px dashed var(--border); border-radius: .3rem; }
+.teaser-issued.on { color: var(--foreground); border: 1px solid var(--warn); background: color-mix(in oklab, var(--warn) 10%, transparent); }
+.teaser-issued.on b { color: var(--warn); }
+.ops-section { margin: .4rem 0 1.4rem; }
+.ops-section h3 { font-family: var(--font-display); font-size: .95rem; margin: 1rem 0 .4rem; }
+.ops-sub { font-family: var(--font-display); font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted-foreground); margin: 1rem 0 .4rem; display: flex; gap: .5rem; align-items: center; }
+.ops-list { list-style: none; padding: 0; display: grid; gap: .5rem; }
+.ops-card { border: 1px solid var(--border); border-left: 3px solid var(--muted-foreground); border-radius: .4rem; padding: .6rem .7rem; background: var(--card); }
+.ops-card.ops-warning { border-left-color: var(--warn); }
+.ops-card.ops-watch { border-left-color: var(--sun); }
+.ops-card.ops-alert { border-left-color: var(--cyan); }
+.ops-card-head { display: flex; gap: .45rem; align-items: center; flex-wrap: wrap; font-family: var(--font-mono); font-size: .6rem; text-transform: uppercase; letter-spacing: .05em; }
+.ops-kind { color: var(--foreground); font-weight: 500; }
+.ops-warning .ops-kind { color: var(--warn); } .ops-watch .ops-kind { color: var(--sun); } .ops-alert .ops-kind { color: var(--cyan); }
+.ops-code { margin-left: auto; color: var(--muted-foreground); }
+.ops-scale { padding: .05rem .4rem; border-radius: 100px; border: 1px solid currentColor; color: var(--warn); }
+.ops-title { display: block; font-size: .86rem; margin: .3rem 0 .2rem; font-weight: 500; }
+.ops-times { font-family: var(--font-mono); font-size: .64rem; color: var(--muted-foreground); line-height: 1.5; }
+.ops-times b { color: var(--foreground); font-weight: 500; }
+.ops-days { display: flex; flex-wrap: wrap; gap: .3rem; margin: .45rem 0 .2rem; }
+.ops-days span { font-family: var(--font-mono); font-size: .62rem; padding: .2rem .45rem; border: 1px solid var(--border); border-radius: .25rem; color: var(--muted-foreground); }
+.ops-days span.on { border-color: var(--sun); color: var(--foreground); } .ops-days span.on b { color: var(--sun); }
+.ops-days span.past { opacity: .45; }
+.ops-text { margin-top: .35rem; font-size: .66rem; }
+.ops-text summary { cursor: pointer; color: var(--cyan); font-family: var(--font-mono); font-size: .62rem; }
+.ops-text pre { white-space: pre-wrap; overflow-wrap: anywhere; font-family: var(--font-mono); font-size: .62rem; line-height: 1.45; color: var(--muted-foreground); margin-top: .4rem; max-height: 14rem; overflow: auto; }
+.ops-clear { font-size: .78rem; padding: .6rem .7rem; border: 1px solid color-mix(in oklab, var(--ok) 40%, var(--border)); border-radius: .4rem; background: color-mix(in oklab, var(--ok) 7%, transparent); }
+.ops-clear.muted { border-color: var(--border); background: none; color: var(--muted-foreground); font-size: .72rem; }
+.ops-unavailable b { color: var(--warn); }
+.ops-rationale { list-style: none; padding: 0; margin: .6rem 0 0; display: grid; gap: .35rem; font-size: .7rem; color: var(--muted-foreground); line-height: 1.5; }
+.ops-rationale b { color: var(--foreground); font-weight: 500; }
+.drawer .ops-list, .drawer .ops-rationale { list-style: none; padding-left: 0; }
+/* Phones: the dashboard teaser sits below the fold, so an issued NOAA product also surfaces on the globe. */
+.issued-pill { display: none; }
+@media (max-width: 860px) {
+  .issued-pill { display: block; position: absolute; left: 50%; bottom: .7rem; transform: translateX(-50%); z-index: 3; max-width: 92vw;
+    font-family: var(--font-mono); font-size: .62rem; line-height: 1.35; text-align: center; padding: .35rem .65rem; border-radius: 100px;
+    border: 1px solid var(--warn); background: color-mix(in oklab, var(--background) 78%, var(--warn)); color: var(--foreground); }
+  .issued-pill b { color: var(--warn); text-transform: uppercase; }
+}

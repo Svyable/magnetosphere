@@ -1,6 +1,7 @@
 import { EPIC_API, parseEpic } from "./epic";
 import { parseXray, XRAY_URL } from "./xray";
 import { FORECAST_URLS, parseKpForecast, parseGeomagBulletin, parse27DayOutlook } from "./forecast";
+import { OPS_URLS, parseAlerts, parseThreeDayForecast } from "./ops";
 import { useQuery } from "@tanstack/react-query";
 import { parseHp30, parseKp, parseMag, parseOvation, parseWind } from "./model";
 
@@ -111,4 +112,22 @@ export const use27DayOutlook = (enabled: boolean) =>
     queryFn: async () => parse27DayOutlook(await getText(FORECAST_URLS.outlook)),
     refetchInterval: enabled ? 2 * 3600_000 : false, refetchOnWindowFocus: true,
     retry: 1, staleTime: 60 * 60_000,
+  });
+
+/** NOAA-issued alerts/watches/warnings. Always on: the dashboard shows what is in effect. */
+export const useSwpcAlerts = () =>
+  useQuery({
+    queryKey: ["noaa-swpc-alerts"],
+    queryFn: async () => parseAlerts(await getJson(OPS_URLS.alerts)),
+    refetchInterval: 2 * 60_000, refetchOnWindowFocus: true,
+    retry: 1, staleTime: 60_000,
+  });
+
+/** Dated 3-day forecast (S1+ radiation storm, R1–R2 / R3+ radio blackout probabilities). */
+export const useThreeDayForecast = (enabled: boolean) =>
+  useQuery({
+    queryKey: ["noaa-3-day-forecast"], enabled,
+    queryFn: async () => parseThreeDayForecast(await getText(OPS_URLS.threeDay)),
+    refetchInterval: enabled ? 30 * 60_000 : false, refetchOnWindowFocus: true,
+    retry: 1, staleTime: 20 * 60_000,
   });
