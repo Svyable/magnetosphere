@@ -8,6 +8,9 @@ import {
 import { Overlay, fmtUtc, fmtUtcS, fmtAgo } from "./ui";
 import { IssuedProducts, SolarRadioOdds } from "./OfficialProducts";
 import SolarWindAhead from "./SolarWindAhead";
+import IncomingConditions from "./IncomingConditions";
+import ForecastVerification from "./ForecastVerification";
+import type { L1Sample } from "@/lib/space/model";
 
 interface Props {
   now: number;
@@ -18,6 +21,9 @@ interface Props {
   ovation: { observed: number; forecast: number } | null;
   onClose: () => void;
   onRefresh: () => void;
+  incomingSamples: L1Sample[];
+  previewedAt: number | null;
+  onPreview: (sample: L1Sample | null) => void;
 }
 const dayFmt = (t:number) => new Date(t).toLocaleDateString("en-US",{ timeZone:"UTC",month:"short",day:"numeric" });
 const clockFmt = (t:number) => new Date(t).toISOString().slice(11,16) + " UTC";
@@ -103,7 +109,7 @@ function NextThreeDays({now,data,fetchedAt,loading,error,ovation}:{now:number;da
   </section>;
 }
 export default function ForecastCenter(p:Props) {
-  const [horizon,setHorizon]=useState<"72h"|"sw"|"27d">("72h");
+  const [horizon,setHorizon]=useState<"incoming"|"72h"|"sw"|"27d"|"verify">("incoming");
   const queryClient = useQueryClient();
   return <Overlay title="FORECAST / EARTH AHEAD" onClose={p.onClose} wide>
     <div className="forecast-mission">
@@ -112,8 +118,10 @@ export default function ForecastCenter(p:Props) {
       <p>Near-term measured solar wind reaches Earth in roughly an hour. Aurora predictions run tens of minutes ahead; global Kp forecasts extend about three days. A separate 27-day outlook is much less precise. None of these feeds directly measure tomorrow's global 3D magnetic field.</p>
     </div>
     <div className="ev-tabs forecast-tabs" role="tablist" aria-label="Forecast horizon">
+      <button role="tab" aria-selected={horizon==="incoming"} className={"btn"+(horizon==="incoming"?" active":"")} onClick={()=>setHorizon("incoming")}>Incoming L1 · up to 2h</button>
       <button role="tab" aria-selected={horizon==="72h"} className={"btn"+(horizon==="72h"?" active":"")} onClick={()=>setHorizon("72h")}>Now → 72h · NOAA warnings, G/S/R</button>
       <button role="tab" aria-selected={horizon==="sw"} className={"btn"+(horizon==="sw"?" active":"")} onClick={()=>setHorizon("sw")}>Solar wind · 7-day model</button>
+      <button role="tab" aria-selected={horizon==="verify"} className={"btn"+(horizon==="verify"?" active":"")} onClick={()=>setHorizon("verify")}>Forecast receipts · verification</button>
       <button role="tab" aria-selected={horizon==="27d"} className={"btn"+(horizon==="27d"?" active":"")} onClick={()=>setHorizon("27d")}>Next 27 days · outlook</button>
     </div>
     <div className="forecast-time-horizons" role="list">
@@ -123,10 +131,10 @@ export default function ForecastCenter(p:Props) {
       <div role="listitem"><span>3 days</span><small>NOAA forecaster Kp & storm probabilities</small></div>
       <div role="listitem"><span>27 days</span><small>NOAA daily outlook · less certain</small></div>
     </div>
-    {horizon==="72h" ?
+    {horizon==="incoming" ? <IncomingConditions now={p.now} samples={p.incomingSamples} previewedAt={p.previewedAt} onPreview={p.onPreview} onClose={p.onClose}/> : horizon==="72h" ?
       <NextThreeDays now={p.now} data={p.data} fetchedAt={p.fetchedAt} loading={p.loading} error={p.error} ovation={p.ovation}/> :
       horizon==="sw" ? <SolarWindAhead now={p.now}/> :
-      <OutlookBars now={p.now}/>}
+      horizon==="27d" ? <OutlookBars now={p.now}/> : <ForecastVerification now={p.now} enabled={horizon==="verify"}/>}
     <button className="btn forecast-refetch" onClick={() => {p.onRefresh(); void queryClient.invalidateQueries({queryKey:["noaa-geomag-bulletin"]}); void queryClient.invalidateQueries({queryKey:["noaa-27-day-outlook"]}); void queryClient.invalidateQueries({queryKey:["noaa-swpc-alerts"]}); void queryClient.invalidateQueries({queryKey:["noaa-3-day-forecast"]}); void queryClient.invalidateQueries({queryKey:["noaa-enlil"]});}}>↻ Refresh predictions from NOAA</button>
     <p className="caveat">Forecasts are fallible, especially following CMEs and changing southward IMF Bz. These values are published NOAA products, not our independently generated storm predictions. Kp ≥5 corresponds to G1 threshold, but **a threshold projection is not an issued NOAA watch or warning**. For operational decisions consult <a href="https://www.swpc.noaa.gov/" target="_blank" rel="noreferrer">NOAA SWPC ↗</a>.</p>
   </Overlay>;

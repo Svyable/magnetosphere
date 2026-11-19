@@ -13,6 +13,7 @@ import { useHp30, useKp, useMag, useOvation, useWind, useXray, useKpForecast, us
 import { outlook as enlilOutlook } from "@/lib/space/enlil";
 import { highestIssuedG, opsStatus } from "@/lib/space/ops";
 import { forecastPeak, gFromKp } from "@/lib/space/forecast";
+import { estimatedArrival, incomingOutlook } from "@/lib/space/incoming";
 import { XRAY_URL } from "@/lib/space/xray";
 import {
   bzNear, dynamicPressure, freshness, joinL1, kpLabel, laggedSample, propagationSeconds, shue,
@@ -104,6 +105,7 @@ export default function MissionApp() {
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [timeOpen, setTimeOpen] = useState(false);
   const [forecastOpen, setForecastOpen] = useState(false);
+  const [incomingPreview, setIncomingPreview] = useState<L1Sample | null>(null);
   const [passportOpen, setPassportOpen] = useState(false);
   const [fieldTarget, setFieldTarget] = useState<Target | null>(() => {
     const la = initQ.get("lat"), lo = initQ.get("lon");
@@ -215,6 +217,7 @@ export default function MissionApp() {
 
   const all = useMemo(() => joinL1(wind.data ?? [], mag.data ?? []), [wind.data, mag.data]);
   const latestL1 = all.at(-1) ?? null;
+  const inbound = useMemo(() => incomingOutlook(all, now), [all,now]);
   const timeline = useMemo(() => {
     const ref = Math.max(now, latestL1?.t ?? 0);
     return all.filter((s) => s.t >= ref - 4 * 3600_000);
@@ -246,6 +249,14 @@ export default function MissionApp() {
   const bz = sample ? bzNear(all, sample) : null;
   const P = sample ? dynamicPressure(sample.n, sample.v) : null;
   const model = shue(P ?? 2, bz ?? 0);
+  // The preview must be a genuine measured L1 sample with matched Bz that has
+  // not yet nominally reached Earth. It does NOT replace measured nowcast metrics.
+  const activePreview = live && !historicCore && incomingPreview?.bz !== null && incomingPreview !== null &&
+    incomingPreview.t <= now + 60_000 && estimatedArrival(incomingPreview) > now &&
+    estimatedArrival(incomingPreview) <= now + 130 * 60_000 ? incomingPreview : null;
+  const scenarioModel = activePreview
+    ? shue(dynamicPressure(activePreview.n, activePreview.v), activePreview.bz!)
+    : model;
   const lagS = sample ? propagationSeconds(sample.v) : null;
   const arrival = sample && lagS ? sample.t + lagS * 1000 : null;
   const sceneTime = live ? now : arrival ?? now;
@@ -321,6 +332,13 @@ export default function MissionApp() {
       flash("3D image exported (on-screen HTML labels not included)");
     } catch { flash("PNG export unavailable: scene not ready or graphics restrictions"); }
   }, []);
+  const previewIncoming = (next: L1Sample | null) => {
+    setIncomingPreview(next);
+    if (!next) return;
+    // An in-transit Shue model is a scenario, NEVER a live observation.
+    setPlaying(false); setSelIdx(null); setCoreYear(null); setEarthOnly(false);
+    setPreset("global"); setNonce(n => n + 1);
+  };
   const exportMeasuredCsv = () => {
     if (!timeline.length) { flash("No valid NOAA L1 measurements to export"); return; }
     try {
@@ -376,7 +394,7 @@ export default function MissionApp() {
           <span className={live ? "mode mode-live" : "mode mode-hist"}>{live ? "LIVE" : "HISTORICAL"}</span>
           <span>L1 feed <StatusDot s={overall} /></span>
           <span className="hide-sm topbar-refreshed">Refreshed {lastRefresh ? fmtUtc(lastRefresh) : "—"}</span>
-          <button className="btn-ghost forecast-topbar" onClick={() => setForecastOpen(true)}>↗ Future forecast</button>
+          <button className="btn-ghost forecast-topbar" onClick={() => setForecastOpen(true)}>↗ Incoming & future</button>
           <button className="btn-ghost" onClick={() => setGalleryOpen(true)}>◉ Eyes on Earth</button>
           <button className="btn-ghost" onClick={() => setFieldOpen(true)}>⌖ Field explorer</button>
           <button className="btn-ghost" onClick={() => setPassportOpen(true)}>▤ Data passport</button>
@@ -391,9 +409,9 @@ export default function MissionApp() {
       <main className="stage">
         <div className="canvas-area">
           <Suspense fallback={<div className="loading">Initializing scene…</div>}>
-            <Scene layers={{ ...displayedLayers, aurora: displayedLayers.aurora && !!ovValid }} r0={model.r0} alpha={model.alpha} speed={sample?.v ?? null}
+            <Scene layers={{ ...displayedLayers, mp: activePreview ? true : displayedLayers.mp, aurora: displayedLayers.aurora && !!ovValid && !activePreview }} r0={scenarioModel.r0} alpha={scenarioModel.alpha} speed={activePreview?.v ?? sample?.v ?? null}
               time={sceneTime} aurora={ovValid ? ov.data!.points : null} preset={preset} presetNonce={nonce} core={core}
-              cinematic={cinematic} reducedMotion={motionOff} lowPower={lowPower} fieldDetail={fieldDetail} baseline={baseline} onGlobePick={pickGlobe} selected={fieldTarget} />
+              cinematic={cinematic} reducedMotion={motionOff} lowPower={lowPower} fieldDetail={fieldDetail} baseline={baseline && !activePreview} onGlobePick={pickGlobe} selected={fieldTarget} />
           </Suspense>
           {leadIssued && (
             <button type="button" className="issued-pill" onClick={() => setForecastOpen(true)} aria-label={"NOAA " + leadIssued.kind + " in effect: " + leadIssued.title + ". Open forecast"}>
@@ -401,7 +419,8 @@ export default function MissionApp() {
             </button>
           )}
           <div className="scene-banner">
-            {earthOnly ? <span>Earth-only geographic view · fixed NASA Blue Marble texture, not a current global satellite photo · click Earth to inspect field</span>
+            {activePreview ? <span className="incoming-preview-banner"><strong>UPSTREAM SCENARIO · NOT YET OBSERVED AT EARTH</strong> · L1 sample {fmtUtc(activePreview.t)} → nominal arrival {fmtUtc(estimatedArrival(activePreview))} · Shue nose {scenarioModel.r0.toFixed(2)} Rₑ · timing uncertain <button type="button" className="btn" onClick={() => setIncomingPreview(null)}>↺ Return live geometry</button></span>
+              : earthOnly ? <span>Earth-only geographic view · fixed NASA Blue Marble texture, not a current global satellite photo · click Earth to inspect field</span>
               : historicCore ? <span className="hist">HISTORIC CORE MODEL {coreYear?.toFixed(1)} · IGRF-14 SAA / poles only · present-day NOAA solar-wind geometry hidden (different time clocks)</span> : baseline
               ? <span className="warn">{notPropagated ? "L1 observed, not yet propagated — " : "No live observations — "}geometry is an illustrative baseline (P = 2 nPa, Bz = 0)</span>
               : live
@@ -459,6 +478,14 @@ export default function MissionApp() {
 
         <aside className="panel panel-right" aria-label="Live metrics">
           <section className="forecast-teaser" aria-label="Published NOAA future predictions">
+            <button type="button" className="incoming-teaser" onClick={() => setForecastOpen(true)} aria-label="Open incoming L1 observations and nominal Earth arrival scenarios">
+              <span>↘ UPSTREAM TO EARTH</span>
+              <strong>{inbound.freshness==="current" && inbound.pulses[0] ? "~"+Math.round(inbound.pulses[0].leadMinutes)+" min" : inbound.freshness==="stale"?"Stale source":"Awaiting L1"}</strong>
+              <small>{inbound.freshness==="current" && inbound.pulses[0]
+                ? "Measured Bz "+(inbound.pulses[0].sample.bz===null?"unavailable":inbound.pulses[0].sample.bz.toFixed(1)+" nT")+" · nominal arrival"
+                : "No verified current inbound sample"}</small>
+              <span className="incoming-teaser-cta">Inspect incoming stream ↗</span>
+            </button>
             <div className="forecast-teaser-heading"><span>◷ NEXT 72 HOURS</span><span className="prov">NOAA PREDICTION</span></div>
             <div className="forecast-teaser-body">
               <strong>{peakKpAhead ? "Kp " + peakKpAhead.kp.toFixed(2) : kpForecast.isError ? "Unavailable" : "Loading forecast"}</strong>
@@ -547,7 +574,7 @@ export default function MissionApp() {
       {toast && <div className="toast" role="status">{toast}</div>}
       {galleryOpen && <Gallery onClose={() => setGalleryOpen(false)} now={now} />}
       {timeOpen && <Suspense fallback={<div className="loading" role="status">Loading temporal evidence…</div>}><TimeAtlas onClose={() => setTimeOpen(false)} coreYear={coreYear} onYear={setCoreYear}/></Suspense>}
-      {forecastOpen && <Suspense fallback={<div className="loading" role="status">Loading NOAA predictions…</div>}><ForecastCenter now={now} data={kpForecast.data} fetchedAt={kpForecast.dataUpdatedAt} loading={kpForecast.isPending} error={kpForecast.isError} ovation={ov.data?.observed != null && ov.data.forecast != null ? {observed:ov.data.observed, forecast:ov.data.forecast} : null} onClose={() => setForecastOpen(false)} onRefresh={() => { void kpForecast.refetch(); }}/></Suspense>}
+      {forecastOpen && <Suspense fallback={<div className="loading" role="status">Loading NOAA predictions…</div>}><ForecastCenter now={now} data={kpForecast.data} fetchedAt={kpForecast.dataUpdatedAt} loading={kpForecast.isPending} error={kpForecast.isError} ovation={ov.data?.observed != null && ov.data.forecast != null ? {observed:ov.data.observed, forecast:ov.data.forecast} : null} onClose={() => setForecastOpen(false)} onRefresh={() => { void kpForecast.refetch(); void wind.refetch(); void mag.refetch(); }} incomingSamples={all} previewedAt={activePreview?.t ?? null} onPreview={previewIncoming}/></Suspense>}
       {passportOpen && <DataPassport now={now} feeds={feedLines} timeline={timeline} sample={sample} estimatedArrival={arrival} modelR0={model.r0} missingBz={bz === null} onClose={() => setPassportOpen(false)} onRefresh={requestRefresh} />}
       {fieldOpen && <Overlay title="Inspect Earth's magnetic field" onClose={() => setFieldOpen(false)} wide><FieldExplorer core={core} target={fieldTarget} onTarget={setFieldTarget} /></Overlay>}
       {tourOpen && <Guide onClose={() => setTourOpen(false)} onView={chooseView} onField={() => { setTourOpen(false); setFieldOpen(true); }} onPhotos={() => { setTourOpen(false); setGalleryOpen(true); }} />}
