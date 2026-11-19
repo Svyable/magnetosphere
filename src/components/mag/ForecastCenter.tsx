@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { use27DayOutlook, useGeomagBulletin } from "@/lib/space/data";
 import {
   FORECAST_URLS, forecastPeak, gFromKp, issuanceStatus, outlookAhead, upcomingKp,
@@ -98,6 +99,7 @@ function NextThreeDays({now,data,fetchedAt,loading,error,ovation}:{now:number;da
 }
 export default function ForecastCenter(p:Props) {
   const [horizon,setHorizon]=useState<"72h"|"27d">("72h");
+  const queryClient = useQueryClient();
   return <Overlay title="FORECAST / EARTH AHEAD" onClose={p.onClose} wide>
     <div className="forecast-mission">
       <span className="forecast-mission-kicker">NOAA / OFFICIAL PREDICTIONS</span>
@@ -117,7 +119,7 @@ export default function ForecastCenter(p:Props) {
     {horizon==="72h" ?
       <NextThreeDays now={p.now} data={p.data} fetchedAt={p.fetchedAt} loading={p.loading} error={p.error} ovation={p.ovation}/> :
       <OutlookBars now={p.now}/>}
-    <button className="btn forecast-refetch" onClick={p.onRefresh}>↻ Refresh predictions from NOAA</button>
+    <button className="btn forecast-refetch" onClick={() => {p.onRefresh(); void queryClient.invalidateQueries({queryKey:["noaa-geomag-bulletin"]}); void queryClient.invalidateQueries({queryKey:["noaa-27-day-outlook"]});}}>↻ Refresh predictions from NOAA</button>
     <p className="caveat">Forecasts are fallible, especially following CMEs and changing southward IMF Bz. These values are published NOAA products, not our independently generated storm predictions. Kp ≥5 corresponds to G1 threshold, but **a threshold projection is not an issued NOAA watch or warning**. For operational decisions consult <a href="https://www.swpc.noaa.gov/" target="_blank" rel="noreferrer">NOAA SWPC ↗</a>.</p>
   </Overlay>;
 }
