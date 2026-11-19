@@ -65,7 +65,7 @@ export default function SolarWindAhead({ now }: { now: number }) {
       <h3>Solar wind arriving at Earth · 7-day model</h3>
       <p className="forecast-explain">NOAA's <strong>WSA–Enlil</strong> run models the solar wind reaching Earth, including CMEs that forecasters have inserted. The left part of the chart is already in the past, so we lay NOAA's <strong>measured</strong> L1 plasma over it: you can see how well this run is doing before trusting what it says about the days ahead.</p>
       <p className="forecast-source-line">
-        Model file updated {fmtUtc(q.data?.fileUpdatedAt)} · fetched {q.dataUpdatedAt ? fmtUtc(q.dataUpdatedAt) : "—"}
+        File last rewritten {fmtUtc(q.data?.fileUpdatedAt)} · fetched {q.dataUpdatedAt ? fmtUtc(q.dataUpdatedAt) : "—"}
         {d ? ` · covers ${dayHour(d.cov.start)} → ${dayHour(d.cov.end)}` : ""}
         {" · "}<a href={ENLIL_INFO_URL} target="_blank" rel="noreferrer">about WSA–Enlil ↗</a> · <a href={ENLIL_URL} target="_blank" rel="noreferrer">data ↗</a>
       </p>
@@ -143,7 +143,7 @@ export default function SolarWindAhead({ now }: { now: number }) {
             </div>
           </div>
           <p className="caveat">
-            <b>Not a Bz forecast.</b> Enlil does not model the magnetic field inside a CME, so the magnetopause is shown for two stated Bz values rather than predicted; the real boundary also depends on how southward the field turns. CME tracer timing comes from cones forecasters insert from coronagraph images and often misses by many hours (compare the CME arrival ensemble when it is available). The measured overlay covers the last {Math.round(((wind.data?.at(-1)?.t ?? now) - (wind.data?.[0]?.t ?? now)) / H)} h of NOAA real-time data. Model file updated {q.data?.fileUpdatedAt ? fmtAgo(Math.max(0, now - q.data.fileUpdatedAt)) : "at an unknown time"}; the model run time itself is not stated in this file.
+            <b>Not a Bz forecast.</b> Enlil does not model the magnetic field inside a CME, so the magnetopause is shown for two stated Bz values rather than predicted; the real boundary also depends on how southward the field turns. CME tracer timing comes from cones forecasters insert from coronagraph images and often misses by many hours (compare the CME arrival ensemble when it is available). The measured overlay covers the last {Math.round(((wind.data?.at(-1)?.t ?? now) - (wind.data?.[0]?.t ?? now)) / H)} h of NOAA real-time data. NOAA rewrites this file every few minutes (last {q.data?.fileUpdatedAt ? fmtAgo(Math.max(0, now - q.data.fileUpdatedAt)) : "at an unknown time"}) even when the model run is unchanged, and the run time itself is not stated in the file.
           </p>
         </>}
     </section>

@@ -136,7 +136,8 @@ export const useThreeDayForecast = (enabled: boolean) =>
 /**
  * NOAA WSA–Enlil model at Earth (~200 kB gzipped). Loaded on the dashboard because the
  * modelled CME arrival is headline information; refreshed every 30 min. The file's
- * Last-Modified (a CORS-safelisted header) is kept as "file updated", never as model run time.
+ * Last-Modified (a CORS-safelisted header) is when NOAA last rewrote the file (every few
+ * minutes, even with an unchanged run), never the model run time.
  */
 export const useEnlil = () =>
   useQuery({
