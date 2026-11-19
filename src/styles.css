@@ -432,3 +432,73 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px soli
 }
 @keyframes earth-loading-orbit { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .globe-loading-orbit { animation: none; } }
+
+
+/* Public space-weather forecasts: source-linked temporal evidence, never invented future geometry. */
+.forecast-teaser { border: 1px solid color-mix(in oklab, var(--cyan) 35%, var(--border)); border-radius: .4rem; padding: .7rem; background: linear-gradient(135deg, color-mix(in oklab, var(--cyan) 10%, var(--card)), var(--card)); margin: 0 0 1.25rem; }
+.forecast-teaser-heading { display:flex;justify-content:space-between;gap:.6rem;align-items:center;font-family:var(--font-mono);font-size:.64rem;letter-spacing:.08em;color:var(--cyan);}
+.forecast-teaser-heading .prov {font-size:.55rem;}
+.forecast-teaser-body {display:flex;align-items:baseline;justify-content:space-between;gap:.8rem;margin:.5rem 0;}
+.forecast-teaser-body strong {color:var(--foreground);font-family:var(--font-display);font-size:1.55rem;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.forecast-teaser-body span {color:var(--muted-foreground);font-size:.62rem;text-align:right;line-height:1.5;}
+.forecast-teaser-cta {display:block;width:100%;font-size:.72rem;color:var(--cyan);border-color:color-mix(in oklab,var(--cyan) 35%,var(--border));}
+.forecast-mission { padding:.8rem 1rem;background:linear-gradient(125deg,color-mix(in oklab,var(--cyan) 11%,var(--card)),var(--card));border-left:3px solid var(--cyan);margin:.7rem 0 1rem; }
+.forecast-mission-kicker {font-family:var(--font-mono);color:var(--cyan);font-size:.63rem;letter-spacing:.1em;}
+.forecast-mission h3 {font-family:var(--font-display);font-size:1.3rem;margin:.3rem 0;color:var(--foreground);}
+.forecast-mission p,.forecast-explain {font-size:.78rem;color:var(--muted-foreground);line-height:1.55;margin:.3rem 0 .6rem;}
+.forecast-explain strong {color:var(--foreground);}
+.forecast-tabs {margin-bottom:.7rem;}
+.forecast-tabs .btn {white-space:normal;line-height:1.4;min-height:2.25rem;}
+.forecast-tabs [aria-selected=true] {border-color:var(--cyan);color:var(--cyan);background:color-mix(in oklab,var(--cyan) 12%,var(--card));}
+.forecast-time-horizons {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.4rem;margin:.7rem 0 1.25rem;}
+.forecast-time-horizons>div {border:1px solid var(--border);border-radius:.4rem;padding:.55rem;display:flex;flex-direction:column;gap:.22rem;}
+.forecast-time-horizons span {font-family:var(--font-mono);color:var(--cyan);font-size:.77rem;}
+.forecast-time-horizons small {font-size:.59rem;color:var(--muted-foreground);line-height:1.5;}
+.forecast-overview {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.5rem;}
+.forecast-overview>div {background:var(--card);border:1px solid var(--border);border-radius:.4rem;padding:.7rem;display:flex;flex-direction:column;gap:.22rem;}
+.forecast-overview span {font-family:var(--font-mono);font-size:.6rem;text-transform:uppercase;color:var(--muted-foreground);letter-spacing:.05em;}
+.forecast-overview strong {font-family:var(--font-display);font-size:clamp(1.15rem,2.8vw,1.9rem);font-variant-numeric:tabular-nums;color:var(--cyan);line-height:1.2;}
+.forecast-overview small {font-size:.62rem;color:var(--muted-foreground);line-height:1.4;}
+.forecast-overview+h3,.forecast-prob-scroll+h3,.forecast-time-horizons+h3,section[aria-label="Lower confidence 27-day geomagnetic outlook"] h3 {font-family:var(--font-display);font-size:.95rem;margin:1.1rem 0 .45rem;}
+.forecast-source-line {font-family:var(--font-mono);font-size:.63rem;color:var(--muted-foreground);line-height:1.5;margin:.4rem 0 .8rem;}
+.forecast-source-line a,.forecast-nowcast a,.forecast-mission a,.forecast-refetch+a {color:var(--cyan);text-decoration:underline;text-underline-offset:3px;}
+.forecast-empty {padding:1rem;border:1px dashed var(--border);border-radius:.35rem;background:var(--card);font-family:var(--font-mono);font-size:.7rem;color:var(--muted-foreground);line-height:1.6;}
+.forecast-chart-wrap {padding:.7rem;border:1px solid var(--border);border-radius:.5rem;background:radial-gradient(ellipse at 50% 100%,color-mix(in oklab,var(--cyan) 6%,var(--background)),var(--background));}
+.forecast-bars {position:relative;height:175px;display:flex;align-items:end;gap:3px;isolation:isolate;border-bottom:1px solid var(--border);padding:0 0 2px;}
+.forecast-bar-cell {position:relative;height:100%;flex:1 1 0;display:flex;align-items:end;min-width:4px;z-index:1;}
+.forecast-bar {width:100%;background:var(--cyan);border-radius:2px 2px 0 0;opacity:.85;min-height:3px;}
+.forecast-bar.forecast-estimated {background:repeating-linear-gradient(135deg,color-mix(in oklab,var(--sun) 70%,transparent) 0 3px,transparent 3px 6px);border:1px solid var(--sun);opacity:.75;}
+.forecast-bar.forecast-storm {background:var(--sun);box-shadow:0 0 6px color-mix(in oklab,var(--sun) 20%,transparent);}
+.forecast-threshold {position:absolute;left:0;right:0;height:1px;border-top:1px dashed var(--sun);opacity:.75;z-index:0;}
+.forecast-threshold span {position:absolute;right:0;bottom:3px;font-family:var(--font-mono);font-size:.57rem;color:var(--sun);background:var(--background);padding:0 .2rem;}
+.forecast-bar-foot {display:flex;justify-content:space-between;gap:.35rem;color:var(--muted-foreground);font-family:var(--font-mono);font-size:.58rem;margin:.4rem 0;}
+.forecast-legend {display:flex;gap:.8rem;flex-wrap:wrap;align-items:center;font-family:var(--font-mono);font-size:.62rem;color:var(--muted-foreground);}
+.forecast-sample {display:inline-block;width:.65rem;height:.65rem;border-radius:2px;background:var(--cyan);}
+.forecast-sample.estimated {background:var(--sun);}
+.forecast-sample.storm {background:var(--sun);box-shadow:0 0 6px var(--sun);}
+.forecast-prob-scroll {width:100%;overflow-x:auto;border:1px solid var(--border);border-radius:.45rem;}
+.forecast-prob-table {width:100%;border-collapse:collapse;text-align:left;font-size:.76rem;font-variant-numeric:tabular-nums;min-width:22rem;}
+.forecast-prob-table th,.forecast-prob-table td {padding:.5rem .6rem;border-bottom:1px solid var(--border);}
+.forecast-prob-table thead th {background:var(--card);color:var(--muted-foreground);font-family:var(--font-mono);font-size:.64rem;}
+.forecast-prob-table tbody th {color:var(--foreground);font-weight:400;}
+.forecast-prob-table tbody td {color:var(--cyan);font-family:var(--font-mono);}
+.forecast-nowcast {margin:1.1rem 0;padding:.75rem;border-left:3px solid var(--cyan);background:var(--card);}
+.forecast-nowcast>span {color:var(--cyan);font-family:var(--font-mono);font-size:.67rem;letter-spacing:.04em;text-transform:uppercase;}
+.forecast-nowcast p {color:var(--muted-foreground);font-size:.74rem;line-height:1.5;margin:.4rem 0 0;}
+.forecast-day-bars {height:170px;display:flex;align-items:end;gap:3px;overflow:hidden;border-bottom:1px solid var(--border);padding:.3rem .1rem;background:var(--card);}
+.forecast-day-col {height:100%;flex:1 1 0;min-width:4px;display:flex;align-items:end;}
+.forecast-day-bar {width:100%;min-height:3px;background:var(--cyan);border-radius:2px 2px 0 0;opacity:.8;}
+.forecast-day-bar.storm {background:var(--sun);}
+.forecast-forecast-days {display:grid;grid-template-columns:repeat(auto-fit,minmax(5.3rem,1fr));gap:.3rem;margin:.8rem 0;}
+.forecast-forecast-days>div {border:1px solid var(--border);border-radius:.2rem;padding:.45rem;display:flex;flex-direction:column;gap:.2rem;background:var(--card);}
+.forecast-forecast-days span {font-family:var(--font-mono);font-size:.6rem;color:var(--muted-foreground);}
+.forecast-forecast-days strong {font-size:.75rem;color:var(--foreground);}
+.forecast-forecast-days small {font-family:var(--font-mono);font-size:.55rem;color:var(--muted-foreground);}
+.forecast-refetch {margin:1rem 0;display:block;max-width:22rem;}
+@media (max-width:740px) {
+  .forecast-time-horizons {grid-template-columns:repeat(2,minmax(0,1fr));}
+  .forecast-overview {grid-template-columns:repeat(2,minmax(0,1fr));}
+  .forecast-overview>div:first-child {grid-column:1/-1;}
+  .forecast-bars {height:135px;gap:2px;}
+  .forecast-mission {padding:.6rem;}
+}
