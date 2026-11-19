@@ -2,6 +2,7 @@ import { EPIC_API, parseEpic } from "./epic";
 import { parseXray, XRAY_URL } from "./xray";
 import { FORECAST_URLS, parseKpForecast, parseGeomagBulletin, parse27DayOutlook } from "./forecast";
 import { OPS_URLS, parseAlerts, parseThreeDayForecast } from "./ops";
+import { ENLIL_URL, parseEnlil } from "./enlil";
 import { useQuery } from "@tanstack/react-query";
 import { parseHp30, parseKp, parseMag, parseOvation, parseWind } from "./model";
 
@@ -130,4 +131,25 @@ export const useThreeDayForecast = (enabled: boolean) =>
     queryFn: async () => parseThreeDayForecast(await getText(OPS_URLS.threeDay)),
     refetchInterval: enabled ? 30 * 60_000 : false, refetchOnWindowFocus: true,
     retry: 1, staleTime: 20 * 60_000,
+  });
+
+/**
+ * NOAA WSA–Enlil model at Earth (~200 kB gzipped). Loaded on the dashboard because the
+ * modelled CME arrival is headline information; refreshed every 30 min. The file's
+ * Last-Modified (a CORS-safelisted header) is kept as "file updated", never as model run time.
+ */
+export const useEnlil = () =>
+  useQuery({
+    queryKey: ["noaa-enlil"],
+    queryFn: async () => {
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), 30_000);
+      try {
+        const r = await fetch(ENLIL_URL, { signal: ctl.signal, cache: "no-store" });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const lm = Date.parse(r.headers.get("last-modified") ?? "");
+        return { points: parseEnlil(await r.json()), fileUpdatedAt: Number.isFinite(lm) ? lm : null };
+      } finally { clearTimeout(timer); }
+    },
+    refetchInterval: 30 * 60_000, refetchOnWindowFocus: false, retry: 1, staleTime: 15 * 60_000,
   });

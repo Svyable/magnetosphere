@@ -99,6 +99,10 @@ try {
     await page.getByRole("region", { name: /NOAA-issued alerts, watches and warnings/i }).waitFor();
     await page.getByRole("region", { name: /solar radiation storm and radio blackout probabilities/i }).waitFor();
     await page.locator(".ops-clear, .ops-list, .ops-unavailable").first().waitFor({ timeout: 20_000 });
+    // WSA–Enlil tab: model vs measured chart, or an explicit unavailable state (never a blank chart).
+    await page.getByRole("tab", { name: /Solar wind · 7-day model/i }).click();
+    await page.getByRole("region", { name: /WSA–Enlil modelled solar wind at Earth/i }).waitFor();
+    await page.locator("svg.enlil-chart, .enlil .forecast-empty").first().waitFor({ timeout: 30_000 });
     await page.getByRole("tab", { name: /Next 27 days/i }).click();
     await page.getByRole("heading", { name: /27-day outlook/i }).waitFor();
     await page.getByRole("tab", { name: /72h · NOAA warnings/i }).click();
