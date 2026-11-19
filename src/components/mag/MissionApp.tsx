@@ -6,6 +6,7 @@ import Guide from "./Guide";
 import DataPassport, { type ProvenanceFeed } from "./DataPassport";
 import { Overlay } from "./ui";
 import { loadPrefs, savePrefs, clearPrefs } from "@/lib/space/prefs";
+import { FIELD_DETAIL_CHOICES, parseFieldDetail, type FieldDetail } from "@/lib/space/visuals";
 import { validateTarget, type Target } from "@/lib/space/explorer";
 import { measuredWindCsv } from "@/lib/space/export";
 import { useHp30, useKp, useMag, useOvation, useWind, useXray, URLS } from "@/lib/space/data";
@@ -119,6 +120,7 @@ export default function MissionApp() {
   const [osReduced, setOsReduced] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(() => savedPrefs.reducedMotion ?? false);
   const [lowPower, setLowPower] = useState(() => savedPrefs.lowPower ?? false);
+  const [fieldDetail, setFieldDetail] = useState<FieldDetail>(() => parseFieldDetail(initQ.get("detail")) ?? parseFieldDetail(savedPrefs.fieldDetail) ?? "balanced");
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
@@ -145,7 +147,7 @@ export default function MissionApp() {
   }, [earthOnly, historicCore, layers]);
 
   // Save only accessibility/display preferences; shared URLs override them on arrival.
-  useEffect(() => { savePrefs({ focus, lowPower, reducedMotion }); }, [focus, lowPower, reducedMotion]);
+  useEffect(() => { savePrefs({ focus, lowPower, reducedMotion, fieldDetail }); }, [focus, lowPower, reducedMotion, fieldDetail]);
 
   useEffect(() => {
     document.title = "MAGNETOSPHERE / EARTH NOW · " + (earthOnly ? "Earth only" : preset.toUpperCase()) + " view";
@@ -171,6 +173,7 @@ export default function MissionApp() {
       else if (k === "i") setFieldOpen(true);
       else if (k === "d") setPassportOpen(true);
       else if (k === "t") setTimeOpen(true);
+      else if (k === "v") setFieldDetail((d) => FIELD_DETAIL_CHOICES[(FIELD_DETAIL_CHOICES.indexOf(d) + 1) % FIELD_DETAIL_CHOICES.length]!);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -268,6 +271,7 @@ export default function MissionApp() {
     if (cinematic) q.set("cine", "1");
     if (focus) q.set("focus", "1");
     if (earthOnly) q.set("earth", "1");
+    q.set("detail", fieldDetail);
     if (coreYear !== null) q.set("coreYear", String(coreYear));
     if (fieldTarget) {
       q.set("lat", String(Number(fieldTarget.lat.toFixed(4))));
@@ -276,7 +280,7 @@ export default function MissionApp() {
     }
     if (!live && sample) q.set("t", String(sample.t));
     window.history.replaceState(null, "", `${window.location.pathname}?${q.toString()}`);
-  }, [layers, preset, cinematic, focus, earthOnly, coreYear, fieldTarget, fieldOpen, live, sample]);
+  }, [layers, preset, cinematic, focus, earthOnly, fieldDetail, coreYear, fieldTarget, fieldOpen, live, sample]);
 
   const flash = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2600); };
   const exportPng = useCallback(() => {
@@ -312,7 +316,7 @@ export default function MissionApp() {
   const chooseView = (p: Preset) => { setPreset(p); setNonce((n) => n + 1); };
   const pickGlobe = (lat: number, lon: number) => { setFieldTarget({ lat, lon }); setFieldOpen(true); };
   const resetPrefs = () => {
-    clearPrefs(); setFocus(false); setEarthOnly(false); setReducedMotion(false);
+    clearPrefs(); setFocus(false); setEarthOnly(false); setReducedMotion(false); setFieldDetail("balanced");
     setLowPower(window.innerWidth < 768 || (navigator.hardwareConcurrency ?? 8) <= 4);
     flash("Display preferences reset");
   };
@@ -363,7 +367,7 @@ export default function MissionApp() {
           <Suspense fallback={<div className="loading">Initializing scene…</div>}>
             <Scene layers={{ ...displayedLayers, aurora: displayedLayers.aurora && !!ovValid }} r0={model.r0} alpha={model.alpha} speed={sample?.v ?? null}
               time={sceneTime} aurora={ovValid ? ov.data!.points : null} preset={preset} presetNonce={nonce} core={core}
-              cinematic={cinematic} reducedMotion={motionOff} lowPower={lowPower} baseline={baseline} onGlobePick={pickGlobe} selected={fieldTarget} />
+              cinematic={cinematic} reducedMotion={motionOff} lowPower={lowPower} fieldDetail={fieldDetail} baseline={baseline} onGlobePick={pickGlobe} selected={fieldTarget} />
           </Suspense>
           <div className="scene-banner">
             {earthOnly ? <span>Earth-only geographic view · fixed NASA Blue Marble texture, not a current global satellite photo · click Earth to inspect field</span>
@@ -378,6 +382,15 @@ export default function MissionApp() {
         <aside className="panel panel-left" aria-label="Layers and view">
           <h2>Layers</h2>
           <div className="layers">{LAYERS.map((l) => <Toggle key={l.key} k={l.key} />)}</div>
+          <h2>Field-line clarity <span className="prov">illustrative</span></h2>
+          <div className="seg field-detail-picker" role="group" aria-label="Schematic field line complexity">
+            {FIELD_DETAIL_CHOICES.map((d) => (
+              <button key={d} type="button" aria-pressed={fieldDetail === d}
+                title={d === "quiet" ? "Minimal schematic field lines for a clear Earth view" : d === "balanced" ? "Readable science geometry with 28 possible paths" : "Original research view with up to 80 illustrative paths"}
+                onClick={() => setFieldDetail(d)}>{d === "detailed" ? "Detailed" : d === "balanced" ? "Balanced" : "Quiet"}</button>
+            ))}
+          </div>
+          <p className="detail-hint">Visual complexity only, not magnetic-model accuracy. Press V to cycle.</p>
           <h2>View</h2>
           <div className="seg" role="group" aria-label="Camera preset">
             {(["global", "earth", "tail", "saa", "arctic"] as Preset[]).map((p) => (
@@ -487,7 +500,7 @@ export default function MissionApp() {
           <div className="guide-shortcuts">
             <p><kbd>1</kbd> Global · <kbd>2</kbd> Earth · <kbd>3</kbd> Tail · <kbd>4</kbd> SAA · <kbd>5</kbd> Arctic</p>
             <p><kbd>L</kbd> Live · <kbd>E</kbd> Earth only · <kbd>F</kbd> Focus · <kbd>G</kbd> Satellite photos · <kbd>I</kbd> Field explorer · <kbd>D</kbd> Data passport</p>
-            <p><kbd>T</kbd> 4D Time Atlas · <kbd>?</kbd> or <kbd>H</kbd> Help · <kbd>Esc</kbd> Close overlays</p>
+            <p><kbd>T</kbd> 4D Time Atlas · <kbd>V</kbd> Cycle field-line detail · <kbd>?</kbd> or <kbd>H</kbd> Help · <kbd>Esc</kbd> Close overlays</p>
           </div>
           <div className="guide-actions">
             <button className="btn" role="switch" aria-checked={lowPower} onClick={() => setLowPower((v) => !v)}>{lowPower ? "✓ Low-power mode" : "Low-power mode"}</button>
