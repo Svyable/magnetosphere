@@ -8,15 +8,30 @@ const ARCHIVE_LINK="https://github.com/Svyable/magnetosphere/tree/forecast-ledge
 const round=(x:number|null,digits=2)=>x===null?"—":x.toFixed(digits);
 const utc=(t:number)=>new Date(t).toISOString().slice(0,16).replace("T"," ")+" UTC";
 function validSummary(x:unknown): x is LedgerSummary {
-  if(!x||typeof x!=="object")return false;
+  if(!x || typeof x!=="object" || Array.isArray(x))return false;
   const r=x as Record<string,unknown>;
-  return r["schemaVersion"]===1 && typeof r["updatedAt"]==="number" &&
-    Array.isArray(r["rows"]) && r["rows"].length===LEAD_BANDS.length &&
-    r["rows"].every((v:unknown)=>v !== null && typeof v==="object" &&
-      typeof (v as SkillRow).pairedPeriods==="number" &&
-      (v as SkillRow).maeKp===null || v!==null && typeof v==="object" && typeof (v as SkillRow).maeKp==="number") &&
-    Array.isArray(r["recentPairs"]) &&
-    typeof r["captures"]==="number" && typeof r["verifiedTargetPeriods"]==="number";
+  if(r["schemaVersion"]!==1 || !Number.isFinite(r["updatedAt"]) ||
+    !Number.isInteger(r["captures"]) || !Number.isInteger(r["verifiedTargetPeriods"]) ||
+    !Array.isArray(r["rows"]) || r["rows"].length!==LEAD_BANDS.length ||
+    !Array.isArray(r["recentPairs"]))return false;
+  const rows=r["rows"] as unknown[];
+  const isOptionalNumber=(v:unknown)=>v===null || (typeof v==="number" && Number.isFinite(v));
+  return rows.every(v=>{
+    if(!v || typeof v!=="object" || Array.isArray(v))return false;
+    const row=v as Record<string,unknown>;
+    return LEAD_BANDS.includes(row["band"] as typeof LEAD_BANDS[number]) &&
+      Number.isInteger(row["pairedPeriods"]) &&
+      isOptionalNumber(row["maeKp"]) && isOptionalNumber(row["biasKp"]) &&
+      isOptionalNumber(row["persistenceMaeKp"]) &&
+      Number.isInteger(row["missedStorms"]) && Number.isInteger(row["falseAlarms"]) &&
+      Number.isInteger(row["observedStormPeriods"]);
+  }) && (r["recentPairs"] as unknown[]).every(v=>{
+    if(!v || typeof v!=="object" || Array.isArray(v))return false;
+    const p=v as Record<string,unknown>;
+    return Number.isFinite(p["targetAt"]) && Number.isFinite(p["fetchedAt"]) &&
+      Number.isFinite(p["leadHours"]) && Number.isFinite(p["forecastKp"]) &&
+      Number.isFinite(p["observedKp"]) && LEAD_BANDS.includes(p["band"] as typeof LEAD_BANDS[number]);
+  });
 }
 async function getLedger():Promise<LedgerSummary>{
   const resp=await fetch(PUBLIC_LEDGER_URL,{cache:"no-store",signal:AbortSignal.timeout(12_000)});
