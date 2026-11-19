@@ -350,6 +350,7 @@ export default function MissionApp() {
           <button className="btn-ghost" onClick={() => setGalleryOpen(true)}>◉ Eyes on Earth</button>
           <button className="btn-ghost" onClick={() => setFieldOpen(true)}>⌖ Field explorer</button>
           <button className="btn-ghost" onClick={() => setPassportOpen(true)}>▤ Data passport</button>
+          <button className="btn-ghost" onClick={() => setTimeOpen(true)}>◷ 4D Time Atlas</button>
           <button className="btn-ghost" onClick={() => setTourOpen(true)}>Explore tour</button>
           <button className="btn-ghost" aria-pressed={focus} onClick={() => setFocus((v) => !v)}>{focus ? "Exit focus" : "Focus"}</button>
           <button className="btn-ghost" onClick={() => setHelpOpen(true)} aria-label="Keyboard shortcuts">?</button>
@@ -365,7 +366,8 @@ export default function MissionApp() {
               cinematic={cinematic} reducedMotion={motionOff} lowPower={lowPower} baseline={baseline} onGlobePick={pickGlobe} selected={fieldTarget} />
           </Suspense>
           <div className="scene-banner">
-            {earthOnly ? <span>Earth-only geographic view · fixed NASA Blue Marble texture, not a current global satellite photo · click Earth to inspect field</span> : baseline
+            {earthOnly ? <span>Earth-only geographic view · fixed NASA Blue Marble texture, not a current global satellite photo · click Earth to inspect field</span>
+              : historicCore ? <span className="hist">HISTORIC CORE MODEL {coreYear?.toFixed(1)} · IGRF-14 SAA / poles only · present-day NOAA solar-wind geometry hidden (different time clocks)</span> : baseline
               ? <span className="warn">{notPropagated ? "L1 observed, not yet propagated — " : "No live observations — "}geometry is an illustrative baseline (P = 2 nPa, Bz = 0)</span>
               : live
                 ? <span>{arrivalGap > 20 * 60_000 ? "STALE model input" : "Estimated Earth arrival"}: L1 sample {fmtUtc(sample!.t)} propagated ~{Math.round(lagS! / 60)} min{bz === null && <b className="warn"> · Bz missing, 0 assumed</b>}{arrivalGap > 20 * 60_000 && <b className="warn"> · data gap, last arrival {fmtAgo(arrivalGap)}</b>}</span>
@@ -421,6 +423,7 @@ export default function MissionApp() {
             <Metric label="Flaring α" value={baseline ? null : model.alpha.toFixed(3)} src="model" note={sample && bz === null ? "Bz absent: boundary assumes 0 nT" : undefined} />
           </div>
           <h2>Core field <span className="prov">IGRF-14 model</span></h2>
+          <button className="btn full-inspector" onClick={() => setTimeOpen(true)}>◷ Scrub 1900–2030 core field · explore 500 Myr</button>
           {core ? (
             <>
               <p className="sub">Epoch {core.year.toFixed(2)}{core.year > IGRF_LAST ? ` · extrapolated with official secular variation (valid to ${IGRF_SV_END})` : ""}</p>
@@ -474,6 +477,7 @@ export default function MissionApp() {
 
       {toast && <div className="toast" role="status">{toast}</div>}
       {galleryOpen && <Gallery onClose={() => setGalleryOpen(false)} now={now} />}
+      {timeOpen && <Suspense fallback={<div className="loading" role="status">Loading temporal evidence…</div>}><TimeAtlas onClose={() => setTimeOpen(false)} coreYear={coreYear} onYear={setCoreYear}/></Suspense>}
       {passportOpen && <DataPassport now={now} feeds={feedLines} timeline={timeline} sample={sample} estimatedArrival={arrival} modelR0={model.r0} missingBz={bz === null} onClose={() => setPassportOpen(false)} onRefresh={requestRefresh} />}
       {fieldOpen && <Overlay title="Inspect Earth's magnetic field" onClose={() => setFieldOpen(false)} wide><FieldExplorer core={core} target={fieldTarget} onTarget={setFieldTarget} /></Overlay>}
       {tourOpen && <Guide onClose={() => setTourOpen(false)} onView={chooseView} onField={() => { setTourOpen(false); setFieldOpen(true); }} onPhotos={() => { setTourOpen(false); setGalleryOpen(true); }} />}
@@ -483,7 +487,7 @@ export default function MissionApp() {
           <div className="guide-shortcuts">
             <p><kbd>1</kbd> Global · <kbd>2</kbd> Earth · <kbd>3</kbd> Tail · <kbd>4</kbd> SAA · <kbd>5</kbd> Arctic</p>
             <p><kbd>L</kbd> Live · <kbd>E</kbd> Earth only · <kbd>F</kbd> Focus · <kbd>G</kbd> Satellite photos · <kbd>I</kbd> Field explorer · <kbd>D</kbd> Data passport</p>
-            <p><kbd>?</kbd> or <kbd>H</kbd> Help · <kbd>Esc</kbd> Close overlays</p>
+            <p><kbd>T</kbd> 4D Time Atlas · <kbd>?</kbd> or <kbd>H</kbd> Help · <kbd>Esc</kbd> Close overlays</p>
           </div>
           <div className="guide-actions">
             <button className="btn" role="switch" aria-checked={lowPower} onClick={() => setLowPower((v) => !v)}>{lowPower ? "✓ Low-power mode" : "Low-power mode"}</button>
