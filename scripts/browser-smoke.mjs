@@ -41,6 +41,21 @@ try {
   });
   await page.screenshot({ path: out + "/desktop.png", fullPage: true });
 
+  await check("Curated field-line detail controls preserve scientific layers and share links", async () => {
+    const quiet = page.getByRole("button", { name: "Quiet", exact: true });
+    const research = page.getByRole("button", { name: "Detailed", exact: true });
+    const balanced = page.getByRole("button", { name: "Balanced", exact: true });
+    if (await balanced.getAttribute("aria-pressed") !== "true") throw new Error("Default field-line detail is not balanced");
+    await quiet.click();
+    if (await quiet.getAttribute("aria-pressed") !== "true") throw new Error("Quiet view did not activate");
+    if (new URL(page.url()).searchParams.get("detail") !== "quiet") throw new Error("Share link does not encode chosen clarity");
+    await page.screenshot({ path: out + "/quiet-magnetosphere.png", fullPage: true });
+    await research.click();
+    if (await research.getAttribute("aria-pressed") !== "true") throw new Error("Detailed view did not activate");
+    if (new URL(page.url()).searchParams.get("detail") !== "detailed") throw new Error("Detailed view did not update share link");
+    await balanced.click();
+    if (await balanced.getAttribute("aria-pressed") !== "true") throw new Error("Balanced view did not restore");
+  });
   await check("Data passport shows NOAA/GOES/GFZ source details", async () => {
     await page.getByRole("button", { name: /Data passport/i }).click();
     await page.getByRole("dialog", { name: /Data passport/i }).waitFor();
