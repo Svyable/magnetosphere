@@ -1,0 +1,47 @@
+name: Archive NOAA predictions before they become observations
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "15 */6 * * *"
+  push:
+    branches: [main]
+    paths:
+      - src/lib/space/ledger.ts
+      - scripts/collect-kp-ledger.ts
+      - .github/workflows/forecast-ledger.yml
+permissions:
+  contents: write
+concurrency:
+  group: magnetosphere-public-kp-ledger
+  cancel-in-progress: false
+jobs:
+  archive:
+    name: Collect public, source-stamped Kp forecast receipt
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Check out trusted main release
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: true
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile
+      - name: Check out the public evidence-only branch as a separate worktree
+        run: |
+          git fetch origin forecast-ledger
+          git worktree add --detach "$RUNNER_TEMP/forecast-ledger" origin/forecast-ledger
+      - name: Collect NOAA source and compute audit summary
+        run: bun scripts/collect-kp-ledger.ts "$RUNNER_TEMP/forecast-ledger"
+      - name: Commit only public NOAA evidence files
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/forecast-ledger"
+          git add forecast-ledger/
+          if git diff --cached --quiet; then
+            echo "No new source receipts in this six-hour slot."
+            exit 0
+          fi
+          git -c user.name="magnetosphere-data-bot" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "data: archive verified NOAA Kp forecast receipt"
+          git push origin HEAD:forecast-ledger
