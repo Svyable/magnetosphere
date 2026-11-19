@@ -7,8 +7,11 @@
  * "official" arrival time; CCMC's own auto-generated average/median entries are kept
  * separate from the independent members.
  */
-export const CCMC_SCOREBOARD_API = "https://kauai.ccmc.gsfc.nasa.gov/CMEscoreboard/WS/get/predictions";
-export const CCMC_SCOREBOARD_PAGE = "https://kauai.ccmc.gsfc.nasa.gov/CMEscoreboard/";
+// CCMC moved the Scoreboard in September 2026 (same parameters and JSON schema); the old kauai
+// endpoint stopped updating. The legacy URL is kept only as an archive-collector fallback.
+export const CCMC_SCOREBOARD_API = "https://ccmc.gsfc.nasa.gov/CMESB-Earth/WS/get/predictions";
+export const CCMC_SCOREBOARD_API_LEGACY = "https://kauai.ccmc.gsfc.nasa.gov/CMEscoreboard/WS/get/predictions";
+export const CCMC_SCOREBOARD_PAGE = "https://ccmc.gsfc.nasa.gov/CMESB-Earth/";
 
 const H = 3_600_000;
 

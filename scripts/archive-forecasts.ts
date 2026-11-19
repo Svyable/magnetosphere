@@ -15,7 +15,7 @@ import { dirname, join } from "node:path";
 import { FORECAST_URLS, parse27DayOutlook, parseGeomagBulletin } from "../src/lib/space/forecast";
 import { OPS_URLS, parseAlerts, parseThreeDayForecast } from "../src/lib/space/ops";
 import { cmeWindows, ENLIL_URL, hourly, parseEnlil } from "../src/lib/space/enlil";
-import { CCMC_SCOREBOARD_API, parseScoreboard, recentEvents } from "../src/lib/space/ccmc";
+import { CCMC_SCOREBOARD_API, CCMC_SCOREBOARD_API_LEGACY, parseScoreboard, recentEvents } from "../src/lib/space/ccmc";
 
 const OUT = process.argv[2] ?? "archive";
 const NOW = Date.now();
@@ -24,11 +24,11 @@ const stamp = (t: number) => new Date(t).toISOString().slice(0, 16).replace(/:/g
 const dayPath = (t: number) => new Date(t).toISOString().slice(0, 10).replace(/-/g, "/");     // 2026/11/19
 const sha = (s: string) => createHash("sha256").update(s).digest("hex").slice(0, 16);
 
-async function get(url: string, kind: "json" | "text") {
+async function get(url: string, kind: "json" | "text", timeoutMs = 45_000) {
   let last: unknown;
   for (let i = 0; i < 3; i++) {
     try {
-      const r = await fetch(url, { signal: AbortSignal.timeout(45_000), headers: { "user-agent": "magnetosphere-forecast-archive (github.com/Svyable/magnetosphere)" } });
+      const r = await fetch(url, { signal: AbortSignal.timeout(timeoutMs), headers: { "user-agent": "magnetosphere-forecast-archive (github.com/Svyable/magnetosphere)" } });
       if (!r.ok) throw new Error("HTTP " + r.status);
       return { body: kind === "json" ? await r.json() : await r.text(), lastModified: Date.parse(r.headers.get("last-modified") ?? "") };
     } catch (e) { last = e; await new Promise(res => setTimeout(res, 1500 * (i + 1))); }
@@ -113,13 +113,21 @@ const jobs: Record<string, (wrote: string[]) => Promise<string | void>> = {
     return `${msgs.length} messages`;
   },
   async "ccmc-cme"(wrote) {
-    const start = new Date(NOW - 45 * 86_400_000).toISOString().slice(0, 10);
-    const { body } = await get(`${CCMC_SCOREBOARD_API}?closeOutCMEsOnly=false&startDate=${start}`, "json");
-    const events = recentEvents(parseScoreboard(body), NOW, 45);
-    const content = JSON.stringify({ fetchedAt: new Date(NOW).toISOString(), source: CCMC_SCOREBOARD_API, windowDays: 45, events });
+    // The full response is several MB (date parameters are not honoured), so allow a long timeout.
+    let source = CCMC_SCOREBOARD_API, body: unknown;
+    try { ({ body } = await get(`${source}?closeOutCMEsOnly=false`, "json", 150_000)); }
+    catch (e) {
+      source = CCMC_SCOREBOARD_API_LEGACY;
+      try { ({ body } = await get(`${source}?closeOutCMEsOnly=false`, "json", 150_000)); }
+      catch { throw e; }
+    }
+    const all = parseScoreboard(body);
+    const events = recentEvents(all, NOW, 45);
+    const newest = all[0]?.observedAt ?? null;
+    const content = JSON.stringify({ fetchedAt: new Date(NOW).toISOString(), source, windowDays: 45, newestCmeInSource: newest !== null ? new Date(newest).toISOString() : null, events });
     await put("latest/ccmc-cme.json", content);
     await snapshotIfChanged("ccmc-cme", `snapshots/ccmc-cme/${dayPath(NOW)}/${stamp(NOW)}.json`, content, wrote, JSON.stringify(events));
-    return `${events.length} CMEs in the last 45 days`;
+    return `${events.length} CMEs in the last 45 days from ${new URL(source).host}; newest in source ${newest !== null ? stamp(newest) : "none"}`;
   },
 };
 
