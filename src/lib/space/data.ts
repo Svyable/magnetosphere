@@ -3,6 +3,7 @@ import { parseXray, XRAY_URL } from "./xray";
 import { FORECAST_URLS, parseKpForecast, parseGeomagBulletin, parse27DayOutlook } from "./forecast";
 import { OPS_URLS, parseAlerts, parseThreeDayForecast } from "./ops";
 import { ENLIL_URL, parseEnlil } from "./enlil";
+import { ARCHIVE_BASE, parseCmeArchive } from "./ccmc";
 import { useQuery } from "@tanstack/react-query";
 import { parseHp30, parseKp, parseMag, parseOvation, parseWind } from "./model";
 
@@ -153,4 +154,20 @@ export const useEnlil = () =>
       } finally { clearTimeout(timer); }
     },
     refetchInterval: 30 * 60_000, refetchOnWindowFocus: false, retry: 1, staleTime: 15 * 60_000,
+  });
+
+/**
+ * NASA CCMC CME Scoreboard, via the hourly forecast archive (CCMC's API is not browser-accessible).
+ * A missing archive (404 before the first run) resolves to null rather than an error.
+ */
+export const useCmeArchive = () =>
+  useQuery({
+    queryKey: ["ccmc-cme-archive"],
+    queryFn: async () => {
+      const r = await fetch(ARCHIVE_BASE + "latest/ccmc-cme.json", { cache: "no-store" });
+      if (r.status === 404) return null;
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return parseCmeArchive(await r.json());
+    },
+    refetchInterval: 15 * 60_000, refetchOnWindowFocus: false, retry: 1, staleTime: 10 * 60_000,
   });

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { Freshness } from "@/lib/space/model";
 
 export const fmtUtc = (t: number | null | undefined) => (t ? new Date(t).toISOString().replace("T", " ").slice(0, 16) + " UTC" : "—");
@@ -29,4 +30,15 @@ export function Overlay({ title, onClose, children, side = "right", wide = false
       </aside>
     </div>
   );
+}
+/** True on narrow screens; charts use it to pick a drawing width that keeps SVG text legible. */
+export function useNarrow(query = "(max-width: 740px)") {
+  const [narrow, setNarrow] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const on = () => setNarrow(mq.matches);
+    on(); mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, [query]);
+  return narrow;
 }

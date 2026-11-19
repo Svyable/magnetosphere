@@ -604,3 +604,18 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px soli
 .enlil-key.cme { height: 8px; background: color-mix(in oklab, var(--sun) 35%, transparent); }
 @media (max-width: 740px) { .forecast-tabs .btn { font-size: .66rem; padding: .35rem .3rem; } }
 .forecast-time-horizons { grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); }
+
+/* CCMC CME arrival ensemble */
+.cme-card { border: 1px solid var(--border); border-left: 3px solid var(--sun); border-radius: .4rem; padding: .6rem .7rem; background: var(--card); margin: .5rem 0; }
+.cme-card.cme-overdue { border-left-color: var(--muted-foreground); }
+.cme-card .ops-kind { color: var(--sun); }
+.cme-strip { width: 100%; height: auto; display: block; margin-top: .5rem; }
+.cme-err { stroke: var(--sun); stroke-width: 2; opacity: .55; vector-effect: non-scaling-stroke; }
+.cme-dot { fill: var(--sun); stroke: var(--background); stroke-width: 1.5; }
+.cme-method { fill: var(--muted-foreground); font: 10px var(--font-mono); }
+.cme-median { stroke: var(--foreground); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.cme-median-label, .cme-observed-label { fill: var(--foreground); font: 10px var(--font-mono); }
+.cme-observed { stroke: var(--ok); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.cme-observed-label { fill: var(--ok); }
+.cme-table td, .cme-table th { white-space: nowrap; }
+.cme-row { stroke: var(--border); opacity: .5; }

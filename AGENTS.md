@@ -49,3 +49,10 @@ This repository is the dedicated GitHub source workspace. Its code was migrated 
 - NOAA Kp JSON has a per-slot `observed` provenance flag (`observed`, `estimated`, `predicted`); never combine these under one label, and do not mistake successful browser fetch for source issue time.
 - Official 3-day probability bulletin and 27-day outlook have explicit `:Issued:` dates. Reject malformed forecasts and note stale publication; NOAA probabilities are not mechanically derived from storm threshold bar colors.
 - Expose uncertainty honestly: no numerical CI or CME arrival time if NOAA did not publish it, and Kp-derived G-levels are **not official watches**. Retain existing historic time atlas; do not spend default enhancement effort expanding deep-time model until requested again.
+
+## Forecast archive and CME ensemble
+- `.github/workflows/forecast-archive.yml` + `scripts/archive-forecasts.ts` write hourly to the `forecast-archive` branch only. Never write archive data to `main`, never edit archived snapshots, and never back-fill a missing product.
+- Archive file names use the product's own issue time when it has one; otherwise the archive fetch time, labelled as such.
+- CCMC CME Scoreboard predictions are community submissions. Show the spread between independent methods with their own error bars; keep CCMC aggregate entries separate; never present one member or the median as an official arrival time.
+- Verification statistics may only be computed from archived issue-time snapshots against observed values, never from the current rolling product.
+

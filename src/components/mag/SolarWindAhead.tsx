@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useEnlil, useWind } from "@/lib/space/data";
 import {
   cmeWindows, coverage, earthArrival, ENLIL_INFO_URL, ENLIL_URL, hindcastSkill, hourly, outlook,
   standoffScenarios, type HourBin,
 } from "@/lib/space/enlil";
-import { fmtAgo, fmtUtc } from "./ui";
+import { fmtAgo, fmtUtc, useNarrow } from "./ui";
 
 const H = 3_600_000;
 const GEO_RE = 6.6;
@@ -19,13 +19,7 @@ export default function SolarWindAhead({ now }: { now: number }) {
   const wind = useWind();
   const [hoverT, setHoverT] = useState<number | null>(null);
   // Narrow screens get a narrower drawing space so SVG text stays legible (not just scaled down).
-  const [narrow, setNarrow] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 740px)");
-    const on = () => setNarrow(mq.matches);
-    on(); mq.addEventListener("change", on);
-    return () => mq.removeEventListener("change", on);
-  }, []);
+  const narrow = useNarrow();
 
   const d = useMemo(() => {
     if (!q.data) return null;
