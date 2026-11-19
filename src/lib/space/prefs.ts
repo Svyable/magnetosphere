@@ -1,5 +1,6 @@
 // Guarded localStorage preferences. URL params always take priority (handled by caller).
-export interface Prefs { lowPower?: boolean; reducedMotion?: boolean; focus?: boolean; tourSeen?: boolean }
+import type { FieldDetail } from "./visuals";
+export interface Prefs { lowPower?: boolean; reducedMotion?: boolean; focus?: boolean; tourSeen?: boolean; fieldDetail?: FieldDetail }
 const KEY = "magnetosphere.prefs.v1";
 
 export function loadPrefs(): Prefs {
