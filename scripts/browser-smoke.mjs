@@ -95,7 +95,7 @@ try {
     await page.getByRole("tab", { name: /Incoming L1/i }).waitFor();
     await page.getByText(/Measured upstream\. Not yet at Earth\./i).waitFor();
     await page.getByText(/not an independently issued NOAA forecast/i).waitFor();
-    await page.getByRole("tab", { name: /Next 72h/i }).click();
+    await page.getByRole("tab", { name: /Now.*72h/i }).click();
     await page.getByRole("heading", { name: /Planetary Kp · next three days/i }).waitFor();
     await page.getByRole("tab", { name: /Incoming L1/i }).click();
     // A real feed may have no future arrivals; the interface must then show a data gap.
@@ -114,9 +114,9 @@ try {
     await closeOverlay(page);
   });
   await check("Real NOAA future forecast center distinguishes 72h predictions from 27-day outlook", async () => {
-    await page.getByRole("button", { name: /Future forecast/i }).click();
+    await page.getByRole("button", { name: /Incoming & future/i }).click();
     await page.getByRole("dialog", { name: /FORECAST \/ EARTH AHEAD/i }).waitFor({ timeout: 15_000 });
-    await page.getByRole("tab", { name: /Next 72h/i }).click();
+    await page.getByRole("tab", { name: /Now.*72h/i }).click();
     await page.getByRole("heading", { name: /Planetary Kp · next three days/i }).waitFor();
     await page.getByText(/NOAA daily geomagnetic storm probabilities/i).waitFor();
     await page.getByText(/0–30 minute aurora forecast/i).waitFor();
