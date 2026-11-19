@@ -79,15 +79,16 @@ Each run writes a UTC, source-attributed **feed-health.json** and a Markdown rep
 
 **Interpretation:** This is a check from one GitHub-hosted runner, **not** global service monitoring; an unreachable feed does not prove a worldwide outage. It validates URL availability, JSON shape and source timestamp freshness—not browser CORS, image content, WebGL, physical accuracy of the Shue model, or an operational forecast. A recent NASA EPIC image is labeled **released**, never live; NOAA GOES image HTTP Last-Modified is *not* assumed to be acquisition time. The on-screen **Data Passport** provides a corresponding user-visible source/freshness ledger.
 
-## Forecast archive (verification record)
+## Forecast archive (issued products and CME ensemble)
 
-NOAA's rolling forecast products overwrite themselves, so nobody can later check how good yesterday's forecast was. The [forecast archive workflow](.github/workflows/forecast-archive.yml) runs hourly and writes to the separate **`forecast-archive` branch** (never `main`):
+Complements the [Kp forecast ledger](#forecast-accountability-immutable-public-noaa-prediction-receipts) (which owns the 72-hour Kp forecast, observed Kp and their scoring). The [forecast archive workflow](.github/workflows/forecast-archive.yml) runs hourly and writes to the separate **`forecast-archive` branch** (never `main`):
 
-- every issued NOAA 3-day forecast, 3-day geomagnetic bulletin and 27-day outlook (named by their own `:Issued:` time); each new version of the 72-hour Kp forecast (by content change); WSA–Enlil hourly summaries (when the model content changes); and every NOAA alert, watch and warning (NOAA's own list only spans about 30 days);
-- observed planetary Kp by month, to verify forecasts against;
+- every issued NOAA 3-day forecast (G/S/R), 3-day geomagnetic bulletin and 27-day outlook, named by their own `:Issued:` time;
+- WSA–Enlil hourly summaries, snapshotted when the model content changes (NOAA rewrites the file every few minutes even with an unchanged run);
+- every NOAA alert, watch and warning, by month (NOAA's own list only spans about 30 days);
 - a validated copy of NASA CCMC's CME Scoreboard for the last 45 days. CCMC's API is not reachable from browsers, so the site reads this copy from `raw.githubusercontent.com`.
 
-Each product is fetched independently; one failure never blocks the others, and nothing is filled in for a failed product (`latest/manifest.json` records per-product success). The script is `scripts/archive-forecasts.ts`. Scoring NOAA's Kp forecasts against observations is the next step once enough issued versions have accumulated.
+Each product is fetched independently; one failure never blocks the others, and nothing is filled in for a failed product (`latest/manifest.json` records per-product success). The script is `scripts/archive-forecasts.ts`.
 
 ## Public hosting via GitHub Pages
 
@@ -135,3 +136,27 @@ The app fetches NOAA SWPC's independently published products directly into the b
 If a product fails to load or expires, it is visibly unavailable or marked outdated. There are **no invented forecast values** or assumed confidence intervals. The "G1–G5" indicator is derived from NOAA's **predicted Kp** thresholds and is explicitly *not* an issued official watch or warning. Open [NOAA SWPC](https://www.swpc.noaa.gov/) for safety-critical decisions.
 
 All plots show UTC and source provenance. The 4D historical atlas continues to work, but predicted geomagnetic activity is **not projected onto the 3D Shue magnetopause geometry** without the required forecast wind/IMF inputs. See `src/lib/space/forecast.ts`, `src/lib/space/ops.ts` (issued products and S/R odds), `src/lib/space/enlil.ts` (model parsing, CME windows and hindcast skill), `ForecastCenter.tsx`, `OfficialProducts.tsx`, `SolarWindAhead.tsx` and their unit/browser tests. Parser tests run against real NOAA products saved in `src/lib/space/fixtures/`; the Enlil hindcast score is checked against an independent calculation on the same data.
+
+## Arrival Intelligence: measured solar wind that has not yet reached Earth
+
+The **first tab** of *Incoming & Future* (`P`) is an interactive NOAA L1 → Earth arrival outlook. The dashboard also shows the next predicted arrival prominently alongside official 72-hour Kp forecasts.
+
+- Uses **real 1-minute spacecraft measurements** of solar-wind speed, proton density, and matched GSM IMF Bz. Solar-wind travel time is estimated by `1,500,000 km / measured speed`; each sample gets its own *nominal* Earth-arrival UTC. Only genuinely unarrived samples appear. Input age and independent source links are shown.
+- Shows pressure, matched Bz, and an optional **Shue (1998) empirical magnetopause standoff radius** from those measured inputs. **If Bz was not observed, the forecast-mode Shue estimate is absent**, never silently substituted as zero.
+- An interactive timeline is time-ordered by estimated arrival, color-coded for measured southward Bz, and sampled into five-minute display buckets. The downloadable CSV preserves **every** eligible one-minute input and evidence/source timestamps.
+- Click **Preview** for a scientifically labeled *upstream advection scenario* rendered on the actual 3D magnetopause. The planet's current live telemetry stays unchanged; the aurora nowcast is hidden in preview to avoid mixing times. **Return live geometry** restores the measured/current magnetopause, and a preview ceases automatically once its nominal arrival has passed.
+- Freshness gates distinguish live source from stale/missing upstream products. A stale preview cannot be initiated. The advection method does not solve tilted shock fronts, CME propagation, variable L1 spacecraft distance, magnetic-field evolution during transit, or uncertainty-calibrated arrival distributions. Its 130-minute horizon is limited to *already measured* upstream plasma, not a 130-minute speculative solar forecast.
+
+**Important:** This is not NOAA's official CME arrival model, not a future 3D MHD reconstruction, not a valid prediction of ground-level Kp from Bz alone, and not a promise that the nominal arrival will be exact. The broader *next 72 hours* and *27 days* tabs continue to use the actual NOAA-issued forecasts.
+
+## Forecast accountability: immutable public NOAA prediction receipts
+
+**Forecast skill is an experiment, not a marketing confidence number.** The new *Forecast Receipts · Verification* tab in **Incoming & Future** uses a source-linked, publicly auditable forecast ledger, rather than judging yesterday's forecast from today's rolling NOAA graph (which would leak the answer).
+
+A new [GitHub Actions collection workflow](.github/workflows/forecast-ledger.yml) uses a dedicated public [`forecast-ledger` branch](https://github.com/Svyable/magnetosphere/tree/forecast-ledger) to record NOAA Kp predictions **every six hours** (subject to scheduled-run delays and network availability). Each receipt preserves the exact Git commit, our retrieval UTC, the future 3-hour Kp values *then* marked `predicted`, and the latest already-observed Kp known at collection for a **no-change persistence baseline**. Later runs record NOAA rows marked `observed`, **never** interim `estimated` values, append revisions, and match by target three-hour bin.
+
+The publicly accessible [`summary.json`](https://raw.githubusercontent.com/Svyable/magnetosphere/forecast-ledger/forecast-ledger/summary.json) is recomputed from the archive. It reports the NOAA forecast's mean absolute Kp error (MAE), signed bias, Kp≥5 hit/miss/false-alarm counts, persistence benchmark, and example target/forecast/verification receipts for lead-time groups **0–6, 6–24, 24–48 and 48–72 hours**. Each target counts once per lead bucket. The dashboard shows **insufficient evidence** for under 20 verified target periods and no skill until observations mature; the public Git branch ensures a traceable record rather than retroactively selected examples.
+
+**Limits:** The NOAA 3-day Kp JSON does **not** include an independent forecast-issued timestamp. Our GitHub runner **retrieval UTC** is the only issuance proxy, accurately labeled. NOAA's later `observed` rows can be revised and are not independent final ground truth. MAE is *not* a probability; deterministic Kp is not a calibrated storm likelihood. This does not yet verify L1 shock arrival times or CME forecasts. Correlated lead buckets, sparse storm events, and missed GitHub schedule runs constrain conclusions. The ledger needs days to build an initial sample, and the initial empty state is intentional.
+
+The archive job requests write access only to push *public source data* to `forecast-ledger`, not main. It runs only for trusted main pushes, scheduled runs, or explicit owner dispatch; no pull-request code gets a write token.
