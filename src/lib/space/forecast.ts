@@ -55,7 +55,8 @@ export function parseKpForecast(raw: unknown): KpForecastSlot[] {
 }
 export function gFromKp(kp: number): string | null {
   if (!Number.isFinite(kp) || kp < 5) return null;
-  return "G" + Math.min(5, Math.floor(kp));
+  // NOAA geomagnetic storm scale: Kp 5→G1, 6→G2, 7→G3, 8→G4, 9→G5.
+  return "G" + Math.min(5, Math.floor(kp) - 4);
 }
 /** Only slots not already fully elapsed are included; observed values are not forecasts. */
 export function upcomingKp(data: KpForecastSlot[], now: number, hours = 72): KpForecastSlot[] {
