@@ -637,3 +637,42 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px soli
   .incoming-plot-axis{font-size:.49rem;}
   .incoming-preview-banner{font-size:.58rem;}
 }
+
+
+/* Public verifiable forecast receipts and skill: descriptive, never fabricated confidence. */
+.audit-ledger {padding:.4rem 0 1.4rem;min-width:0;}
+.audit-ledger-heading {padding:.95rem;border:1px solid color-mix(in oklab,var(--cyan) 30%,var(--border));border-radius:.5rem;background:radial-gradient(ellipse at 0 10%,color-mix(in oklab,var(--cyan) 9%,var(--card)),var(--card));margin:.5rem 0 .9rem;}
+.audit-ledger-heading>span{font-family:var(--font-mono);font-size:.62rem;color:var(--cyan);letter-spacing:.07em;}
+.audit-ledger-heading h3 {font-family:var(--font-display);font-size:clamp(1.1rem,2vw,1.45rem);margin:.35rem 0;}
+.audit-ledger-heading p,.audit-ledger-explain{font-size:.74rem;line-height:1.6;color:var(--muted-foreground);margin:.3rem 0;}
+.audit-ledger-heading strong{color:var(--foreground);}
+.audit-ledger-kpis {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.5rem;margin:.75rem 0;}
+.audit-ledger-kpis>div {display:flex;flex-direction:column;gap:.3rem;border:1px solid var(--border);background:var(--card);border-radius:.4rem;padding:.7rem;min-width:0;}
+.audit-ledger-kpis span {font-family:var(--font-mono);font-size:.6rem;line-height:1.3;color:var(--muted-foreground);text-transform:uppercase;}
+.audit-ledger-kpis strong {font-family:var(--font-display);font-size:clamp(1.05rem,2vw,1.7rem);color:var(--cyan);font-variant-numeric:tabular-nums;}
+.audit-ledger-kpis small{font-size:.61rem;line-height:1.4;color:var(--muted-foreground);}
+.audit-ledger-empty {padding:.85rem;border:1px dashed var(--border);border-radius:.3rem;background:var(--card);font-size:.71rem;line-height:1.65;color:var(--muted-foreground);margin:.7rem 0;}
+.audit-ledger-empty strong {color:var(--warn);}
+.audit-ledger-empty a,.audit-ledger-method a {color:var(--cyan);text-decoration:underline;text-underline-offset:3px;}
+.audit-ledger-skill>h4,.audit-ledger>h4,.audit-ledger-method h4{font-family:var(--font-display);font-size:.88rem;margin:1.15rem 0 .35rem;}
+.audit-ledger-skill>p {font-size:.7rem;line-height:1.6;color:var(--muted-foreground);}
+.audit-ledger-chart{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem;margin:.75rem 0;}
+.audit-ledger-bar-row{background:var(--card);border:1px solid var(--border);border-radius:.4rem;padding:.8rem;min-width:0;}
+.audit-ledger-bar-head{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-bottom:.45rem;}
+.audit-ledger-bar-head b {font-family:var(--font-mono);font-size:.73rem;color:var(--cyan);}
+.audit-ledger-bar-head span{font-size:.6rem;color:var(--muted-foreground);}
+.audit-ledger-pair-bars{display:grid;gap:.35rem;}
+.audit-ledger-pair-bars>div{display:grid;grid-template-columns:4rem minmax(0,1fr) 2.4rem;gap:.3rem;align-items:center;font-family:var(--font-mono);font-size:.61rem;color:var(--muted-foreground);}
+.audit-ledger-pair-bars i{height:.58rem;min-width:0;display:block;background:var(--cyan);border-radius:2px;}
+.audit-ledger-pair-bars>div:nth-child(2) i{background:var(--sun);}
+.audit-ledger-pair-bars b{font-weight:500;color:var(--foreground);text-align:right;}
+.audit-ledger-bar-row>small {display:block;font-size:.6rem;color:var(--muted-foreground);line-height:1.5;margin-top:.5rem;}
+.audit-ledger-table-wrap {overflow-x:auto;border:1px solid var(--border);border-radius:.4rem;}
+.audit-ledger-table {width:100%;min-width:47rem;border-collapse:collapse;font-size:.7rem;font-variant-numeric:tabular-nums;}
+.audit-ledger-table th,.audit-ledger-table td{padding:.5rem;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;}
+.audit-ledger-table th{color:var(--muted-foreground);font-family:var(--font-mono);font-size:.58rem;background:var(--card);}
+.audit-ledger-table td:nth-child(4){color:var(--cyan);}
+.audit-ledger-method {margin-top:1rem;border:1px solid var(--border);border-left:3px solid var(--cyan);padding:.9rem;border-radius:.35rem;background:var(--card);}
+.audit-ledger-method p {font-size:.68rem;color:var(--muted-foreground);line-height:1.6;margin:.5rem 0;}
+.audit-ledger-method a {font-size:.66rem;}
+@media(max-width:780px){.audit-ledger-chart{grid-template-columns:1fr;}.audit-ledger-kpis{grid-template-columns:1fr 1fr;}.audit-ledger-kpis>div:last-child{grid-column:1/-1;}}
