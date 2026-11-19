@@ -9,7 +9,8 @@ import { loadPrefs, savePrefs, clearPrefs } from "@/lib/space/prefs";
 import { FIELD_DETAIL_CHOICES, parseFieldDetail, type FieldDetail } from "@/lib/space/visuals";
 import { validateTarget, type Target } from "@/lib/space/explorer";
 import { measuredWindCsv } from "@/lib/space/export";
-import { useHp30, useKp, useMag, useOvation, useWind, useXray, useKpForecast, URLS } from "@/lib/space/data";
+import { useHp30, useKp, useMag, useOvation, useWind, useXray, useKpForecast, useSwpcAlerts, URLS } from "@/lib/space/data";
+import { highestIssuedG, opsStatus } from "@/lib/space/ops";
 import { forecastPeak, gFromKp } from "@/lib/space/forecast";
 import { XRAY_URL } from "@/lib/space/xray";
 import {
@@ -80,7 +81,7 @@ function Spark({ data, sel, accessor, color, zero }: { data: L1Sample[]; sel: nu
 }
 
 export default function MissionApp() {
-  const mag = useMag(); const wind = useWind(); const kp = useKp(); const ov = useOvation(); const hp = useHp30(); const xr = useXray(); const kpForecast = useKpForecast();
+  const mag = useMag(); const wind = useWind(); const kp = useKp(); const ov = useOvation(); const hp = useHp30(); const xr = useXray(); const kpForecast = useKpForecast(); const swpcAlerts = useSwpcAlerts();
   const [now, setNow] = useState(() => Date.now());
   const [initQ] = useState(() => new URLSearchParams(typeof window === "undefined" ? "" : window.location.search));
   const [savedPrefs] = useState(() => loadPrefs());
@@ -268,6 +269,10 @@ export default function MissionApp() {
   const ovValid = live && st.ov === "live" && ov.data && ov.data.points.length > 0;
   const lastRefresh = Math.max(wind.dataUpdatedAt, mag.dataUpdatedAt, kp.dataUpdatedAt, ov.dataUpdatedAt);
   const peakKpAhead = forecastPeak(kpForecast.data ?? [], now);
+  const ops = swpcAlerts.data ? opsStatus(swpcAlerts.data, now) : null;
+  const issuedG = ops ? highestIssuedG(ops, now) : null;
+  const leadIssued = ops ? ([...ops.warnings].sort((x, y) => (y.scale ?? "").localeCompare(x.scale ?? ""))[0] ?? ops.watches[0] ?? null) : null;
+  const issuedCount = ops ? ops.warnings.length + ops.watches.length : 0;
   const overall: Freshness = st.wind === "disconnected" && st.mag === "disconnected" ? "disconnected" : st.wind === "live" && st.mag === "live" ? "live" : st.wind === "loading" ? "loading" : "stale";
   const feedLines: ProvenanceFeed[] = [
     { id: "wind", title: "Upstream plasma", producer: "NOAA SWPC RTSW", role: "measurement", url: URLS.wind, observedAt: wind.data?.at(-1)?.t ?? null, browserUpdatedAt: wind.dataUpdatedAt || null, thresholdMinutes: 10, count: wind.data?.length ?? 0, failed: wind.isError, note: "In-situ spacecraft speed & proton density near L1" },
@@ -388,6 +393,11 @@ export default function MissionApp() {
               time={sceneTime} aurora={ovValid ? ov.data!.points : null} preset={preset} presetNonce={nonce} core={core}
               cinematic={cinematic} reducedMotion={motionOff} lowPower={lowPower} fieldDetail={fieldDetail} baseline={baseline} onGlobePick={pickGlobe} selected={fieldTarget} />
           </Suspense>
+          {leadIssued && (
+            <button type="button" className="issued-pill" onClick={() => setForecastOpen(true)} aria-label={"NOAA " + leadIssued.kind + " in effect: " + leadIssued.title + ". Open forecast"}>
+              <b>NOAA {leadIssued.kind}{issuedG ? " · " + issuedG : ""}</b> {leadIssued.title.replace(/^Geomagnetic /, "")}{leadIssued.kind === "warning" && leadIssued.validTo ? " · to " + fmtTime(leadIssued.validTo) + " UTC" : ""}
+            </button>
+          )}
           <div className="scene-banner">
             {earthOnly ? <span>Earth-only geographic view · fixed NASA Blue Marble texture, not a current global satellite photo · click Earth to inspect field</span>
               : historicCore ? <span className="hist">HISTORIC CORE MODEL {coreYear?.toFixed(1)} · IGRF-14 SAA / poles only · present-day NOAA solar-wind geometry hidden (different time clocks)</span> : baseline
@@ -451,6 +461,12 @@ export default function MissionApp() {
             <div className="forecast-teaser-body">
               <strong>{peakKpAhead ? "Kp " + peakKpAhead.kp.toFixed(2) : kpForecast.isError ? "Unavailable" : "Loading forecast"}</strong>
               <span>{peakKpAhead ? (gFromKp(peakKpAhead.kp) ?? "Below G1") + " · projected peak" : "Future slots only; no invented values"}</span>
+            </div>
+            <div className={"teaser-issued" + (leadIssued ? " on" : "")} role="status">
+              {swpcAlerts.isError ? <span>NOAA alerts unavailable · not an all-clear</span>
+                : !ops ? <span>Checking NOAA-issued watches & warnings…</span>
+                : leadIssued ? <span><b>NOAA {leadIssued.kind.toUpperCase()}{issuedG ? " · " + issuedG : ""}</b> {leadIssued.title}{leadIssued.kind === "warning" && leadIssued.validTo ? " · until " + fmtTime(leadIssued.validTo) + " UTC" : ""}{issuedCount > 1 ? ` · +${issuedCount - 1} more` : ""}</span>
+                : <span>No NOAA watch or warning in effect{ops.recentAlerts.length ? ` · ${ops.recentAlerts.length} alert${ops.recentAlerts.length > 1 ? "s" : ""} in last 24 h` : ""}</span>}
             </div>
             <button type="button" className="btn forecast-teaser-cta" onClick={() => setForecastOpen(true)}>See predictions →</button>
           </section>

@@ -37,4 +37,12 @@ describe("public feed audit: deterministic payload parsing", () => {
     expect(summarizePayload("xray", [{ time_tag:"2026-11-17T21:59:00Z",energy:"0.1-0.8nm",flux:0,satellite:19 }]).newest).toBeNull();
     expect(summarizePayload("xray", [{ time_tag:"2026-11-17T21:59:00Z",energy:"0.1-0.8nm",flux:1.2e-6,satellite:19 }]).count).toBe(1);
   });
+  it("audits NOAA issued alerts by message issue time, tolerating quiet periods", () => {
+    const payload = [{ product_id: "K04W", issue_datetime: "2026-11-17 21:00:00.000", message: "Space Weather Message Code: WARK04\r\nSerial Number: 1\r\nIssue Time: 2026 Nov 17 2100 UTC\r\n\r\nWARNING: Geomagnetic K-index of 4 expected\nValid From: 2026 Nov 17 2100 UTC\nValid To: 2026 Nov 18 0300 UTC\r\n" }];
+    const a = evaluateJson(spec("alerts"), payload, t);
+    expect(a.status).toBe("current");
+    expect(a.acquiredAt).toBe(t - 60 * 60_000);
+    expect(a.note).toMatch(/quiet periods/);
+    expect(evaluateJson(spec("alerts"), { not: "an array" }, t).status).toBe("schema-error");
+  });
 });

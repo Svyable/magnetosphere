@@ -95,9 +95,13 @@ try {
     await page.getByRole("heading", { name: /Planetary Kp · next three days/i }).waitFor();
     await page.getByText(/NOAA daily geomagnetic storm probabilities/i).waitFor();
     await page.getByText(/0–30 minute aurora forecast/i).waitFor();
+    // Issued NOAA products and S/R scales are separate sections; a feed failure must render as "not an all-clear".
+    await page.getByRole("region", { name: /NOAA-issued alerts, watches and warnings/i }).waitFor();
+    await page.getByRole("region", { name: /solar radiation storm and radio blackout probabilities/i }).waitFor();
+    await page.locator(".ops-clear, .ops-list, .ops-unavailable").first().waitFor({ timeout: 20_000 });
     await page.getByRole("tab", { name: /Next 27 days/i }).click();
     await page.getByRole("heading", { name: /27-day outlook/i }).waitFor();
-    await page.getByRole("tab", { name: /Next 72h/i }).click();
+    await page.getByRole("tab", { name: /72h · NOAA warnings/i }).click();
     await closeOverlay(page);
   });
   await check("4D Time Atlas reconstructs 2012 core field and opens 500 Ma evidence", async () => {
