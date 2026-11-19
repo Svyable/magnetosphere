@@ -44,6 +44,7 @@ try {
   });
   await check("3D WebGL canvas is present and sized", async () => {
     await page.locator("#scene-wrap canvas").waitFor({ state:"attached", timeout: 25_000 });
+    await page.locator('#scene-wrap[data-globe-ready="true"]').waitFor({ timeout: 25_000 });
     const box = await page.locator("#scene-wrap canvas").boundingBox();
     if (!box || box.width < 400 || box.height < 300) throw new Error("3D canvas has invalid dimensions: " + JSON.stringify(box));
   });
@@ -127,6 +128,7 @@ try {
   await check("Mobile controls, canvas and provenance", async () => {
     await mobile.goto(url, { waitUntil: "domcontentloaded", timeout: 35_000 });
     await mobile.locator("#scene-wrap canvas").waitFor({ state:"attached", timeout: 25_000 });
+    await mobile.locator('#scene-wrap[data-globe-ready="true"]').waitFor({ timeout: 25_000 });
     await mobile.getByRole("button", { name: /Data passport/i }).click();
     await mobile.getByRole("dialog", { name: /Data passport/i }).waitFor();
     await closeOverlay(mobile);

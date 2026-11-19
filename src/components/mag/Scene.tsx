@@ -142,6 +142,22 @@ function Globe() {
   day.colorSpace = THREE.SRGBColorSpace;
   night.colorSpace = THREE.SRGBColorSpace;
   day.anisotropy = 4;
+  useEffect(() => {
+    // R3F Canvas creation is NOT evidence the NASA globe textures have loaded.
+    // Wait for two painted frames before dismissing the on-screen loading state.
+    const wrap = document.getElementById("scene-wrap");
+    if (!wrap) return;
+    let first = 0, second = 0;
+    first = requestAnimationFrame(() => {
+      second = requestAnimationFrame(() => {
+        wrap.setAttribute("data-globe-ready", "true");
+      });
+    });
+    return () => {
+      cancelAnimationFrame(first); cancelAnimationFrame(second);
+      wrap.removeAttribute("data-globe-ready");
+    };
+  }, [day, night]);
   const uniforms = useMemo(() => ({ dayMap: { value: day }, nightMap: { value: night }, sunDir: { value: new THREE.Vector3(1, 0, 0) } }), [day, night]);
   return (
     <mesh>
@@ -545,6 +561,12 @@ export default function Scene(props: SceneProps) {
         <World {...props} />
         </LabelCtx.Provider>
       </Canvas>
+      <div className="globe-loading" role="status" aria-live="polite">
+        <span className="globe-loading-orbit" aria-hidden="true" />
+        <strong>PREPARING EARTH</strong>
+        <small>Loading geographic textures and initializing the globe…</small>
+        <small className="globe-loading-hint">If this persists, check WebGL support and network access.</small>
+      </div>
       {props.layers.labels && <LabelOverlay items={items} store={store} />}
     </div>
   );
