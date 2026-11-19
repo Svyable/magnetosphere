@@ -120,7 +120,7 @@ export default function MissionApp() {
   const [osReduced, setOsReduced] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(() => savedPrefs.reducedMotion ?? false);
   const [lowPower, setLowPower] = useState(() => savedPrefs.lowPower ?? false);
-  const [fieldDetail, setFieldDetail] = useState<FieldDetail>(() => parseFieldDetail(initQ.get("detail")) ?? parseFieldDetail(savedPrefs.fieldDetail) ?? "balanced");
+  const [fieldDetail, setFieldDetail] = useState<FieldDetail>(() => parseFieldDetail(initQ.get("detail")) ?? parseFieldDetail(savedPrefs.fieldDetail) ?? "quiet");
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
@@ -316,7 +316,7 @@ export default function MissionApp() {
   const chooseView = (p: Preset) => { setPreset(p); setNonce((n) => n + 1); };
   const pickGlobe = (lat: number, lon: number) => { setFieldTarget({ lat, lon }); setFieldOpen(true); };
   const resetPrefs = () => {
-    clearPrefs(); setFocus(false); setEarthOnly(false); setReducedMotion(false); setFieldDetail("balanced");
+    clearPrefs(); setFocus(false); setEarthOnly(false); setReducedMotion(false); setFieldDetail("quiet");
     setLowPower(window.innerWidth < 768 || (navigator.hardwareConcurrency ?? 8) <= 4);
     flash("Display preferences reset");
   };
