@@ -129,6 +129,17 @@ try {
     await page.getByRole("tab", { name: /72h · NOAA warnings/i }).click();
     await closeOverlay(page);
   });
+  await check("Forecast receipts never claim accuracy without archived, later observed NOAA pairs", async () => {
+    await page.getByRole("button", { name: /Incoming & future/i }).click();
+    await page.getByRole("dialog", { name: /FORECAST \/ EARTH AHEAD/i }).waitFor();
+    await page.getByRole("tab", { name: /Forecast receipts/i }).click();
+    await page.getByRole("heading", { name: /Did the prediction actually come true/i }).waitFor();
+    await page.getByText(/Every NOAA Kp prediction is saved/i).waitFor();
+    await page.getByRole("heading", { name: /Public methodology/i }).waitFor();
+    // A newly created public archive may legitimately return 404 until collector runs;
+    // the UI must not manufacture a historical score while that happens.
+    await closeOverlay(page);
+  });
   await check("4D Time Atlas reconstructs 2012 core field and opens 500 Ma evidence", async () => {
     await page.getByRole("button", { name: /4D Time Atlas/i }).click();
     await page.getByRole("dialog", { name: /Temporal Observatory/i }).waitFor({ timeout: 15_000 });
