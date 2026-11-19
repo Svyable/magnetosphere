@@ -26,6 +26,7 @@ No NOAA/NASA API key is required for the public data accessed by the browser.
 
 ## Exploring
 
+- **New quiet first impression:** only 10 *possible* illustrative field paths (the actual drawn count can be lower due to geometry clipping). Switch between **Quiet** (default), **Balanced** (28 candidates), and **Detailed** (original 80 candidates) under *Field-line clarity* on the left. `V` cycles modes. This adjusts visual density and opacity, not magnetic field resolution, and persists on this browser and in share links (`detail=quiet`).
 - Drag or pinch to orbit/zoom. `1` Global, `2` Earth, `3` Tail, `4` SAA, `5` Arctic.
 - `E` toggles **Earth-only mode** (restores your original selected layers when off); `F` toggles an uncluttered focus mode.
 - `G` opens the **Eyes on Earth** gallery: NASA DSCOVR EPIC natural-color actual photographs and NOAA GOES-East/West GeoColor full-disk composites, all labeled for their distinct source, cadence, and age. NASA's EPIC release can be days old.
@@ -78,7 +79,7 @@ Each run writes a UTC, source-attributed **feed-health.json** and a Markdown rep
 
 ## Public hosting via GitHub Pages
 
-The [Pages workflow](.github/workflows/publish-pages.yml) has a special `GITHUB_PAGES=1` build mode, with the correct `/magnetosphere/` base path and static TanStack Start prerendering. Normal Lovable and local builds retain their original root path and runtime. Once [GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site) is enabled for this repository and the workflow completes successfully, the intended project address is `https://svyable.github.io/magnetosphere/`. **Do not advertise that address as live until the deployment action confirms it.**
+The [Pages workflow](.github/workflows/publish-pages.yml) has a special `GITHUB_PAGES=1` build mode, with the correct `/magnetosphere/` base path and static TanStack Start prerendering. Normal Lovable and local builds retain their original root path and runtime. GitHub Pages was successfully published by [Actions run 44442668882](https://github.com/Svyable/magnetosphere/actions/runs/44442668882). The deployed project address is **https://svyable.github.io/magnetosphere/**. The GitHub Actions workflow (rather than a manually updated `docs/` folder) produces its static artifact and publishes it on successful `main` builds. Check [deployment history](https://github.com/Svyable/magnetosphere/actions/workflows/publish-pages.yml) for newer publish attempts.
 
 To test static output on an installed development machine: `GITHUB_PAGES=1 bun run build`, then inspect `.output/public/index.html` and assets. The workflow also publishes a public `build-info.json` containing the exact Git commit and verifies, *after deployment*, that the Pages CDN serves that commit and the two Earth textures. This guards against the wrong Pages source (for example, a stale branch/`docs` folder) serving an older observatory despite a green build. The deployed site requests public NOAA/NASA feeds directly from browsers; browser CORS and WebGL support still need independent verification. The build route has no private server functions.
 

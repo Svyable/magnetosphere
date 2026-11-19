@@ -5,6 +5,7 @@ import * as THREE from "three";
 import type { OrbitControls as OrbitImpl } from "three-stdlib";
 import { shueRadius, sunGeometry } from "@/lib/space/model";
 import type { FieldGrid, LatLon, PoleMotion } from "@/lib/space/igrf";
+import { FIELD_DETAIL, type FieldDetail } from "@/lib/space/visuals";
 
 export interface CoreField { grid: FieldGrid; north: PoleMotion; south: PoleMotion; geomag: LatLon; year: number }
 
@@ -23,6 +24,8 @@ export interface SceneProps {
   cinematic: boolean;
   reducedMotion: boolean;
   lowPower: boolean;
+  /** Drawn paths only; not the resolution or quality of a magnetic model. */
+  fieldDetail: FieldDetail;
   baseline: boolean;
   core: CoreField | null;
   /** Earth-only picking: geographic latitude/longitude in degrees. */
@@ -191,14 +194,14 @@ function ShueSurface({ r0, alpha, color, strength }: { r0: number; alpha: number
   return <mesh geometry={geom} material={mat} rotation={[0, 0, -Math.PI / 2]} />;
 }
 
-function FieldLines({ r0 }: { r0: number }) {
+function FieldLines({ r0, detail }: { r0: number; detail: FieldDetail }) {
+  const settings = FIELD_DETAIL[detail];
   const lines = useMemo(() => {
     const out: { pts: THREE.Vector3[]; open: boolean }[] = [];
     const kDay = r0 / 10.5;
-    const Ls = [2, 3, 4.2, 5.6, 7.2, 8.8];
-    for (let p = 0; p < 8; p++) {
-      const phi = (p / 8) * Math.PI * 2;
-      for (const L of Ls) {
+    for (let p = 0; p < settings.azimuthSamples; p++) {
+      const phi = (p / settings.azimuthSamples) * Math.PI * 2;
+      for (const L of settings.shells) {
         const pts: THREE.Vector3[] = [];
         const lmax = Math.acos(Math.sqrt(1 / L));
         let ok = true;
@@ -218,8 +221,8 @@ function FieldLines({ r0 }: { r0: number }) {
     }
     // Open lobe lines (schematic): polar cap -> stretched tail
     for (const s of [1, -1]) {
-      for (const lat of [70, 74, 78, 83]) {
-        for (const zz of [-6, -2, 2, 6]) {
+      for (const lat of settings.openLatitudes) {
+        for (const zz of settings.openOffsets) {
           const start = new THREE.Vector3(-Math.cos(lat * D2R) * 0.9, s * Math.sin(lat * D2R), zz * 0.04);
           const c = new THREE.CatmullRomCurve3([
             start,
@@ -232,11 +235,11 @@ function FieldLines({ r0 }: { r0: number }) {
       }
     }
     return out;
-  }, [r0]);
+  }, [r0, settings]);
   return (
     <group>
       {lines.map((l, i) => (
-        <Line key={i} points={l.pts} color={l.open ? "#3fb8c9" : "#7ffbe6"} lineWidth={l.open ? 0.8 : 1.1} transparent opacity={l.open ? 0.35 : 0.62} />
+        <Line key={i} points={l.pts} color={l.open ? "#3fb8c9" : "#7ffbe6"} lineWidth={l.open ? settings.openWidth : settings.closedWidth} transparent opacity={l.open ? settings.openOpacity : settings.closedOpacity} />
       ))}
     </group>
   );
@@ -475,7 +478,7 @@ function World(p: SceneProps) {
       </group>
       <Atmosphere />
       <group rotation={[0, 0, frame.tilt]}>
-        {L.fl && <FieldLines r0={p.r0} />}
+        {L.fl && <FieldLines r0={p.r0} detail={p.fieldDetail} />}
         {L.tail && <PlasmaSheet />}
       </group>
       {L.mp && <ShueSurface r0={p.r0} alpha={p.alpha} color={BLUE} strength={p.baseline ? 0.5 : 0.85} />}

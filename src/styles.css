@@ -394,3 +394,14 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px soli
 
 /* Geological slider moves from older (500 Ma, left) to younger (0 Ma, right), matching the evidence ribbon. */
 .time-geologic input[type="range"] { direction: rtl; }
+
+
+/* Curated scientific geometry: let visitors inspect dense illustrative paths by choice. */
+.field-detail-picker { margin: .2rem 0 .3rem; border-radius: 6px; background: color-mix(in oklab,var(--card) 60%,transparent); }
+.field-detail-picker button { flex: 1 1 30%; padding: .48rem .2rem; font-size: .7rem; letter-spacing: .04em; }
+.field-detail-picker button[aria-pressed="true"] { box-shadow: inset 0 0 0 1px var(--cyan); background: color-mix(in oklab,var(--cyan) 15%,var(--background)); }
+.detail-hint { margin: .25rem 0 .8rem; font: .64rem/1.5 var(--font-mono); color: var(--muted-foreground); }
+@media(max-width: 860px) {
+  .field-detail-picker { max-width: 28rem; }
+  .field-detail-picker button { min-height: 2.25rem; }
+}
