@@ -103,3 +103,21 @@ External datasets to integrate with appropriate rights and error models in futur
 - **PINT v8.2.0**, ~50 ka to 4.2 Ga: 4,854 *local rock* paleointensity site records spanning heterogeneous ages, with reliability scores and serious sampling/dating biases. It is **not** a smooth global field series. [2026 study](https://doi.org/10.1093/gji/ggaf490) (link to source; the dataset is not redistributed in our app).
 
 **Important scientific inference:** From bundled IGRF-14 coefficients, the degree-one dipole declined about **7.6% over 1900–2025** and about **0.61% from 2012–2025**. There is no special abrupt 2012 break in this global moment trend. This does not deny regional anomalies or past changes in magnetic-pole drift speed. The measured/derived/reference meaning of each layer and time axis is shown on screen.
+
+## Earth Ahead — official future forecasts
+
+**The main development priority is real-time measurements and near-future predictions; the historical atlas is retained but not currently being expanded.** The header button **Future forecast**, keyboard `P`, or the **NEXT 72 HOURS** panel in the right sidebar opens the new forecast cockpit.
+
+The app fetches NOAA SWPC's independently published products directly into the browser. It does **not** generate hypothetical tomorrow's Bz, magnetic-pole movement or 3D magnetosphere:
+
+| Lead horizon | What visitors can see | Source | Evidence type |
+| --- | --- | --- | --- |
+| ~30–90 minutes | Measured L1 solar wind plasma, density, IMF Bz and simple estimated travel to Earth | [NOAA real-time L1](https://www.swpc.noaa.gov/products/real-time-solar-wind) | Actual upstream measurements + uncertain propagation estimate |
+| ~30 minutes | OVATION auroral-oval probability and timestamp | [NOAA 30-minute aurora](https://www.swpc.noaa.gov/products/aurora-30-minute-forecast) | Physical/statistical short-term **forecast**, not a real sky camera |
+| 3-hour bins, ~3 days | NOAA published Kp values, **explicitly separated into observed / estimated / predicted** | [NOAA Kp forecast JSON](https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json) | Official forecaster product; no issue time in this JSON, only browser fetch time |
+| 3 days | NOAA published **daily geomagnetic storm probabilities** (active, minor, moderate, strong–extreme) with **bulletin issue UTC** | [NOAA 3-day geomag bulletin](https://services.swpc.noaa.gov/text/3-day-geomag-forecast.txt) | Official issued probabilities, not probabilities reverse-engineered from Kp |
+| 27 days | Daily highest Kp, Ap and F10.7 outlook with issue timestamp; deliberately separate longer-range tab | [NOAA 27-day outlook](https://services.swpc.noaa.gov/text/27-day-outlook.txt) | Lower-resolution/less reliable outlook, **not** a daily 3D magnetic-field forecast |
+
+If a product fails to load or expires, it is visibly unavailable or marked outdated. There are **no invented forecast values** or assumed confidence intervals. The "G1–G5" indicator is derived from NOAA's **predicted Kp** thresholds and is explicitly *not* an issued official watch or warning. Open [NOAA SWPC](https://www.swpc.noaa.gov/) for safety-critical decisions.
+
+All plots show UTC and source provenance. The 4D historical atlas continues to work, but predicted geomagnetic activity is **not projected onto the 3D Shue magnetopause geometry** without the required forecast wind/IMF inputs. See `src/lib/space/forecast.ts`, `ForecastCenter.tsx` and corresponding unit/browser tests.
