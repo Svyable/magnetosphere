@@ -41,7 +41,7 @@ export function parseKpForecast(raw: unknown): KpForecastSlot[] {
     const obj = asObj(entry);
     if (!obj) continue;
     const t = isoTime(obj["time_tag"]);
-    const kp = typeof obj["kp"] === "number" ? obj["kp"] : Number(obj["kp"]);
+    const kp = (typeof obj["kp"] === "number" || (typeof obj["kp"] === "string" && obj["kp"].trim() !== "")) ? Number(obj["kp"]) : NaN;
     const status = obj["observed"];
     if (t === null || !Number.isFinite(kp) || kp < 0 || kp > 9 || !["observed", "estimated", "predicted"].includes(String(status))) continue;
     byTime.set(t, {
