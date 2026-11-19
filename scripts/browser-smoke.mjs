@@ -45,7 +45,7 @@ try {
     const quiet = page.getByRole("button", { name: "Quiet", exact: true });
     const research = page.getByRole("button", { name: "Detailed", exact: true });
     const balanced = page.getByRole("button", { name: "Balanced", exact: true });
-    if (await balanced.getAttribute("aria-pressed") !== "true") throw new Error("Default field-line detail is not balanced");
+    if (await quiet.getAttribute("aria-pressed") !== "true") throw new Error("Default field-line detail is not quiet");
     await quiet.click();
     if (await quiet.getAttribute("aria-pressed") !== "true") throw new Error("Quiet view did not activate");
     if (new URL(page.url()).searchParams.get("detail") !== "quiet") throw new Error("Share link does not encode chosen clarity");
