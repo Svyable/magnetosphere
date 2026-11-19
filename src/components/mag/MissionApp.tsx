@@ -12,7 +12,7 @@ import { measuredWindCsv } from "@/lib/space/export";
 import { useHp30, useKp, useMag, useOvation, useWind, useXray, useKpForecast, useSwpcAlerts, URLS } from "@/lib/space/data";
 import { highestIssuedG, opsStatus } from "@/lib/space/ops";
 import { forecastPeak, gFromKp } from "@/lib/space/forecast";
-import { estimatedArrival } from "@/lib/space/incoming";
+import { estimatedArrival, incomingOutlook } from "@/lib/space/incoming";
 import { XRAY_URL } from "@/lib/space/xray";
 import {
   bzNear, dynamicPressure, freshness, joinL1, kpLabel, laggedSample, propagationSeconds, shue,
@@ -193,7 +193,6 @@ export default function MissionApp() {
       else if (k === "d") setPassportOpen(true);
       else if (k === "t") setTimeOpen(true);
       else if (k === "p") setForecastOpen(true);
-      else if (k === "backspace" && incomingPreview) setIncomingPreview(null);
       else if (k === "v") setFieldDetail((d) => FIELD_DETAIL_CHOICES[(FIELD_DETAIL_CHOICES.indexOf(d) + 1) % FIELD_DETAIL_CHOICES.length]!);
     };
     window.addEventListener("keydown", onKey);
@@ -217,6 +216,7 @@ export default function MissionApp() {
 
   const all = useMemo(() => joinL1(wind.data ?? [], mag.data ?? []), [wind.data, mag.data]);
   const latestL1 = all.at(-1) ?? null;
+  const inbound = useMemo(() => incomingOutlook(all, now), [all,now]);
   const timeline = useMemo(() => {
     const ref = Math.max(now, latestL1?.t ?? 0);
     return all.filter((s) => s.t >= ref - 4 * 3600_000);
@@ -476,6 +476,14 @@ export default function MissionApp() {
 
         <aside className="panel panel-right" aria-label="Live metrics">
           <section className="forecast-teaser" aria-label="Published NOAA future predictions">
+            <button type="button" className="incoming-teaser" onClick={() => setForecastOpen(true)} aria-label="Open incoming L1 observations and nominal Earth arrival scenarios">
+              <span>↘ UPSTREAM TO EARTH</span>
+              <strong>{inbound.freshness==="current" && inbound.pulses[0] ? "~"+Math.round(inbound.pulses[0].leadMinutes)+" min" : inbound.freshness==="stale"?"Stale source":"Awaiting L1"}</strong>
+              <small>{inbound.freshness==="current" && inbound.pulses[0]
+                ? "Measured Bz "+(inbound.pulses[0].sample.bz===null?"unavailable":inbound.pulses[0].sample.bz.toFixed(1)+" nT")+" · nominal arrival"
+                : "No verified current inbound sample"}</small>
+              <span className="incoming-teaser-cta">Inspect incoming stream ↗</span>
+            </button>
             <div className="forecast-teaser-heading"><span>◷ NEXT 72 HOURS</span><span className="prov">NOAA PREDICTION</span></div>
             <div className="forecast-teaser-body">
               <strong>{peakKpAhead ? "Kp " + peakKpAhead.kp.toFixed(2) : kpForecast.isError ? "Unavailable" : "Loading forecast"}</strong>
@@ -560,7 +568,7 @@ export default function MissionApp() {
       {toast && <div className="toast" role="status">{toast}</div>}
       {galleryOpen && <Gallery onClose={() => setGalleryOpen(false)} now={now} />}
       {timeOpen && <Suspense fallback={<div className="loading" role="status">Loading temporal evidence…</div>}><TimeAtlas onClose={() => setTimeOpen(false)} coreYear={coreYear} onYear={setCoreYear}/></Suspense>}
-      {forecastOpen && <Suspense fallback={<div className="loading" role="status">Loading NOAA predictions…</div>}><ForecastCenter now={now} data={kpForecast.data} fetchedAt={kpForecast.dataUpdatedAt} loading={kpForecast.isPending} error={kpForecast.isError} ovation={ov.data?.observed != null && ov.data.forecast != null ? {observed:ov.data.observed, forecast:ov.data.forecast} : null} onClose={() => setForecastOpen(false)} onRefresh={() => { void kpForecast.refetch(); }} incomingSamples={all} previewedAt={activePreview?.t ?? null} onPreview={previewIncoming}/></Suspense>}
+      {forecastOpen && <Suspense fallback={<div className="loading" role="status">Loading NOAA predictions…</div>}><ForecastCenter now={now} data={kpForecast.data} fetchedAt={kpForecast.dataUpdatedAt} loading={kpForecast.isPending} error={kpForecast.isError} ovation={ov.data?.observed != null && ov.data.forecast != null ? {observed:ov.data.observed, forecast:ov.data.forecast} : null} onClose={() => setForecastOpen(false)} onRefresh={() => { void kpForecast.refetch(); void wind.refetch(); void mag.refetch(); }} incomingSamples={all} previewedAt={activePreview?.t ?? null} onPreview={previewIncoming}/></Suspense>}
       {passportOpen && <DataPassport now={now} feeds={feedLines} timeline={timeline} sample={sample} estimatedArrival={arrival} modelR0={model.r0} missingBz={bz === null} onClose={() => setPassportOpen(false)} onRefresh={requestRefresh} />}
       {fieldOpen && <Overlay title="Inspect Earth's magnetic field" onClose={() => setFieldOpen(false)} wide><FieldExplorer core={core} target={fieldTarget} onTarget={setFieldTarget} /></Overlay>}
       {tourOpen && <Guide onClose={() => setTourOpen(false)} onView={chooseView} onField={() => { setTourOpen(false); setFieldOpen(true); }} onPhotos={() => { setTourOpen(false); setGalleryOpen(true); }} />}
