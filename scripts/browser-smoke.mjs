@@ -33,6 +33,14 @@ try {
     await page.locator(".topbar").waitFor({ timeout: 20_000 });
     const h = await page.locator(".brand").innerText();
     if (!h.includes("MAGNETOSPHERE")) throw new Error("Missing observatory brand");
+    const views = page.getByRole("group", { name: "Camera preset" });
+    const earth = views.getByRole("button", { name: "earth", exact: true });
+    const global = views.getByRole("button", { name: "global", exact: true });
+    if (await earth.getAttribute("aria-pressed") !== "true") throw new Error("New visitors should see the Earth close-up camera");
+    await global.click();
+    if (await global.getAttribute("aria-pressed") !== "true") throw new Error("Global scale view unavailable");
+    await earth.click();
+    if (await earth.getAttribute("aria-pressed") !== "true") throw new Error("Earth camera did not restore");
   });
   await check("3D WebGL canvas is present and sized", async () => {
     await page.locator("#scene-wrap canvas").waitFor({ state:"attached", timeout: 25_000 });
