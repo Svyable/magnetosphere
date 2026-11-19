@@ -532,7 +532,7 @@ export default function Scene(props: SceneProps) {
     <div ref={wrapRef} className="absolute inset-0" id="scene-wrap">
       <Canvas
         dpr={props.lowPower ? [1, 1.25] : [1, 2]}
-        camera={{ fov: 42, near: 0.05, far: 2000, position: PRESETS.global.pos }}
+        camera={{ fov: 42, near: 0.05, far: 2000, position: (props.preset === "earth" ? PRESETS.earth : PRESETS.global).pos }}
         gl={{ antialias: true, preserveDrawingBuffer: true, powerPreference: "high-performance" }}
         onCreated={({ gl }) => {
           gl.setClearColor("#030814");

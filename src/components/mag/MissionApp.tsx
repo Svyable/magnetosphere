@@ -89,7 +89,7 @@ export default function MissionApp() {
   });
   const [preset, setPreset] = useState<Preset>(() => {
     const v = initQ.get("view");
-    return v === "earth" || v === "tail" || v === "saa" || v === "arctic" ? v : "global";
+    return v === "global" || v === "earth" || v === "tail" || v === "saa" || v === "arctic" ? v : "earth";
   });
   const [nonce, setNonce] = useState(0);
   const [cinematic, setCinematic] = useState(() => initQ.get("cine") === "1");
@@ -397,6 +397,13 @@ export default function MissionApp() {
               <button key={p} aria-pressed={preset === p} onClick={() => { setPreset(p); setNonce((n) => n + 1); }}>{p}</button>
             ))}
           </div>
+          <p className="detail-hint" role="note">
+            {preset === "global"
+              ? "Global keeps relative sizes: Earth is tiny compared with the ~10 Earth-radius dayside magnetopause. Choose Earth for a close-up."
+              : preset === "earth"
+                ? "Close-up view of Earth's field and aurora. Choose Global to see the full empirical magnetopause at scale."
+                : "Drag to orbit · scroll to zoom · Reset camera restores this view."}
+          </p>
           <div className="row">
             <button className="btn" onClick={() => setNonce((n) => n + 1)}>Reset camera</button>
             <button className={"btn" + (earthOnly ? " active" : "")} role="switch" aria-checked={earthOnly} onClick={() => { setEarthOnly((v) => !v); chooseView("earth"); }}>{earthOnly ? "Restore science layers" : "Earth only"}</button>

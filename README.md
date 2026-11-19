@@ -27,6 +27,7 @@ No NOAA/NASA API key is required for the public data accessed by the browser.
 ## Exploring
 
 - **New quiet first impression:** only 10 *possible* illustrative field paths (the actual drawn count can be lower due to geometry clipping). Switch between **Quiet** (default), **Balanced** (28 candidates), and **Detailed** (original 80 candidates) under *Field-line clarity* on the left. `V` cycles modes. This adjusts visual density and opacity, not magnetic field resolution, and persists on this browser and in share links (`detail=quiet`).
+- **New visitors land on a close-up of Earth**, with the magnetic/auroral overlays available in context. `1` Global reveals the physically much larger magnetopause (Earth appears appropriately small relative to a roughly 10-Earth-radius boundary); `2` Earth restores the close-up. Explicit share links such as `?view=global` retain that camera choice.
 - Drag or pinch to orbit/zoom. `1` Global, `2` Earth, `3` Tail, `4` SAA, `5` Arctic.
 - `E` toggles **Earth-only mode** (restores your original selected layers when off); `F` toggles an uncluttered focus mode.
 - `G` opens the **Eyes on Earth** gallery: NASA DSCOVR EPIC natural-color actual photographs and NOAA GOES-East/West GeoColor full-disk composites, all labeled for their distinct source, cadence, and age. NASA's EPIC release can be days old.
