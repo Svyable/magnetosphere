@@ -34,6 +34,14 @@ describe("incoming L1 advection / empirical Shue projection",()=>{
     expect(o.freshness).toBe("stale");
     expect(o.allPulses).toHaveLength(1);
   });
+  it("requires a separately current paired magnetometer, not only fresh plasma",()=>{
+    const o=incomingOutlook([mk(15,-7,250),mk(2,null,250)],now);
+    expect(o.freshness).toBe("current");
+    expect(o.magneticFreshness).toBe("stale");
+    expect(o.latestMagObservationAt).toBe(now-15*60000);
+    expect(o.allPulses.some(p=>p.shueNoseRE!==null)).toBe(true);
+    // UI must nevertheless refuse a new preview when matched Bz source is stale.
+  });
   it("stays unavailable without valid measured data; never infers tomorrow from Kp",()=>{
     const o=incomingOutlook([mk(5,-5,99),mk(1,-5,400,0)],now);
     expect(o.freshness).toBe("missing");
