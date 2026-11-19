@@ -391,3 +391,6 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px soli
   .time-tabs .btn{font-size:.67rem;}
 }
 @media(prefers-reduced-motion:reduce){.deep-span{transition:none;}}
+
+/* Geological slider moves from older (500 Ma, left) to younger (0 Ma, right), matching the evidence ribbon. */
+.time-geologic input[type="range"] { direction: rtl; }
