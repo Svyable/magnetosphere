@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "updatedAt": 1795067714129,
+  "updatedAt": 1795103360820,
   "earliestCaptureAt": 1795067714129,
-  "latestCaptureAt": 1795067714129,
-  "captures": 1,
-  "archivedPredictions": 17,
-  "sourceObservedRecords": 57,
+  "latestCaptureAt": 1795103360820,
+  "captures": 2,
+  "archivedPredictions": 34,
+  "sourceObservedRecords": 61,
   "verifiedTargetPeriods": 0,
   "rows": [
     {
