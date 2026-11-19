@@ -65,3 +65,10 @@ This repository is the dedicated GitHub source workspace. Its code was migrated 
 - Source observations may be revised. Keep revisions, Git history and source/provenance links; describe results as measured against NOAA's later *source-labelled* observed Kp, not independent certification.
 - The collector stores only public NOAA products on the evidence-only `forecast-ledger` branch. Permission `contents:write` is reserved for this trusted scheduled workflow. Do not give an untrusted PR or external payload a GitHub write token.
 - The UI must handle an empty/unavailable archive with zero score claims and show visible collection age and source distinctions. Browser smoke and unit tests protect that behavior.
+
+## Forecast archive and CME ensemble
+- `.github/workflows/forecast-archive.yml` + `scripts/archive-forecasts.ts` write hourly to the `forecast-archive` branch only (issued NOAA text bulletins, Enlil summaries, alerts history, CCMC CME Scoreboard). Kp forecasts/observations belong to the `forecast-ledger` collector; do not duplicate them. Never write archive data to `main`, never edit archived snapshots, and never back-fill a missing product.
+- Archive file names use the product's own issue time when it has one; otherwise the archive fetch time, labelled as such.
+- CCMC CME Scoreboard predictions are community submissions. Show the spread between independent methods with their own error bars; keep CCMC aggregate entries separate; never present one member or the median as an official arrival time.
+- Verification statistics may only be computed from archived issue-time snapshots against observed values, never from the current rolling product.
+

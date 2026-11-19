@@ -1,0 +1,8 @@
+[
+ {"cmeID":"2026-01-01T19:36:00-CME-001","observedTime":"2026-01-01T19:36Z","noArrivalObserved":false,"arrivalTime":"2026-01-04T20:41Z","maxKP":null,"dstMin":null,"dstMinTime":null,"cmeNote":"Values transcribed verbatim from CCMC CME Scoreboard prediction pages 5143, 5145, 5148.",
+  "predictions":[
+   {"predictedMethodName":"WSA-ENLIL + Cone (Met Office)","submissionTime":"2026-01-02T17:18Z","predictedArrivalTime":"2026-01-04T12:00Z","uncertaintyMinusInHrs":6.0,"uncertaintyPlusInHrs":6.0,"confidenceInPercentage":50.0,"predictedMaxKpLowerRange":4.0,"predictedMaxKpUpperRange":6.0,"predictedDstMin":null,"predictedDstMinTime":null,"differenceInHrs":"8.68","leadTimeInHrs":"51.38","predictionNote":""},
+   {"predictedMethodName":"CMEFM v.0.1","submissionTime":"2026-01-02T01:36Z","predictedArrivalTime":"2026-01-04T21:23Z","uncertaintyMinusInHrs":13.68,"uncertaintyPlusInHrs":10.93,"confidenceInPercentage":50.0,"predictedMaxKpLowerRange":null,"predictedMaxKpUpperRange":null,"predictedDstMin":null,"predictedDstMinTime":null,"differenceInHrs":"-0.70","leadTimeInHrs":"67.08","predictionNote":""},
+   {"predictedMethodName":"Average of all Methods","submissionTime":"2026-01-02T18:25Z","predictedArrivalTime":"2026-01-04T15:20Z","uncertaintyMinusInHrs":null,"uncertaintyPlusInHrs":null,"confidenceInPercentage":55.5,"predictedMaxKpLowerRange":4.0,"predictedMaxKpUpperRange":6.0,"predictedDstMin":null,"predictedDstMinTime":null,"differenceInHrs":"5.35","leadTimeInHrs":"50.27","predictionNote":"This is the auto generated average of all submitted predictions for this CME"}
+  ]}
+]
