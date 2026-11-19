@@ -37,3 +37,8 @@ This repository is the dedicated GitHub source workspace. Its code was migrated 
 - Palaeo event ribbon ages are approximate references from stratigraphy and volcanic rocks, with uneven data density. A polarity reversal rate is NOT intensity. No synthetic value for unknown million-year windows.
 - Rendering historic core field must hide modern solar-wind geometry unless specifically annotated as a cross-era comparison; do not mix core epoch with real-time L1 as though an accurate past magnetosphere.
 - Link source/licensing and uncertainty, especially for proposed future PINT/gufm1/CALS10k datasets. Never download and redistribute a protected geological collection without checking its data-use rights.
+
+## Scene legibility / science distinction
+- The visitor-facing default is **Quiet** (maximum 10 candidate illustrative field lines) so Earth remains visible beneath the overlays. **Balanced** / **Detailed** are explicit user choices (maximum 28 / 80 candidate paths), driven by `src/lib/space/visuals.ts` with tests.
+- Treat path count and opacity purely as presentation complexity, NEVER geomagnetic model precision or real sampled field lines. Preserve original high-detail geometry as an opt-in research mode.
+- Honor the `detail` share URL and browser saved preference. Keep screenshots and browser CI checking the default clarity mode.
