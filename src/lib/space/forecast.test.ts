@@ -20,6 +20,9 @@ describe("NOAA official geomagnetic future predictions",()=>{
     expect(future.map(v=>v.status)).toEqual(["estimated","predicted","predicted"]);
     expect(forecastPeak(p,now)?.kp).toBe(5.67);
     expect(gFromKp(5.67)).toBe("G1");
+    expect(gFromKp(6.12)).toBe("G2");
+    expect(gFromKp(7)).toBe("G3");
+    expect(gFromKp(8)).toBe("G4");
     expect(gFromKp(4.99)).toBeNull();
     expect(gFromKp(9)).toBe("G5");
     expect(gFromKp(NaN)).toBeNull();
