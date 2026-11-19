@@ -9,7 +9,8 @@ import { loadPrefs, savePrefs, clearPrefs } from "@/lib/space/prefs";
 import { FIELD_DETAIL_CHOICES, parseFieldDetail, type FieldDetail } from "@/lib/space/visuals";
 import { validateTarget, type Target } from "@/lib/space/explorer";
 import { measuredWindCsv } from "@/lib/space/export";
-import { useHp30, useKp, useMag, useOvation, useWind, useXray, useKpForecast, useSwpcAlerts, URLS } from "@/lib/space/data";
+import { useHp30, useKp, useMag, useOvation, useWind, useXray, useKpForecast, useSwpcAlerts, useEnlil, URLS } from "@/lib/space/data";
+import { outlook as enlilOutlook } from "@/lib/space/enlil";
 import { highestIssuedG, opsStatus } from "@/lib/space/ops";
 import { forecastPeak, gFromKp } from "@/lib/space/forecast";
 import { estimatedArrival, incomingOutlook } from "@/lib/space/incoming";
@@ -82,7 +83,7 @@ function Spark({ data, sel, accessor, color, zero }: { data: L1Sample[]; sel: nu
 }
 
 export default function MissionApp() {
-  const mag = useMag(); const wind = useWind(); const kp = useKp(); const ov = useOvation(); const hp = useHp30(); const xr = useXray(); const kpForecast = useKpForecast(); const swpcAlerts = useSwpcAlerts();
+  const mag = useMag(); const wind = useWind(); const kp = useKp(); const ov = useOvation(); const hp = useHp30(); const xr = useXray(); const kpForecast = useKpForecast(); const swpcAlerts = useSwpcAlerts(); const enlil = useEnlil();
   const [now, setNow] = useState(() => Date.now());
   const [initQ] = useState(() => new URLSearchParams(typeof window === "undefined" ? "" : window.location.search));
   const [savedPrefs] = useState(() => loadPrefs());
@@ -284,6 +285,7 @@ export default function MissionApp() {
   const issuedG = ops ? highestIssuedG(ops, now) : null;
   const leadIssued = ops ? ([...ops.warnings].sort((x, y) => (y.scale ?? "").localeCompare(x.scale ?? ""))[0] ?? ops.watches[0] ?? null) : null;
   const issuedCount = ops ? ops.warnings.length + ops.watches.length : 0;
+  const modelCme = enlil.data ? (() => { const o = enlilOutlook(enlil.data.points, now); return o.activeCme ? { now: true, w: o.activeCme } : o.nextCme ? { now: false, w: o.nextCme } : null; })() : null;
   const overall: Freshness = st.wind === "disconnected" && st.mag === "disconnected" ? "disconnected" : st.wind === "live" && st.mag === "live" ? "live" : st.wind === "loading" ? "loading" : "stale";
   const feedLines: ProvenanceFeed[] = [
     { id: "wind", title: "Upstream plasma", producer: "NOAA SWPC RTSW", role: "measurement", url: URLS.wind, observedAt: wind.data?.at(-1)?.t ?? null, browserUpdatedAt: wind.dataUpdatedAt || null, thresholdMinutes: 10, count: wind.data?.length ?? 0, failed: wind.isError, note: "In-situ spacecraft speed & proton density near L1" },
@@ -495,6 +497,10 @@ export default function MissionApp() {
                 : leadIssued ? <span><b>NOAA {leadIssued.kind.toUpperCase()}{issuedG ? " · " + issuedG : ""}</b> {leadIssued.title}{leadIssued.kind === "warning" && leadIssued.validTo ? " · until " + fmtTime(leadIssued.validTo) + " UTC" : ""}{issuedCount > 1 ? ` · +${issuedCount - 1} more` : ""}</span>
                 : <span>No NOAA watch or warning in effect{ops.recentAlerts.length ? ` · ${ops.recentAlerts.length} alert${ops.recentAlerts.length > 1 ? "s" : ""} in last 24 h` : ""}</span>}
             </div>
+            {enlil.data && <div className={"teaser-model" + (modelCme ? " on" : "")}>
+              {modelCme ? <span><b>MODEL CME</b> {modelCme.now ? "material at Earth now in WSA–Enlil" : "material reaches Earth ~" + new Date(modelCme.w.start).toLocaleString("en-US", { timeZone: "UTC", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false }) + " UTC in WSA–Enlil"} · timing uncertain</span>
+                : <span>WSA–Enlil: no CME material reaches Earth in the current model run</span>}
+            </div>}
             <button type="button" className="btn forecast-teaser-cta" onClick={() => setForecastOpen(true)}>See predictions →</button>
           </section>
           <h2>Solar wind at L1 <StatusDot s={st.wind} /></h2>
