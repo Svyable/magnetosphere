@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "updatedAt": 1795135217099,
+  "updatedAt": 1795188714009,
   "earliestCaptureAt": 1795067714129,
-  "latestCaptureAt": 1795135217099,
-  "captures": 3,
-  "archivedPredictions": 51,
-  "sourceObservedRecords": 64,
-  "verifiedTargetPeriods": 0,
+  "latestCaptureAt": 1795188714009,
+  "captures": 4,
+  "archivedPredictions": 68,
+  "sourceObservedRecords": 69,
+  "verifiedTargetPeriods": 5,
   "rows": [
     {
       "band": "0–6h",
@@ -24,31 +24,31 @@
     },
     {
       "band": "6–24h",
-      "pairedPeriods": 0,
-      "maeKp": null,
-      "biasKp": null,
-      "persistenceMaeKp": null,
-      "persistencePairedPeriods": 0,
+      "pairedPeriods": 5,
+      "maeKp": 1.6,
+      "biasKp": 1.6,
+      "persistenceMaeKp": 1,
+      "persistencePairedPeriods": 5,
       "observedStormPeriods": 0,
       "predictedStormPeriods": 0,
       "hits": 0,
       "falseAlarms": 0,
       "missedStorms": 0,
-      "trueNegatives": 0
+      "trueNegatives": 5
     },
     {
       "band": "24–48h",
-      "pairedPeriods": 0,
-      "maeKp": null,
-      "biasKp": null,
-      "persistenceMaeKp": null,
-      "persistencePairedPeriods": 0,
+      "pairedPeriods": 3,
+      "maeKp": 1.45,
+      "biasKp": 1.45,
+      "persistenceMaeKp": 4.22,
+      "persistencePairedPeriods": 3,
       "observedStormPeriods": 0,
       "predictedStormPeriods": 0,
       "hits": 0,
       "falseAlarms": 0,
       "missedStorms": 0,
-      "trueNegatives": 0
+      "trueNegatives": 3
     },
     {
       "band": "48–72h",
@@ -65,7 +65,88 @@
       "trueNegatives": 0
     }
   ],
-  "recentPairs": [],
+  "recentPairs": [
+    {
+      "targetAt": 1795176000000,
+      "fetchedAt": 1795103360820,
+      "leadHours": 20.18,
+      "band": "6–24h",
+      "forecastKp": 1.67,
+      "observedKp": 0.33,
+      "observationSeenAt": 1795188714009,
+      "persistenceKp": 2
+    },
+    {
+      "targetAt": 1795176000000,
+      "fetchedAt": 1795067714129,
+      "leadHours": 30.08,
+      "band": "24–48h",
+      "forecastKp": 1.67,
+      "observedKp": 0.33,
+      "observationSeenAt": 1795188714009,
+      "persistenceKp": 5
+    },
+    {
+      "targetAt": 1795165200000,
+      "fetchedAt": 1795103360820,
+      "leadHours": 17.18,
+      "band": "6–24h",
+      "forecastKp": 2.33,
+      "observedKp": 0.67,
+      "observationSeenAt": 1795188714009,
+      "persistenceKp": 2
+    },
+    {
+      "targetAt": 1795165200000,
+      "fetchedAt": 1795067714129,
+      "leadHours": 27.08,
+      "band": "24–48h",
+      "forecastKp": 2.33,
+      "observedKp": 0.67,
+      "observationSeenAt": 1795188714009,
+      "persistenceKp": 5
+    },
+    {
+      "targetAt": 1795154400000,
+      "fetchedAt": 1795103360820,
+      "leadHours": 14.18,
+      "band": "6–24h",
+      "forecastKp": 2.67,
+      "observedKp": 1.33,
+      "observationSeenAt": 1795188714009,
+      "persistenceKp": 2
+    },
+    {
+      "targetAt": 1795154400000,
+      "fetchedAt": 1795067714129,
+      "leadHours": 24.08,
+      "band": "24–48h",
+      "forecastKp": 2.67,
+      "observedKp": 1.33,
+      "observationSeenAt": 1795188714009,
+      "persistenceKp": 5
+    },
+    {
+      "targetAt": 1795143600000,
+      "fetchedAt": 1795103360820,
+      "leadHours": 11.18,
+      "band": "6–24h",
+      "forecastKp": 3.33,
+      "observedKp": 2,
+      "observationSeenAt": 1795188714009,
+      "persistenceKp": 2
+    },
+    {
+      "targetAt": 1795132800000,
+      "fetchedAt": 1795103360820,
+      "leadHours": 8.18,
+      "band": "6–24h",
+      "forecastKp": 3,
+      "observedKp": 0.67,
+      "observationSeenAt": 1795188714009,
+      "persistenceKp": 2
+    }
+  ],
   "provenance": {
     "forecastSource": "https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json",
     "archiveBranch": "forecast-ledger",
