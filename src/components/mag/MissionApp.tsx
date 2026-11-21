@@ -14,6 +14,7 @@ import { highestIssuedG, opsStatus } from "@/lib/space/ops";
 import { forecastPeak, gFromKp } from "@/lib/space/forecast";
 import {parseForecastClock,parseForecastHorizon,parseStormTarget,type ForecastHorizon,type ForecastClock} from "@/lib/space/forecast-ux";
 import { estimatedArrival, incomingOutlook } from "@/lib/space/incoming";
+import type {ScenarioInput} from "@/lib/space/mission-lab";
 import { XRAY_URL } from "@/lib/space/xray";
 import {
   bzNear, dynamicPressure, freshness, joinL1, kpLabel, laggedSample, propagationSeconds, shue,
@@ -25,6 +26,7 @@ import { coeffsAt, decimalYear, geomagneticPole, intensityGrid, IGRF_LAST, IGRF_
 const Scene = lazy(() => import("./Scene"));
 const TimeAtlas = lazy(() => import("./TimeAtlas"));
 const ForecastCenter = lazy(() => import("./ForecastCenter"));
+const MissionLab = lazy(() => import("./MissionLab"));
 
 const LAYERS: { key: LayerKey; name: string; kind: string; hint: string }[] = [
   { key: "saa", name: "Field strength · SAA", kind: "IGRF-14 model", hint: "Surface total field intensity. Warm = below 32,000 nT; the South Atlantic Anomaly is the weak-field dent where the inner radiation belt dips closest to Earth." },
@@ -105,6 +107,8 @@ export default function MissionApp() {
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [timeOpen, setTimeOpen] = useState(false);
   const [forecastOpen, setForecastOpen] = useState(() => parseForecastHorizon(initQ.get("forecast")) !== null);
+  const [missionLabOpen,setMissionLabOpen] = useState(false);
+  const [whatIf,setWhatIf] = useState<ScenarioInput|null>(null);
   const [forecastHorizon,setForecastHorizon] = useState<ForecastHorizon>(() => parseForecastHorizon(initQ.get("forecast")) ?? "incoming");
   const [stormFocus,setStormFocus] = useState<number|null>(() => parseStormTarget(initQ.get("storm")));
   const [forecastClock,setForecastClock] = useState<ForecastClock>(() => parseForecastClock(initQ.get("clock")) ?? parseForecastClock(savedPrefs.forecastClock ?? null) ?? "utc");
@@ -180,7 +184,7 @@ export default function MissionApp() {
     const onKey = (e: KeyboardEvent) => {
       if (e.altKey || e.ctrlKey || e.metaKey) return;
       if (e.key === "Escape") {
-        setGalleryOpen(false); setFieldOpen(false); setHelpOpen(false); setTourOpen(false); setDrawer(false); setPassportOpen(false); setTimeOpen(false); setForecastOpen(false);
+        setGalleryOpen(false); setFieldOpen(false); setHelpOpen(false); setTourOpen(false); setDrawer(false); setPassportOpen(false); setTimeOpen(false); setForecastOpen(false); setMissionLabOpen(false);
         return;
       }
       const t = e.target;
@@ -197,6 +201,7 @@ export default function MissionApp() {
       else if (k === "d") setPassportOpen(true);
       else if (k === "t") setTimeOpen(true);
       else if (k === "p") setForecastOpen(true);
+      else if (k === "m") setMissionLabOpen(true);
       else if (k === "v") setFieldDetail((d) => FIELD_DETAIL_CHOICES[(FIELD_DETAIL_CHOICES.indexOf(d) + 1) % FIELD_DETAIL_CHOICES.length]!);
     };
     window.addEventListener("keydown", onKey);
@@ -257,9 +262,12 @@ export default function MissionApp() {
   const activePreview = live && !historicCore && incomingPreview?.bz !== null && incomingPreview !== null &&
     incomingPreview.t <= now + 60_000 && estimatedArrival(incomingPreview) > now &&
     estimatedArrival(incomingPreview) <= now + 130 * 60_000 ? incomingPreview : null;
-  const scenarioModel = activePreview
-    ? shue(dynamicPressure(activePreview.n, activePreview.v), activePreview.bz!)
-    : model;
+  const activeWhatIf = live && !historicCore ? whatIf : null;
+  const scenarioModel = activeWhatIf
+    ? shue(activeWhatIf.pressure,activeWhatIf.bz)
+    : activePreview
+      ? shue(dynamicPressure(activePreview.n, activePreview.v), activePreview.bz!)
+      : model;
   const lagS = sample ? propagationSeconds(sample.v) : null;
   const arrival = sample && lagS ? sample.t + lagS * 1000 : null;
   const sceneTime = live ? now : arrival ?? now;
@@ -346,6 +354,13 @@ export default function MissionApp() {
     setPlaying(false); setSelIdx(null); setCoreYear(null); setEarthOnly(false);
     setPreset("global"); setNonce(n => n + 1);
   };
+  const previewWhatIf = (value:ScenarioInput|null) => {
+    setWhatIf(value);
+    if(!value)return;
+    // A hypothetical boundary is not an observed forecast and has no time of arrival.
+    setIncomingPreview(null);setPlaying(false);setSelIdx(null);setCoreYear(null);
+    setEarthOnly(false);setPreset("global");setNonce(n=>n+1);
+  };
   const exportMeasuredCsv = () => {
     if (!timeline.length) { flash("No valid NOAA L1 measurements to export"); return; }
     try {
@@ -402,6 +417,7 @@ export default function MissionApp() {
           <span>L1 feed <StatusDot s={overall} /></span>
           <span className="hide-sm topbar-refreshed">Refreshed {lastRefresh ? fmtUtc(lastRefresh) : "—"}</span>
           <button className="btn-ghost forecast-topbar" onClick={() => setForecastOpen(true)}>↗ Incoming & future</button>
+          <button className="btn-ghost mlab-topbar" onClick={() => setMissionLabOpen(true)}>⌖ Mission Lab</button>
           <button className="btn-ghost" onClick={() => setGalleryOpen(true)}>◉ Eyes on Earth</button>
           <button className="btn-ghost" onClick={() => setFieldOpen(true)}>⌖ Field explorer</button>
           <button className="btn-ghost" onClick={() => setPassportOpen(true)}>▤ Data passport</button>
@@ -416,9 +432,9 @@ export default function MissionApp() {
       <main className="stage">
         <div className="canvas-area">
           <Suspense fallback={<div className="loading">Initializing scene…</div>}>
-            <Scene layers={{ ...displayedLayers, mp: activePreview ? true : displayedLayers.mp, aurora: displayedLayers.aurora && !!ovValid && !activePreview }} r0={scenarioModel.r0} alpha={scenarioModel.alpha} speed={activePreview?.v ?? sample?.v ?? null}
+            <Scene layers={{ ...displayedLayers, mp: activePreview || activeWhatIf ? true : displayedLayers.mp, aurora: displayedLayers.aurora && !!ovValid && !activePreview && !activeWhatIf, wind: displayedLayers.wind && !activeWhatIf }} r0={scenarioModel.r0} alpha={scenarioModel.alpha} speed={activeWhatIf?null:activePreview?.v ?? sample?.v ?? null}
               time={sceneTime} aurora={ovValid ? ov.data!.points : null} preset={preset} presetNonce={nonce} core={core}
-              cinematic={cinematic} reducedMotion={motionOff} lowPower={lowPower} fieldDetail={fieldDetail} baseline={baseline && !activePreview} onGlobePick={pickGlobe} selected={fieldTarget} />
+              cinematic={cinematic} reducedMotion={motionOff} lowPower={lowPower} fieldDetail={fieldDetail} baseline={baseline && !activePreview && !activeWhatIf} onGlobePick={pickGlobe} selected={fieldTarget} />
           </Suspense>
           {leadIssued && (
             <button type="button" className="issued-pill" onClick={() => setForecastOpen(true)} aria-label={"NOAA " + leadIssued.kind + " in effect: " + leadIssued.title + ". Open forecast"}>
@@ -426,7 +442,8 @@ export default function MissionApp() {
             </button>
           )}
           <div className="scene-banner">
-            {activePreview ? <span className="incoming-preview-banner"><strong>UPSTREAM SCENARIO · NOT YET OBSERVED AT EARTH</strong> · L1 sample {fmtUtc(activePreview.t)} → nominal arrival {fmtUtc(estimatedArrival(activePreview))} · Shue nose {scenarioModel.r0.toFixed(2)} Rₑ · timing uncertain <button type="button" className="btn" onClick={() => setIncomingPreview(null)}>↺ Return live geometry</button></span>
+            {activeWhatIf ? <span className="mlab-scenario-banner"><strong>HYPOTHETICAL MODEL · NOT OBSERVED / NOT FORECAST</strong> · chosen P {activeWhatIf.pressure.toFixed(1)} nPa / Bz {activeWhatIf.bz.toFixed(1)} nT · Shue nose {scenarioModel.r0.toFixed(2)} Rₑ <button type="button" className="btn" onClick={() => setWhatIf(null)}>↺ Return observed geometry</button></span>
+              : activePreview ? <span className="incoming-preview-banner"><strong>UPSTREAM SCENARIO · NOT YET OBSERVED AT EARTH</strong> · L1 sample {fmtUtc(activePreview.t)} → nominal arrival {fmtUtc(estimatedArrival(activePreview))} · Shue nose {scenarioModel.r0.toFixed(2)} Rₑ · timing uncertain <button type="button" className="btn" onClick={() => setIncomingPreview(null)}>↺ Return live geometry</button></span>
               : earthOnly ? <span>Earth-only geographic view · fixed NASA Blue Marble texture, not a current global satellite photo · click Earth to inspect field</span>
               : historicCore ? <span className="hist">HISTORIC CORE MODEL {coreYear?.toFixed(1)} · IGRF-14 SAA / poles only · present-day NOAA solar-wind geometry hidden (different time clocks)</span> : baseline
               ? <span className="warn">{notPropagated ? "L1 observed, not yet propagated — " : "No live observations — "}geometry is an illustrative baseline (P = 2 nPa, Bz = 0)</span>
@@ -577,6 +594,17 @@ export default function MissionApp() {
       {toast && <div className="toast" role="status">{toast}</div>}
       {galleryOpen && <Gallery onClose={() => setGalleryOpen(false)} now={now} />}
       {timeOpen && <Suspense fallback={<div className="loading" role="status">Loading temporal evidence…</div>}><TimeAtlas onClose={() => setTimeOpen(false)} coreYear={coreYear} onYear={setCoreYear}/></Suspense>}
+      {missionLabOpen && <Overlay title="Earth Mission Lab" onClose={() => setMissionLabOpen(false)} wide>
+        <Suspense fallback={<p role="status">Loading mission utilities…</p>}>
+          <MissionLab now={now} onClose={() => setMissionLabOpen(false)} site={fieldTarget} onSite={setFieldTarget}
+            onFieldExplorer={() => {setMissionLabOpen(false);setFieldOpen(true);}}
+            samples={all}
+            actual={live && !historicCore && P!==null && bz!==null && arrivalGap<=20*60_000 && st.mag==="live" && st.wind==="live" ? {pressure:P,bz}:null}
+            onScenario={previewWhatIf} scenario={activeWhatIf}
+            kp={kpLatest} forecast={kpForecast.data??[]} forecastFetchedAt={kpForecast.dataUpdatedAt}
+            ovationTarget={ov.data?.forecast??null}/>
+        </Suspense>
+      </Overlay>}
       {forecastOpen && <Suspense fallback={<div className="loading" role="status">Loading NOAA predictions…</div>}><ForecastCenter now={now} data={kpForecast.data} fetchedAt={kpForecast.dataUpdatedAt} loading={kpForecast.isPending} error={kpForecast.isError} ovation={ov.data?.observed != null && ov.data.forecast != null ? {observed:ov.data.observed, forecast:ov.data.forecast} : null} onClose={() => setForecastOpen(false)} onRefresh={() => { void kpForecast.refetch(); void wind.refetch(); void mag.refetch(); }} incomingSamples={all} previewedAt={activePreview?.t ?? null} onPreview={previewIncoming}
       horizon={forecastHorizon} onHorizon={setForecastHorizon} clock={forecastClock} onClock={setForecastClock}
       selectedStorm={stormFocus} onSelectedStorm={setStormFocus}/></Suspense>}
@@ -589,7 +617,7 @@ export default function MissionApp() {
           <div className="guide-shortcuts">
             <p><kbd>1</kbd> Global · <kbd>2</kbd> Earth · <kbd>3</kbd> Tail · <kbd>4</kbd> SAA · <kbd>5</kbd> Arctic</p>
             <p><kbd>L</kbd> Live · <kbd>E</kbd> Earth only · <kbd>F</kbd> Focus · <kbd>G</kbd> Satellite photos · <kbd>I</kbd> Field explorer · <kbd>D</kbd> Data passport</p>
-            <p><kbd>P</kbd> Future NOAA predictions · <kbd>T</kbd> 4D Time Atlas · <kbd>V</kbd> Cycle field-line detail · <kbd>?</kbd> or <kbd>H</kbd> Help · <kbd>Esc</kbd> Close overlays</p>
+            <p><kbd>P</kbd> Future NOAA predictions · <kbd>M</kbd> Mission Lab · <kbd>T</kbd> 4D Time Atlas · <kbd>V</kbd> Cycle field-line detail · <kbd>?</kbd> or <kbd>H</kbd> Help · <kbd>Esc</kbd> Close overlays</p>
           </div>
           <div className="guide-actions">
             <button className="btn" role="switch" aria-checked={lowPower} onClick={() => setLowPower((v) => !v)}>{lowPower ? "✓ Low-power mode" : "Low-power mode"}</button>
