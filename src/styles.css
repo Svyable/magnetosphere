@@ -778,3 +778,42 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px soli
 .mlab-topbar{color:var(--cyan);}
 @media(max-width:760px){.mlab-tabs{grid-template-columns:repeat(2,minmax(0,1fr));}.mlab-readings{grid-template-columns:1fr 1fr;}.mlab-readings>div:last-child{grid-column:1/-1;}.mlab-pane{padding:.65rem;}}
 @media(max-width:420px){.mlab-readings{grid-template-columns:1fr;}.mlab-readings>div:last-child{grid-column:auto;}}
+
+/* Earth Receipts: actual USGS ground magnetometer readings, distinct from modeled upstream space weather. */
+.mlab-tabs{grid-template-columns:repeat(5,minmax(0,1fr));}
+.ground-truth{min-width:0;padding:.1rem 0 1.3rem;}
+.ground-lead{padding:.95rem;background:radial-gradient(ellipse at 5% 0,color-mix(in oklab,var(--cyan) 11%,var(--card)),var(--card));border-left:3px solid var(--cyan);border-radius:.4rem;}
+.ground-lead>span{display:block;color:var(--cyan);font:.62rem var(--font-mono);letter-spacing:.075em;}
+.ground-lead h3{font-family:var(--font-display);font-size:clamp(1.18rem,2.5vw,1.65rem);margin:.4rem 0;color:var(--foreground);}
+.ground-lead p{font-size:.73rem;line-height:1.6;color:var(--muted-foreground);margin:.4rem 0;}
+.ground-lead strong{color:var(--foreground);}
+.ground-stations{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.45rem;margin:1rem 0;}
+.ground-stations>.btn{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:.2rem;min-width:0;padding:.7rem;white-space:normal;text-align:left;font-size:.78rem;}
+.ground-stations .btn small{color:var(--muted-foreground);font-size:.61rem;}
+.ground-stations .btn[aria-pressed="true"]{color:var(--cyan);border-color:var(--cyan);background:color-mix(in oklab,var(--cyan) 10%,var(--card));}
+.ground-meta{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.45rem;color:var(--muted-foreground);font-family:var(--font-mono);font-size:.66rem;line-height:1.55;}
+.ground-meta strong{color:var(--foreground);}
+.ground-meta .btn{padding:.42rem .6rem;min-height:2rem;font-size:.65rem;}
+.ground-empty,.ground-stale{background:var(--card);border:1px dashed var(--border);border-radius:.3rem;padding:.8rem;margin:.85rem 0;color:var(--muted-foreground);font-size:.72rem;line-height:1.7;}
+.ground-empty strong,.ground-stale{color:var(--sun);}
+.ground-empty a,.ground-actions a,.ground-method a{color:var(--cyan);text-decoration:underline;text-underline-offset:3px;}
+.ground-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.5rem;margin:1rem 0;}
+.ground-kpis>div{display:flex;flex-direction:column;gap:.35rem;min-width:0;background:var(--card);border:1px solid var(--border);border-radius:.4rem;padding:.75rem;}
+.ground-kpis span{font-family:var(--font-mono);font-size:.58rem;line-height:1.4;color:var(--muted-foreground);text-transform:uppercase;}
+.ground-kpis strong{font-family:var(--font-display);font-size:clamp(1.05rem,2.4vw,1.65rem);color:var(--cyan);font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
+.ground-kpis strong small{font-size:.71rem;}
+.ground-kpis>div>small{font-size:.61rem;line-height:1.5;color:var(--muted-foreground);}
+.ground-chart-wrap{min-width:0;padding:.65rem;border:1px solid var(--border);border-radius:.4rem;background:var(--card);}
+.ground-chart-heading,.ground-time-axis{display:flex;justify-content:space-between;flex-wrap:wrap;gap:.35rem;color:var(--muted-foreground);font-family:var(--font-mono);font-size:.56rem;line-height:1.5;}
+.ground-chart{display:block;width:100%;height:clamp(10rem,24vw,15rem);margin:.6rem 0;color:var(--muted-foreground);}
+.ground-scrub{display:flex;flex-direction:column;gap:.5rem;color:var(--muted-foreground);font:.66rem var(--font-mono);margin:1rem 0 .6rem;}
+.ground-scrub input{width:100%;accent-color:var(--cyan);min-height:1.2rem;cursor:pointer;}
+.ground-selected{display:flex;gap:.5rem 1rem;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--border);padding:.35rem 0 .65rem;font:.66rem var(--font-mono);color:var(--muted-foreground);}
+.ground-selected strong{color:var(--cyan);}
+.ground-actions{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem 1rem;margin:.8rem 0;}
+.ground-actions .btn{min-height:2.2rem;font-size:.68rem;}
+.ground-actions a{font-size:.67rem;}
+.ground-method{padding:.85rem;margin-top:1rem;border-left:3px solid var(--cyan);background:var(--card);color:var(--muted-foreground);font-size:.7rem;line-height:1.7;border-radius:.3rem;}
+.ground-method strong{color:var(--foreground);}
+@media(max-width:860px){.mlab-tabs{grid-template-columns:repeat(3,minmax(0,1fr));}.ground-stations{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:520px){.mlab-tabs{grid-template-columns:repeat(2,minmax(0,1fr));}.ground-kpis{grid-template-columns:1fr;}.ground-chart-heading{flex-direction:column;}}
