@@ -29,11 +29,11 @@ export function parseGroundH(input: unknown, now: number): GroundPoint[] {
   const obj = input as Record<string, unknown>;
   if (!Array.isArray(obj["times"]) || !Array.isArray(obj["values"]) || obj["times"].length > 2000) throw new Error("Unexpected USGS response");
   const metadata = obj["metadata"] as Record<string, unknown> | undefined;
-  if (metadata?["status"] !== undefined && String(metadata["status"]) !== "200") throw new Error("USGS source error");
+  if (metadata?.["status"] !== undefined && String(metadata["status"]) !== "200") throw new Error("USGS source error");
   const hChannel = obj["values"].find((v: unknown) => {
     if (!v || typeof v !== "object") return false;
     const meta = (v as Record<string, unknown>)["metadata"] as Record<string, unknown> | undefined;
-    return meta?["element"] === "H";
+    return meta?.["element"] === "H";
   }) as { values?: unknown } | undefined;
   if (!hChannel || !Array.isArray(hChannel["values"]) || hChannel["values"].length !== obj["times"].length) throw new Error("Missing H channel");
   const points: GroundPoint[] = [];
