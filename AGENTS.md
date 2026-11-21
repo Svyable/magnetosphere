@@ -65,3 +65,10 @@ This repository is the dedicated GitHub source workspace. Its code was migrated 
 - Source observations may be revised. Keep revisions, Git history and source/provenance links; describe results as measured against NOAA's later *source-labelled* observed Kp, not independent certification.
 - The collector stores only public NOAA products on the evidence-only `forecast-ledger` branch. Permission `contents:write` is reserved for this trusted scheduled workflow. Do not give an untrusted PR or external payload a GitHub write token.
 - The UI must handle an empty/unavailable archive with zero score claims and show visible collection age and source distinctions. Browser smoke and unit tests protect that behavior.
+
+## Forecast usability contract
+- `src/lib/space/forecast-ux.ts` handles four **presentation** enhancements, not a new forecasting model: official Kp storm-threshold windows, explicitly browser-saved predicted revisions, DST-aware timestamp formatting and URL-deep-linked forecast tabs.
+- Only NOAA Kp slots with `status="predicted"` enter projected G1+ storm windows. Do not join missing 3-hour periods, call estimated/observed a future prediction, or call a Kp threshold projection an official watch or warning.
+- Snapshot revisions must be compared only for the **same target UTC 3-hour period**. A browser-saved baseline is not an immutable global archive and is not a forecast-accuracy backtest. Do not imply push notifications or server monitoring.
+- NOAA daily probabilities and 27-day outlook use UTC **days** even if a visitor chooses local display for 3-hour slots. Fetch and issuance provenance stamps should stay explicitly UTC.
+- Shared views must restore tab and optional selected projected window without pinning outdated forecast values or inventing an event that no longer appears. Validate clock/horizon/target URL inputs, and preserve all existing 3D camera/layer URL behavior.
