@@ -27,19 +27,19 @@ export function groundDataUrl(station: GroundStation, now: number): string {
 export function parseGroundH(input: unknown, now: number): GroundPoint[] {
   if (!input || typeof input !== "object" || !Number.isFinite(now)) throw new Error("Invalid ground data");
   const obj = input as Record<string, unknown>;
-  if (!Array.isArray(obj.times) || !Array.isArray(obj.values) || obj.times.length > 2000) throw new Error("Unexpected USGS response");
-  const metadata = obj.metadata as Record<string, unknown> | undefined;
-  if (metadata?.status !== undefined && String(metadata.status) !== "200") throw new Error("USGS source error");
-  const hChannel = obj.values.find((v: unknown) => {
+  if (!Array.isArray(obj["times"]) || !Array.isArray(obj["values"]) || obj["times"].length > 2000) throw new Error("Unexpected USGS response");
+  const metadata = obj["metadata"] as Record<string, unknown> | undefined;
+  if (metadata?["status"] !== undefined && String(metadata["status"]) !== "200") throw new Error("USGS source error");
+  const hChannel = obj["values"].find((v: unknown) => {
     if (!v || typeof v !== "object") return false;
-    const meta = (v as Record<string, unknown>).metadata as Record<string, unknown> | undefined;
-    return meta?.element === "H";
+    const meta = (v as Record<string, unknown>)["metadata"] as Record<string, unknown> | undefined;
+    return meta?["element"] === "H";
   }) as { values?: unknown } | undefined;
-  if (!hChannel || !Array.isArray(hChannel.values) || hChannel.values.length !== obj.times.length) throw new Error("Missing H channel");
+  if (!hChannel || !Array.isArray(hChannel["values"]) || hChannel["values"].length !== obj["times"].length) throw new Error("Missing H channel");
   const points: GroundPoint[] = [];
-  for (let i = 0; i < obj.times.length; i++) {
-    const ts = obj.times[i];
-    const value = hChannel.values[i];
+  for (let i = 0; i < obj["times"].length; i++) {
+    const ts = obj["times"][i];
+    const value = hChannel["values"][i];
     if (typeof ts !== "string" || typeof value !== "number" || !Number.isFinite(value)) continue;
     const t = Date.parse(ts);
     // Horizontal intensity in nT. The USGS missing-value sentinels are excluded.
