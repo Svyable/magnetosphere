@@ -43,6 +43,16 @@ export const useWind = () => useQuery({ queryKey: ["wind"], queryFn: async () =>
 export const useKp = () => useQuery({ queryKey: ["kp"], queryFn: async () => parseKp(await getJson(URLS.kp)), ...opts });
 export const useOvation = () =>
   useQuery({ queryKey: ["ovation"], queryFn: async () => parseOvation(await getJson(URLS.ovation)), ...opts });
+/** Full NOAA OVATION grid, including *zero-valued* cells. Fetch only when
+ * someone opens the point inspector; keep the lighter thresholded globe data.
+ * A zero-valued grid cell is not an estimate of actual sky visibility.
+ */
+export const useOvationGrid = (enabled: boolean) =>
+  useQuery({
+    queryKey: ["ovation-full-grid"], enabled,
+    queryFn: async () => parseOvation(await getJson(URLS.ovation), 0),
+    refetchInterval: enabled ? 5 * 60_000 : false, retry: 1, staleTime: 2 * 60_000,
+  });
 export const useHp30 = () =>
   useQuery({
     queryKey: ["hp30"],
