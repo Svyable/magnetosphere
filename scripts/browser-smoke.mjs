@@ -165,6 +165,32 @@ try {
     await closeOverlay(page);
     await page.waitForFunction(() => !new URL(location.href).searchParams.has("forecast"));
   });
+  await check("Mission Lab local aurora, Shue what-if, L1 event patterns and evidence brief", async () => {
+    await page.getByRole("button", { name: /Mission Lab/i }).click();
+    await page.getByRole("dialog", { name: /Earth Mission Lab/i }).waitFor({ timeout: 20000 });
+    await page.getByRole("tab", { name: /Aurora at a point/i }).waitFor();
+    await page.getByRole("textbox", { name: /Observer latitude/i }).fill("69.65");
+    await page.getByRole("textbox", { name: /Observer longitude/i }).fill("18.96");
+    await page.getByRole("button", { name: /Inspect coordinates/i }).click();
+    await page.waitForFunction(() => new URL(location.href).searchParams.get("lat") === "69.65");
+    await page.getByText(/Model ≠ visibility forecast/i).waitFor();
+    await page.getByRole("tab", { name: /Shue what-if lab/i }).click();
+    await page.getByRole("heading", { name: /Change the drivers/i }).waitFor();
+    await page.getByRole("button", { name: /Preview what-if geometry/i }).click();
+    await page.getByText(/HYPOTHETICAL MODEL · NOT OBSERVED \/ NOT FORECAST/i).waitFor();
+    await page.getByRole("button", { name: /Return observed geometry/i }).click();
+    await page.keyboard.press("m");
+    await page.getByRole("dialog", { name: /Earth Mission Lab/i }).waitFor();
+    await page.getByRole("tab", { name: /Upstream event patterns/i }).click();
+    await page.getByRole("heading", { name: /Detect distinctive upstream patterns/i }).waitFor();
+    await page.getByRole("tab", { name: /Evidence brief/i }).click();
+    await page.getByRole("heading", { name: /Make a portable evidence brief/i }).waitFor();
+    const text = await page.locator(".mlab-report").innerText();
+    if (!text.includes("NOAA") || !text.includes("Science limits")) throw new Error("Source-linked evidence brief incomplete");
+    await page.getByRole("button", { name: /Download .md brief/i }).click();
+    await page.getByText(/Markdown evidence brief exported/i).waitFor();
+    await closeOverlay(page);
+  });
   await check("Forecast receipts never claim accuracy without archived, later observed NOAA pairs", async () => {
     await page.getByRole("button", { name: /Incoming & future/i }).click();
     await page.getByRole("dialog", { name: /FORECAST \/ EARTH AHEAD/i }).waitFor();
