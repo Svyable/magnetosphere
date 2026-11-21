@@ -129,6 +129,42 @@ try {
     await page.getByRole("tab", { name: /72h · NOAA warnings/i }).click();
     await closeOverlay(page);
   });
+  await check("Four forecast utilities: storm windows, revisions, local time and deep links", async () => {
+    await page.getByRole("button", { name: /Incoming & future/i }).click();
+    await page.getByRole("dialog", { name: /FORECAST \\/ EARTH AHEAD/i }).waitFor();
+    await page.getByRole("tab", { name: /Now.*72h/i }).click();
+    await page.getByRole("heading", { name: /Predicted storm windows/i }).waitFor();
+    await page.getByRole("heading", { name: /What changed since your saved forecast/i }).waitFor();
+    const utc = page.getByRole("button", { name: "UTC", exact: true });
+    const local = page.getByRole("button", { name: "My local time", exact: true });
+    await local.click();
+    if (await local.getAttribute("aria-pressed") !== "true") throw new Error("Local timezone mode not selected");
+    await page.waitForFunction(() => new URL(location.href).searchParams.get("clock") === "local");
+    const save = page.getByRole("button", { name: /Save current NOAA forecast/i });
+    if (await save.isEnabled()) {
+      await save.click();
+      await page.getByRole("button", { name: /Clear saved comparison/i }).waitFor();
+      await page.getByText(/matching 3h periods/i).waitFor();
+    } else await page.getByText(/No recently fetched|No valid NOAA|No baseline saved/i).first().waitFor();
+    const windows = page.locator(".fc-storm-window");
+    if (await windows.count()) {
+      await windows.first().click();
+      await page.waitForFunction(() => new URL(location.href).searchParams.has("storm"));
+      if (await windows.first().getAttribute("aria-pressed") !== "true") throw new Error("Storm window not selected");
+    }
+    await page.getByRole("button", { name: /Copy link to forecast view/i }).click();
+    await page.getByText(/Forecast view link copied|Clipboard unavailable/i).waitFor();
+    await page.getByRole("tab", { name: /Forecast receipts/i }).click();
+    await page.waitForFunction(() => new URL(location.href).searchParams.get("forecast") === "verify");
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.getByRole("dialog", { name: /FORECAST \\/ EARTH AHEAD/i }).waitFor({ timeout: 20000 });
+    if (await page.getByRole("tab", { name: /Forecast receipts/i }).getAttribute("aria-selected") !== "true")
+      throw new Error("Shared forecast tab did not restore on reload");
+    await utc.click();
+    await page.waitForFunction(() => !new URL(location.href).searchParams.has("clock"));
+    await closeOverlay(page);
+    await page.waitForFunction(() => !new URL(location.href).searchParams.has("forecast"));
+  });
   await check("Forecast receipts never claim accuracy without archived, later observed NOAA pairs", async () => {
     await page.getByRole("button", { name: /Incoming & future/i }).click();
     await page.getByRole("dialog", { name: /FORECAST \/ EARTH AHEAD/i }).waitFor();
