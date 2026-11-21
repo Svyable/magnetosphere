@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "updatedAt": 1795188714009,
+  "updatedAt": 1795219218154,
   "earliestCaptureAt": 1795067714129,
-  "latestCaptureAt": 1795188714009,
-  "captures": 4,
-  "archivedPredictions": 68,
-  "sourceObservedRecords": 69,
-  "verifiedTargetPeriods": 5,
+  "latestCaptureAt": 1795219218154,
+  "captures": 5,
+  "archivedPredictions": 84,
+  "sourceObservedRecords": 71,
+  "verifiedTargetPeriods": 7,
   "rows": [
     {
       "band": "0–6h",
@@ -24,10 +24,24 @@
     },
     {
       "band": "6–24h",
+      "pairedPeriods": 6,
+      "maeKp": 1.72,
+      "biasKp": 1.72,
+      "persistenceMaeKp": 1.11,
+      "persistencePairedPeriods": 6,
+      "observedStormPeriods": 0,
+      "predictedStormPeriods": 0,
+      "hits": 0,
+      "falseAlarms": 0,
+      "missedStorms": 0,
+      "trueNegatives": 6
+    },
+    {
+      "band": "24–48h",
       "pairedPeriods": 5,
-      "maeKp": 1.6,
-      "biasKp": 1.6,
-      "persistenceMaeKp": 1,
+      "maeKp": 1.54,
+      "biasKp": 1.54,
+      "persistenceMaeKp": 3.53,
       "persistencePairedPeriods": 5,
       "observedStormPeriods": 0,
       "predictedStormPeriods": 0,
@@ -35,20 +49,6 @@
       "falseAlarms": 0,
       "missedStorms": 0,
       "trueNegatives": 5
-    },
-    {
-      "band": "24–48h",
-      "pairedPeriods": 3,
-      "maeKp": 1.45,
-      "biasKp": 1.45,
-      "persistenceMaeKp": 4.22,
-      "persistencePairedPeriods": 3,
-      "observedStormPeriods": 0,
-      "predictedStormPeriods": 0,
-      "hits": 0,
-      "falseAlarms": 0,
-      "missedStorms": 0,
-      "trueNegatives": 3
     },
     {
       "band": "48–72h",
@@ -66,6 +66,36 @@
     }
   ],
   "recentPairs": [
+    {
+      "targetAt": 1795197600000,
+      "fetchedAt": 1795103360820,
+      "leadHours": 26.18,
+      "band": "24–48h",
+      "forecastKp": 2.67,
+      "observedKp": 1.67,
+      "observationSeenAt": 1795219218154,
+      "persistenceKp": 2
+    },
+    {
+      "targetAt": 1795186800000,
+      "fetchedAt": 1795103360820,
+      "leadHours": 23.18,
+      "band": "6–24h",
+      "forecastKp": 2.67,
+      "observedKp": 0.33,
+      "observationSeenAt": 1795219218154,
+      "persistenceKp": 2
+    },
+    {
+      "targetAt": 1795186800000,
+      "fetchedAt": 1795067714129,
+      "leadHours": 33.08,
+      "band": "24–48h",
+      "forecastKp": 2.67,
+      "observedKp": 0.33,
+      "observationSeenAt": 1795219218154,
+      "persistenceKp": 5
+    },
     {
       "targetAt": 1795176000000,
       "fetchedAt": 1795103360820,
