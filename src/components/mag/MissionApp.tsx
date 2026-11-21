@@ -12,6 +12,7 @@ import { measuredWindCsv } from "@/lib/space/export";
 import { useHp30, useKp, useMag, useOvation, useWind, useXray, useKpForecast, useSwpcAlerts, URLS } from "@/lib/space/data";
 import { highestIssuedG, opsStatus } from "@/lib/space/ops";
 import { forecastPeak, gFromKp } from "@/lib/space/forecast";
+import {parseForecastClock,parseForecastHorizon,parseStormTarget,type ForecastHorizon,type ForecastClock} from "@/lib/space/forecast-ux";
 import { estimatedArrival, incomingOutlook } from "@/lib/space/incoming";
 import { XRAY_URL } from "@/lib/space/xray";
 import {
@@ -103,7 +104,10 @@ export default function MissionApp() {
   const [drawer, setDrawer] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [timeOpen, setTimeOpen] = useState(false);
-  const [forecastOpen, setForecastOpen] = useState(false);
+  const [forecastOpen, setForecastOpen] = useState(() => parseForecastHorizon(initQ.get("forecast")) !== null);
+  const [forecastHorizon,setForecastHorizon] = useState<ForecastHorizon>(() => parseForecastHorizon(initQ.get("forecast")) ?? "incoming");
+  const [stormFocus,setStormFocus] = useState<number|null>(() => parseStormTarget(initQ.get("storm")));
+  const [forecastClock,setForecastClock] = useState<ForecastClock>(() => parseForecastClock(initQ.get("clock")) ?? parseForecastClock(savedPrefs.forecastClock ?? null) ?? "utc");
   const [incomingPreview, setIncomingPreview] = useState<L1Sample | null>(null);
   const [passportOpen, setPassportOpen] = useState(false);
   const [fieldTarget, setFieldTarget] = useState<Target | null>(() => {
@@ -166,7 +170,7 @@ export default function MissionApp() {
   }, [earthOnly, historicCore, layers]);
 
   // Save only accessibility/display preferences; shared URLs override them on arrival.
-  useEffect(() => { savePrefs({ focus, lowPower, reducedMotion, fieldDetail }); }, [focus, lowPower, reducedMotion, fieldDetail]);
+  useEffect(() => { savePrefs({ focus, lowPower, reducedMotion, fieldDetail, forecastClock }); }, [focus, lowPower, reducedMotion, fieldDetail, forecastClock]);
 
   useEffect(() => {
     document.title = "MAGNETOSPHERE / EARTH NOW · " + (earthOnly ? "Earth only" : preset.toUpperCase()) + " view";
@@ -313,8 +317,13 @@ export default function MissionApp() {
       if (fieldOpen) q.set("inspect", "1");
     }
     if (!live && sample) q.set("t", String(sample.t));
+    if (forecastOpen) {
+      q.set("forecast",forecastHorizon);
+      if (forecastHorizon==="72h" && stormFocus!==null) q.set("storm",String(stormFocus));
+    }
+    if (forecastClock==="local") q.set("clock","local");
     window.history.replaceState(null, "", `${window.location.pathname}?${q.toString()}`);
-  }, [layers, preset, cinematic, focus, earthOnly, fieldDetail, coreYear, fieldTarget, fieldOpen, live, sample]);
+  }, [layers, preset, cinematic, focus, earthOnly, fieldDetail, coreYear, fieldTarget, fieldOpen, live, sample, forecastOpen, forecastHorizon, stormFocus, forecastClock]);
 
   const flash = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2600); };
   const exportPng = useCallback(() => {
@@ -568,7 +577,9 @@ export default function MissionApp() {
       {toast && <div className="toast" role="status">{toast}</div>}
       {galleryOpen && <Gallery onClose={() => setGalleryOpen(false)} now={now} />}
       {timeOpen && <Suspense fallback={<div className="loading" role="status">Loading temporal evidence…</div>}><TimeAtlas onClose={() => setTimeOpen(false)} coreYear={coreYear} onYear={setCoreYear}/></Suspense>}
-      {forecastOpen && <Suspense fallback={<div className="loading" role="status">Loading NOAA predictions…</div>}><ForecastCenter now={now} data={kpForecast.data} fetchedAt={kpForecast.dataUpdatedAt} loading={kpForecast.isPending} error={kpForecast.isError} ovation={ov.data?.observed != null && ov.data.forecast != null ? {observed:ov.data.observed, forecast:ov.data.forecast} : null} onClose={() => setForecastOpen(false)} onRefresh={() => { void kpForecast.refetch(); void wind.refetch(); void mag.refetch(); }} incomingSamples={all} previewedAt={activePreview?.t ?? null} onPreview={previewIncoming}/></Suspense>}
+      {forecastOpen && <Suspense fallback={<div className="loading" role="status">Loading NOAA predictions…</div>}><ForecastCenter now={now} data={kpForecast.data} fetchedAt={kpForecast.dataUpdatedAt} loading={kpForecast.isPending} error={kpForecast.isError} ovation={ov.data?.observed != null && ov.data.forecast != null ? {observed:ov.data.observed, forecast:ov.data.forecast} : null} onClose={() => setForecastOpen(false)} onRefresh={() => { void kpForecast.refetch(); void wind.refetch(); void mag.refetch(); }} incomingSamples={all} previewedAt={activePreview?.t ?? null} onPreview={previewIncoming}
+      horizon={forecastHorizon} onHorizon={setForecastHorizon} clock={forecastClock} onClock={setForecastClock}
+      selectedStorm={stormFocus} onSelectedStorm={setStormFocus}/></Suspense>}
       {passportOpen && <DataPassport now={now} feeds={feedLines} timeline={timeline} sample={sample} estimatedArrival={arrival} modelR0={model.r0} missingBz={bz === null} onClose={() => setPassportOpen(false)} onRefresh={requestRefresh} />}
       {fieldOpen && <Overlay title="Inspect Earth's magnetic field" onClose={() => setFieldOpen(false)} wide><FieldExplorer core={core} target={fieldTarget} onTarget={setFieldTarget} /></Overlay>}
       {tourOpen && <Guide onClose={() => setTourOpen(false)} onView={chooseView} onField={() => { setTourOpen(false); setFieldOpen(true); }} onPhotos={() => { setTourOpen(false); setGalleryOpen(true); }} />}
