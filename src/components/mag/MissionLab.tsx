@@ -5,7 +5,8 @@ import type {L1Sample,KpValue} from "@/lib/space/model";
 import type {KpForecastSlot} from "@/lib/space/forecast";
 import {detectL1Patterns,hypotheticalBoundary,localAurora,missionBrief,type ScenarioInput} from "@/lib/space/mission-lab";
 import {fmtUtcS} from "./ui";
-type Tab="observer"|"sandbox"|"signals"|"brief";
+import GroundTruth from "./GroundTruth";
+type Tab="observer"|"sandbox"|"signals"|"brief"|"ground";
 interface Props{
  now:number; onClose:()=>void; site:Target|null; onSite:(site:Target|null)=>void;
  onFieldExplorer:()=>void; samples:L1Sample[];
@@ -58,13 +59,14 @@ export default function MissionLab(p:Props){
  return <section className="mlab" aria-label="Mission Lab scientific utilities">
    <div className="mlab-lead"><span>THE EARTH FIELD LAB / SCIENCE WITH GUARDRAILS</span>
      <h3>Inspect a location. Stress-test a model. Examine the data.</h3>
-     <p>Four tools built around NOAA measurements and published models. The lab distinguishes a measured upstream pattern, an OVATION model value, and a hypothetical response. Nothing here is an official warning or a new physical forecast.</p>
+     <p>Five tools built around NOAA/USGS measurements and published models. The lab distinguishes a measured upstream pattern, an OVATION model value, and a hypothetical response. Nothing here is an official warning or a new physical forecast.</p>
    </div>
    <div className="mlab-tabs" role="tablist" aria-label="Mission lab utilities">
      <button role="tab" aria-selected={tab==="observer"} className="btn" onClick={()=>setTab("observer")}>Aurora at a point</button>
      <button role="tab" aria-selected={tab==="sandbox"} className="btn" onClick={()=>setTab("sandbox")}>Shue what-if lab</button>
      <button role="tab" aria-selected={tab==="signals"} className="btn" onClick={()=>setTab("signals")}>Upstream event patterns</button>
      <button role="tab" aria-selected={tab==="brief"} className="btn" onClick={()=>setTab("brief")}>Evidence brief</button>
+     <button role="tab" aria-selected={tab==="ground"} className="btn" onClick={()=>setTab("ground")}>Earth receipts · ground stations</button>
    </div>
    {tab==="observer" && <section className="mlab-pane" aria-label="NOAA aurora coordinate inspector">
      <h3>Inspect NOAA OVATION at your coordinates</h3>
@@ -129,6 +131,7 @@ export default function MissionLab(p:Props){
      <pre className="mlab-report">{report}</pre>
      <p className="mlab-inference">A downloaded brief describes what this browser had received at its generation time; it does not independently certify NOAA accuracy or imply a future monitoring task.</p>
    </section>}
+   {tab==="ground" && <GroundTruth now={p.now}/>}
    {message&&<p className="mlab-message" role="status">{message}</p>}
  </section>;
 }

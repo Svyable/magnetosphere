@@ -79,3 +79,9 @@ This repository is the dedicated GitHub source workspace. Its code was migrated 
 - Shue scenario bounds P 0.2–30 nPa and GSM Bz −25 to 25 nT. 3D preview must display **HYPOTHETICAL MODEL · NOT OBSERVED / NOT FORECAST** and must not change NOAA's measured telemetry, assume unmeasured Bz or combine time-disjoint OVATION imagery.
 - Upstream pressure-jump and sustained Bz detector relies strictly on **measured L1 data** and requires adequate 1-minute-window sample density. No pattern ⇒ **no detected pattern**, never an all-clear. State the thresholds as heuristic, not scientifically validated storm detection probability.
 - Browser-only mission briefs are audit-friendly exports of data actually loaded at generation time. Exclude stale measurements/forecasts; retain source URLs and the measurement/model/forecast distinction. No background watch, claim of historical verification, telemetry upload or automatic notifications.
+
+## Ground receipts (USGS observatory measurements)
+- `src/lib/space/ground.ts` strictly parses USGS one-minute horizontal component H (nT) and never fills instrument gaps, missing-value sentinels or future timestamps.
+- Ground H variation is site-specific *observed* provisional data. Offset plots use the first valid measurement within the request, not a quiet-day correction; a 60-minute max-minus-min range is not a K-index, dB/dt, geoelectric hazard, or validated storm severity.
+- Station measurements cannot independently verify arrival of a specific L1 discontinuity or CME without separate timing/causal analysis. Show source observation time and browser retrieval time distinctly; no false all-clear on stale, failed or CORS-blocked sources.
+- Preserve USGS attribution, direct query links and honest unavailable states. Ground data must be an on-demand fetch to minimize load on public USGS infrastructure.

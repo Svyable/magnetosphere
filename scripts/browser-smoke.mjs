@@ -189,6 +189,13 @@ try {
     if (!text.includes("NOAA") || !text.includes("Science limits")) throw new Error("Source-linked evidence brief incomplete");
     await page.getByRole("button", { name: /Download .md brief/i }).click();
     await page.getByText(/Markdown evidence brief exported/i).waitFor();
+    await page.getByRole("tab", { name: /Earth receipts · ground stations/i }).click();
+    await page.getByRole("heading", { name: /Space weather, measured underfoot/i }).waitFor();
+    await page.getByRole("button", { name: /Sitka.*Alaska/i }).click();
+    await page.getByText(/Sitka \(SIT\)/).waitFor();
+    await page.getByText(/Ground truth is local, not a global storm diagnosis/i).waitFor();
+    // USGS access can fail or be CORS-blocked: never turn a failed fetch into synthetic numbers.
+    await page.locator(".ground-stations button[aria-pressed='true']").waitFor();
     await closeOverlay(page);
   });
   await check("Forecast receipts never claim accuracy without archived, later observed NOAA pairs", async () => {
