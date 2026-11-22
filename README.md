@@ -204,3 +204,19 @@ A GitHub Actions workflow, `.github/workflows/event-kp-snapshot.yml`, checks the
 The client uses the site's own `/data/event-kp/<event>.json` assets, strictly verifies the expected event identity, window, source URL, license, timestamp cadence and coverage, and refuses invalid snapshots. No third-party CORS proxy or synthetic fallback is involved. The original GFZ source query remains linked for independent review.
 
 The browser smoke suite includes a deterministic near-complete Kp fixture with an intentionally missing bin, verifying that missing data stays missing; production uses the separately committed actual GFZ records. NASA OMNI continues to load from CDAWeb/HAPI at runtime.
+
+
+### May 2024 — USGS observatory measurements under the same UTC cursor
+
+The May 2024 replay now adds real **USGS quasi-definitive horizontal magnetic field H** observations for **Boulder (BOU), Fredericksburg (FRD), and Sitka (SIT)** between **May 10 00:00 and May 13 00:00 UTC**. The USGS service is requested with `elements=H`, `sampling_period=60`, `type=quasi-definitive`, and `format=json`. Source files are frozen in `public/data/may-2024-ground/`, each with a complete original source URL, retrieval time, station code, processing level, and observed five-minute samples selected directly from the original one-minute records. The operation is reproduced by `scripts/snapshot-may-2024-ground.mjs` and independently checked in `.github/workflows/may-2024-ground-snapshot.yml`.
+
+**Source-verified coverage (May 10–13, 2024):**
+- Boulder: **864/864 five-minute timestamps**, **4320/4320** valid one-minute samples.
+- Fredericksburg: **844/864 five-minute timestamps**, **4219/4320** valid one-minute samples; 20 missing five-minute timestamps remain explicit gaps.
+- Sitka: **864/864 five-minute timestamps**, **4317/4320** valid one-minute samples. Some other one-minute observations were absent even though the selected five-minute records are complete.
+
+USGS initially returned **no definitive readings** for Boulder during this interval. We verified that its **quasi-definitive** channel instead returns a complete record. Honolulu returned no usable quasi-definitive readings and was excluded rather than presented as an incomplete or differently processed comparison. Data-processing status must remain visible in the interface; quasi-definitive must never be described as definitive.
+
+The displayed **ΔH** is measured H minus the median of the earliest six hours of the *same station's* source record, not a physical zero field, regional quiet-day reference, planetary Kp, Dst, or a measurement of geomagnetically induced current. A five-minute sample here is a **real observed sample** picked from the one-minute series, **not a five-minute average or interpolation**. NASA OMNI, GFZ Kp, and USGS H stay distinct datasets with different physical meanings and time resolution.
+
+Evidence/context: [USGS May 10, 2024 magnetic disturbance](https://www.usgs.gov/programs/geomagnetism/science/may-10-2024-magnetic-disturbance-peak-dst-351-nt); [USGS official data service](https://www.usgs.gov/tools/web-service-geomagnetism-data); [GIC-related observations during the May 2024 storm (Space Weather, 2026)](https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2025SW004758).

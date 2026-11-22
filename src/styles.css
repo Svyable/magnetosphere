@@ -871,3 +871,25 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px soli
 .replay-omni-readout,.replay-omni-foot{font-size:.8rem;line-height:1.7}
 .replay-omni-readout strong{white-space:nowrap}
 @media(max-width:600px){.replay-omni-trace svg{height:5.5rem}.replay-omni{padding:.7rem}.replay-clock{padding:.75rem}}
+
+
+/* Source-verified USGS quasi-definitive station H: each chart has its own local reference. */
+.replay-ground{border:1px solid var(--border);border-radius:.7rem;padding:1rem;margin:1.25rem 0}
+.replay-ground h4{font-size:1.13rem;margin:0 0 .55rem}
+.replay-ground-stations{display:flex;flex-wrap:wrap;gap:.45rem;margin:.85rem 0}
+.replay-ground-stations .btn.active{border-color:#82c6df;box-shadow:inset 0 0 0 1px #82c6df}
+.replay-ground-plot{margin:.85rem 0 1.05rem}
+.replay-ground-plot-head{display:flex;justify-content:space-between;gap:.4rem;font-size:.83rem;margin-bottom:.35rem}
+.replay-ground-plot-head small{opacity:.7}
+.replay-ground-plot svg{display:block;width:100%;height:7rem;border-radius:.25rem;background:color-mix(in srgb,var(--border) 20%,transparent)}
+.replay-ground-line{fill:none;stroke:#7ad5b5;stroke-width:1.65;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+.replay-ground-numbers{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr));gap:.6rem}
+.replay-ground-numbers>div{display:flex;flex-direction:column;gap:.2rem;padding:.65rem;background:var(--card);border-radius:.3rem;border:1px solid var(--border)}
+.replay-ground-numbers span{font-size:.7rem;opacity:.78}
+.replay-ground-numbers strong{font-size:.95rem;overflow-wrap:anywhere}
+.replay-ground-sources{display:flex;flex-wrap:wrap;gap:.4rem 1.2rem;font-size:.8rem}
+@media(max-width:600px){.replay-ground{padding:.75rem}.replay-ground-plot svg{height:5.5rem}.replay-ground-stations .btn{font-size:.76rem}}
+
+.replay-ground-context{border-top:1px solid var(--border);margin:1rem 0;padding:1rem .2rem .35rem}
+.replay-ground-context strong{font-size:.9rem}
+.replay-ground-context p{font-size:.81rem;max-width:76ch}

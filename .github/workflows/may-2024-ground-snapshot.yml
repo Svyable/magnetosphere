@@ -1,0 +1,30 @@
+name: Verify May 2024 USGS magnetometer receipts
+on:
+  pull_request:
+    paths:
+      - scripts/snapshot-may-2024-ground.mjs
+      - src/lib/space/may-2024-ground.ts
+      - .github/workflows/may-2024-ground-snapshot.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ground-receipts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Check out
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+      - name: Verify and export three quasi-definitive USGS H station receipts
+        run: bun scripts/snapshot-may-2024-ground.mjs
+      - name: Archive source-verified USGS data
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: historical-usgs-may-2024-ground
+          path: public/data/may-2024-ground/
+          if-no-files-found: error
+          retention-days: 14
