@@ -69,6 +69,12 @@ export default function May2024Ground({cursor}:{cursor:number}){
     <p className="replay-kp-foot">Archive coverage: {samples.length}/{MAY_GROUND_EXPECTED} actual 5-minute samples, drawn from {rawCount}/4320 valid 1-minute readings. Source retrieved {accessed.replace("T"," ").slice(0,16)} UTC. No gaps filled.</p>
    </>}
   <p className="mlab-inference"><strong>Read this correctly:</strong> ΔH = measured H minus the <em>median of available H during the first six UTC hours of May 10</em> at this observatory. This is a consistent local display reference, <strong>not</strong> a quiet-day baseline or a calibrated geomagnetically induced current estimate. These stations occupy different latitudes and local time zones, so their amplitudes should not be ranked as universal storm severity.</p>
+  <aside className="replay-ground-context" aria-label="May 2024 storm evidence and interpretation">
+   <strong>Why the local traces matter</strong>
+   <p>The USGS described the May 10, 2024 magnetic disturbance as an <strong>extreme G5 geomagnetic storm</strong> and highlighted electric-grid, navigation, and satellite risks. That classification is global; these traces are independent station measurements that show how the horizontal field varied locally.</p>
+   <p>A subsequent peer-reviewed study of May 2024 reported that estimating geomagnetically induced currents also requires ground-conductivity and grid-system information. A local H excursion alone cannot tell us whether a transformer was harmed, how many amperes flowed, or what caused each feature in the trace.</p>
+   <a href="https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2025SW004758" target="_blank" rel="noreferrer">Peer-reviewed May 2024 ground-field and GIC study ↗</a>
+  </aside>
   <div className="replay-ground-sources">
    <a href={"https://geomag.usgs.gov/ws/data/?"+new URLSearchParams({id:station,elements:"H",sampling_period:"60",type:"quasi-definitive",format:"json",starttime:MAY_GROUND_START,endtime:MAY_GROUND_END})} target="_blank" rel="noreferrer">Open original USGS definitive H request ↗</a>
    <a href="https://www.usgs.gov/programs/geomagnetism/science/may-10-2024-magnetic-disturbance-peak-dst-351-nt" target="_blank" rel="noreferrer">USGS May 2024 storm account ↗</a>
