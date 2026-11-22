@@ -1,0 +1,30 @@
+name: Verify and export historical GFZ Kp receipts
+on:
+  pull_request:
+    paths:
+      - scripts/snapshot-event-kp.mjs
+      - .github/workflows/event-kp-snapshot.yml
+      - src/lib/space/historical-kp.ts
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Check out
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+      - name: Fetch and validate six definitive GFZ Kp windows
+        run: bun scripts/snapshot-event-kp.mjs
+      - name: Preserve source-verified event archives
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: historical-gfz-event-kp
+          path: public/data/event-kp/
+          if-no-files-found: error
+          retention-days: 14
