@@ -2,7 +2,7 @@
 export type HistoricalKp={t:number;kp:number;status:"def"};
 export type HistoricalSlot={t:number;reading:HistoricalKp|null};
 export const HISTORICAL_WINDOWS:Record<string,readonly [string,string]>={
- "quebec-1989":["1989-03-10","1989-03-15"],
+ "quebec-1989":["1989-03-06","1989-03-15"],
  "bastille-2000":["2000-07-13","2000-07-18"],
  "halloween-2003":["2003-10-27","2003-11-06"],
  "st-patricks-2015":["2015-03-14","2015-03-20"],
