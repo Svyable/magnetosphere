@@ -1,4 +1,4 @@
-/** May 2024 definitive USGS observatory H field receipts (not Kp or Dst).
+/** May 2024 quasi-definitive USGS observatory H field receipts (not Kp or Dst).
  * Observatory H is absolute horizontal intensity in nT; delta H uses a local reference,
  * so different station baselines and extrema MUST NOT be interpreted as planetary indices.
  */
@@ -18,7 +18,7 @@ const start=Date.parse(MAY_GROUND_START),end=Date.parse(MAY_GROUND_END);
 export const MAY_GROUND_EXPECTED=(end-start)/FIVE_MINUTES;
 export function usgsHistoricalUrl(station:MayStation){
  if(!MAY_GROUND_STATIONS.some(s=>s.code===station))throw new Error("Unsupported historical observatory");
- const query=new URLSearchParams({id:station,elements:"H",sampling_period:"60",type:"definitive",format:"json",starttime:MAY_GROUND_START,endtime:MAY_GROUND_END});
+ const query=new URLSearchParams({id:station,elements:"H",sampling_period:"60",type:"quasi-definitive",format:"json",starttime:MAY_GROUND_START,endtime:MAY_GROUND_END});
  return "https://geomag.usgs.gov/ws/data/?"+query;
 }
 export function groundArchiveUrl(station:MayStation,basePath="/"){
@@ -57,7 +57,7 @@ export function parseUsGsHistoricalH(input:unknown):{rawCount:number;expectedRaw
 export function parseGroundArchive(input:unknown,station:MayStation):MayGroundArchive{
  if(!object(input)||input["schemaVersion"]!==1||input["eventId"]!=="may-2024"||
     input["station"]!==station||input["sourceUrl"]!==usgsHistoricalUrl(station)||
-    input["element"]!=="H"||input["processingLevel"]!=="definitive"||
+    input["element"]!=="H"||input["processingLevel"]!=="quasi-definitive"||
     input["originalCadenceSeconds"]!==60||input["retainedCadenceSeconds"]!==300||
     input["timeBasis"]!=="UTC sample timestamps"||input["start"]!==MAY_GROUND_START||
     input["endExclusive"]!==MAY_GROUND_END||input["expectedSamples"]!==MAY_GROUND_EXPECTED||
