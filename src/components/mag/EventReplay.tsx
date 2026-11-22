@@ -1,6 +1,7 @@
 import {useState} from "react";
 import {REPLAY_EVENTS,replayPosition} from "@/lib/space/replay";
 import {archivesForEvent} from "@/lib/space/event-sources";
+import HistoricalKpChart from "./HistoricalKpChart";
 const PHASES={solar:"SUN / ERUPTION",transit:"INTERPLANETARY TRANSIT",earth:"EARTH / MAGNETOSPHERE",impact:"OBSERVED IMPACT"} as const;
 export default function EventReplay(){
  const [eventId,setEventId]=useState(REPLAY_EVENTS[2]!.id);
@@ -31,6 +32,7 @@ export default function EventReplay(){
    <a href={stage.source} target="_blank" rel="noreferrer">Evidence / context: {stage.sourceLabel} ↗</a>
   </article>
   <div className="replay-all" aria-label="Complete event chronology">{event.stages.map((s,i)=><button key={i} className={"replay-entry"+(step===i?" active":"")} onClick={()=>setStep(i)} aria-current={step===i?"step":undefined}><time>{s.at}</time><span>{s.title}</span><small>{PHASES[s.phase]}</small></button>)}</div>
+  <HistoricalKpChart eventId={event.id}/>
   <section className="replay-archives" aria-label="Historical event source data archives">
    <h4>Find the source data</h4>
    <p>These are official archive entry points with potentially relevant measurements, <strong>not</strong> preloaded or verified event-specific records. Select the historical interval in each archive. Instrument availability and processing levels differ by year.</p>
