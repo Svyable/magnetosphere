@@ -189,8 +189,18 @@ The major-event replay now includes a **shared UTC observation cursor**. Selecti
 
 NASA's [CDAWeb HAPI](https://cdaweb.gsfc.nasa.gov/hapi) serves two 5-minute historical series: `BZ_GSM` (nT, geocentric solar-magnetospheric coordinates) and `flow_speed` (km/s). For March 1989 the replay requests `OMNI_HRO_5MIN`; for 2000–2024 it requests `OMNI_HRO2_5MIN` (which uses definitive Wind/SWE plasma). HAPI reports a time-series dataset with source-specific fill values; the application validates both metadata and data bounds, respects gaps and rejects invalid samples. The time tags are **solar-wind measurements shifted to the nose of the Earth's bow shock**, not Sun-to-Earth travel times or directly observed solar activity.
 
-The 3-hour definitive **GFZ planetary Kp** chart uses the *same UTC cursor* but maintains its separate cadence. OMNI traces never interpolate across missing source records or convert wind readings into Kp. There is no assumed one-to-one CME association, and the 3D globe remains live rather than showing a falsely reconstructed historical magnetosphere.
+The 3-hour definitive **GFZ planetary Kp** chart uses the *same UTC cursor* but maintains its separate cadence. Its six source-verified datasets are committed under `public/data/event-kp/`, because GFZ's historical JSON API does not allow direct cross-origin browser retrieval. OMNI traces never interpolate across missing source records or convert wind readings into Kp. There is no assumed one-to-one CME association, and the 3D globe remains live rather than showing a falsely reconstructed historical magnetosphere.
 
 **Availability / verification:** The unit tests and browser smoke use deterministic fixtures, not fictitious production telemetry. Live-browser HAPI reachability and CORS are separately recorded in CI diagnostics; NASA or GFZ may block cross-origin access or return no valid records. A failure displays an explicit unavailable state with a direct original source link. A true historical data cache or server-side fetch can be added only after provenance and licensing are documented.
 
 Source documentation: [NASA OMNI high-resolution guide](https://omniweb.gsfc.nasa.gov/html/HROdocum.html); [HAPI 2.0 service](https://cdaweb.gsfc.nasa.gov/hapi); [Version 2 OMNI dataset descriptor](https://spase-metadata.org/NASA/NumericalData/OMNI/HighResolutionObservations/Version2/PT5M); [GFZ Kp archive](https://kp.gfz.de/en/data).
+
+### Historical GFZ Kp static receipts and refresh procedure
+
+The replay ships **376 definitive 3-hour Kp bins** across six fixed event windows. These were retrieved on November 22, 2026 from the official [GFZ JSON API](https://kp.gfz.de/en/data) using `scripts/snapshot-event-kp.mjs`. Each JSON file records the original bounded source URL, UTC collection time, CC BY 4.0 attribution, expected coverage, and the UTC start timestamp and Kp for each bin.
+
+A GitHub Actions workflow, `.github/workflows/event-kp-snapshot.yml`, checks the source independently and exports all six records as build artifacts. To refresh, run `bun scripts/snapshot-event-kp.mjs` from a network-enabled environment, review the JSON changes and provenance, and commit them through normal CI. **The workflow does not silently rewrite deployed historical measurements.**
+
+The client uses the site's own `/data/event-kp/<event>.json` assets, strictly verifies the expected event identity, window, source URL, license, timestamp cadence and coverage, and refuses invalid snapshots. No third-party CORS proxy or synthetic fallback is involved. The original GFZ source query remains linked for independent review.
+
+The browser smoke suite includes a deterministic near-complete Kp fixture with an intentionally missing bin, verifying that missing data stays missing; production uses the separately committed actual GFZ records. NASA OMNI continues to load from CDAWeb/HAPI at runtime.
