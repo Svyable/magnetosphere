@@ -202,16 +202,32 @@ try {
       await route.fulfill({ status:200, contentType:"application/json", headers:{"access-control-allow-origin":"*"},
         body: JSON.stringify({ datetime:[start+"T00:00:00Z",start+"T06:00:00Z"],Kp:[5,8],status:["def","def"] }) });
     });
+    await page.route(/cdaweb\\.gsfc\\.nasa\\.gov\\/hapi\\/data/, async route => {
+      const params = new URL(route.request().url()).searchParams;
+      const start = params.get("time.min")?.slice(0,10);
+      if (!start) throw new Error("Missing NASA HAPI date range");
+      await route.fulfill({ status:200, contentType:"application/json", headers:{"access-control-allow-origin":"*"},
+        body: JSON.stringify({
+          HAPI:"2.0",status:{code:1200,message:"OK"},
+          parameters:[{name:"Time",type:"isotime"},{name:"BZ_GSM",type:"double",fill:"9999.99"},{name:"flow_speed",type:"double",fill:"99999.9"}],
+          data:[[start+"T12:00:00.000Z",-17.5,650],[start+"T12:05:00.000Z",-21,790],[start+"T12:10:00.000Z",9999.99,99999.9]]
+        })});
+    });
     await page.getByRole("tab", { name: /Major events · Sun/i }).click();
     await page.getByRole("heading", { name: /major event replay/i }).waitFor();
     await page.getByRole("heading", { name: /observed planetary Kp/i }).waitFor();
     await page.getByText(/coverage 2\/56 bins/).waitFor();
+    await page.getByText(/Valid 5-minute bins: Bz 2\/2016; speed 2\/2016/).waitFor();
+    await page.getByRole("slider", { name: /Historical UTC observation time/i }).fill(String(Date.parse("2024-05-08T12:00:00Z")));
+    await page.getByText(/GSM Bz:.*-17\.5 nT/).waitFor();
+    await page.getByText(/speed:.*650 km\/s/).waitFor();
     await page.locator(".replay-kp-bar.missing").first().waitFor();
     await page.getByRole("button", { name: /Later/i }).click();
     await page.getByText(/Selected milestone date:.*2024-05-10/).waitFor();
     await page.getByRole("combobox", { name: /Choose major space weather event/i }).selectOption("quebec-1989");
     await page.getByText(/coverage 2\/80 bins/).waitFor();
     await page.unroute("https://kp.gfz.de/app/json/**");
+    await page.unroute(/cdaweb\\.gsfc\\.nasa\\.gov\\/hapi\\/data/);
     await closeOverlay(page);
   });
   await check("Forecast receipts never claim accuracy without archived, later observed NOAA pairs", async () => {
@@ -251,6 +267,7 @@ try {
       "https://services.swpc.noaa.gov/json/rtsw/rtsw_mag_1m.json",
       "https://epic.gsfc.nasa.gov/api/natural",
       "https://kp.gfz.de/app/json/?start=2024-05-10T00:00:00Z&end=2024-05-11T23:59:59Z&index=Kp&status=def",
+      "https://cdaweb.gsfc.nasa.gov/hapi/info?id=OMNI_HRO2_5MIN",
     ];
     return Promise.all(urls.map(async url => {
       try { const r = await fetch(url, { signal: AbortSignal.timeout(8000) }); return { url, browserReached: r.ok, status: r.status }; }
