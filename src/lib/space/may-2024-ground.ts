@@ -8,7 +8,6 @@ export const MAY_GROUND_STATIONS=[
  {code:"BOU",name:"Boulder",region:"Colorado",context:"Midlatitude US interior"},
  {code:"FRD",name:"Fredericksburg",region:"Virginia",context:"Midlatitude US east"},
  {code:"SIT",name:"Sitka",region:"Alaska",context:"Higher-latitude Alaska"},
- {code:"HON",name:"Honolulu",region:"Hawaii",context:"Low-latitude Pacific"},
 ] as const;
 export type MayStation=typeof MAY_GROUND_STATIONS[number]["code"];
 export type MayGroundSample={t:number;h:number};
