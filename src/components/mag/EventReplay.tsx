@@ -37,7 +37,7 @@ export default function EventReplay(){
    <p>{stage.detail}</p>
    <a href={stage.source} target="_blank" rel="noreferrer">Evidence / context: {stage.sourceLabel} ↗</a>
   </article>
-  <div className="replay-all" aria-label="Complete event chronology">{event.stages.map((s,i)=><button key={i} className={"replay-entry"+(step===i?" active":"")} onClick={()=>setStep(i)} aria-current={step===i?"step":undefined}><time>{s.at}</time><span>{s.title}</span><small>{PHASES[s.phase]}</small></button>)}</div>
+  <div className="replay-all" aria-label="Complete event chronology">{event.stages.map((s,i)=><button key={i} className={"replay-entry"+(step===i?" active":"")} onClick={()=>chooseStep(i)} aria-current={step===i?"step":undefined}><time>{s.at}</time><span>{s.title}</span><small>{PHASES[s.phase]}</small></button>)}</div>
   <section className="replay-clock" aria-label="Shared UTC historical observation cursor">
    <label htmlFor="replay-utc-cursor"><strong>Historical observation cursor</strong> · {new Date(cursor).toISOString().slice(0,16).replace("T"," ")} UTC</label>
    <input id="replay-utc-cursor" type="range" min={from} max={until-3_600_000} step={3_600_000} value={cursor} onChange={e=>setCursor(Number(e.target.value))} aria-label="Historical UTC observation time"/>
