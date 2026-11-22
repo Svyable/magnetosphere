@@ -1,4 +1,4 @@
-/** Fetch and freeze definitive May 2024 H readings from the USGS observatory service.
+/** Fetch and freeze quasi-definitive May 2024 H readings from the USGS observatory service.
  * No synthetic fallback. Preserve raw 1-minute coverage and actual five-minute samples.
  * Command: bun scripts/snapshot-may-2024-ground.mjs
  */
@@ -19,28 +19,19 @@ for(const s of MAY_GROUND_STATIONS){
    break;
   }catch(e){lastError=e;if(!attempt)await new Promise(resolve=>setTimeout(resolve,1800));}
  }
- if(!body)throw new Error(s.code+": unable to retrieve definitive H ("+String(lastError)+")");
+ if(!body)throw new Error(s.code+": unable to retrieve quasi-definitive H ("+String(lastError)+")");
  const data=parseUsGsHistoricalH(body);
- console.log("USGS_PROBE "+s.code+" "+JSON.stringify({metadata:body.metadata,firstTimes:body.times?.slice(0,3),channels:body.values?.map(v=>({meta:v.metadata,first:v.values?.slice(0,4),nonNull:v.values?.filter(x=>typeof x==="number"&&x>0&&x<80000).length})),valid:data.rawCount,retained:data.samples.length}));
+ const meta=body.metadata?.intermagnet;
+ if(meta?.data_type!=="quasi-definitive"||meta?.imo?.iaga_code!==s.code)throw new Error(s.code+": unexpected USGS source type or station");
+
  const coverage=data.samples.length/MAY_GROUND_EXPECTED;
- if(coverage<.75||data.rawCount/data.expectedRaw<.75){
-  for(const type of ["quasi-definitive","adjusted","variation"]){
-   try{
-    const altUrl=new URL(url);altUrl.searchParams.set("type",type);
-    const alt=await fetch(altUrl.toString(),{signal:AbortSignal.timeout(20_000)});
-    const json=await alt.json();
-    const parsed=parseUsGsHistoricalH(json);
-    console.log("USGS_ALT_PROBE "+s.code+" "+type+" HTTP "+alt.status+" valid "+parsed.rawCount+" retained "+parsed.samples.length+" metadata "+JSON.stringify(json.metadata));
-   }catch(err){console.log("USGS_ALT_ERROR "+s.code+" "+type+" "+String(err));}
-  }
-  throw new Error(s.code+": inadequate USGS definitive coverage "+data.samples.length+"/"+MAY_GROUND_EXPECTED);
- }
+ if(coverage<.75||data.rawCount/data.expectedRaw<.75)throw new Error(s.code+": inadequate USGS quasi-definitive coverage "+data.samples.length+"/"+MAY_GROUND_EXPECTED);
  if(groundReference(data.samples)===null)throw new Error(s.code+": first six-hour reference unavailable");
  const archive={
   schemaVersion:1,eventId:"may-2024",station:s.code,source:"U.S. Geological Survey Geomagnetism Program",
   sourceUrl:url,documentation:"https://www.usgs.gov/tools/web-service-geomagnetism-data",
   accessedAtUtc,start:MAY_GROUND_START,endExclusive:MAY_GROUND_END,
-  element:"H",unit:"nT",processingLevel:"definitive",
+  element:"H",unit:"nT",processingLevel:"quasi-definitive",
   originalCadenceSeconds:60,retainedCadenceSeconds:300,
   timeBasis:"UTC sample timestamps",expectedSamples:MAY_GROUND_EXPECTED,
   rawCount:data.rawCount,rawExpected:data.expectedRaw,
