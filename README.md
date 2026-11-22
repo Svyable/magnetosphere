@@ -181,3 +181,16 @@ Mission Lab → **Major events · Sun → Earth** presents curated, source-linke
 ### Historical source-data library
 
 Each replay links to candidate primary data archives rather than fabricating event samples. NASA [OMNIWeb](https://omniweb.gsfc.nasa.gov/ow.html) covers near-Earth solar wind since 1963 (hourly), with [high-resolution OMNI](https://omniweb.gsfc.nasa.gov/ow_min.html) since 1981. [GFZ Kp](https://kp.gfz.de/en/data) spans 1932 onward; [USGS observatory service](https://www.usgs.gov/tools/web-service-geomagnetism-data) offers station-dependent magnetic field readings; [NOAA NCEI flare reports](https://www.ncei.noaa.gov/products/space-weather/legacy-data/solar-flares-events) cover historical flare observations; and [ISGI](https://isgi.unistra.fr/data_download.php/indices_kp.php) provides additional indices with coverage gaps. The application explicitly labels these as **archive discovery links, not downloaded or verified event-specific data**. No continuous historical trace is shown until timestamped measurements are fetched, quality-checked, and accompanied by provenance.
+
+
+### Synchronized historical near-Earth replay (NASA OMNI + GFZ Kp)
+
+The major-event replay now includes a **shared UTC observation cursor**. Selecting a narrated milestone places the cursor at noon UTC on the milestone's date; visitors can then scrub by hour across the full event interval. Noon is a navigational default, **not a measured CME arrival timestamp**.
+
+NASA's [CDAWeb HAPI](https://cdaweb.gsfc.nasa.gov/hapi) serves two 5-minute historical series: `BZ_GSM` (nT, geocentric solar-magnetospheric coordinates) and `flow_speed` (km/s). For March 1989 the replay requests `OMNI_HRO_5MIN`; for 2000–2024 it requests `OMNI_HRO2_5MIN` (which uses definitive Wind/SWE plasma). HAPI reports a time-series dataset with source-specific fill values; the application validates both metadata and data bounds, respects gaps and rejects invalid samples. The time tags are **solar-wind measurements shifted to the nose of the Earth's bow shock**, not Sun-to-Earth travel times or directly observed solar activity.
+
+The 3-hour definitive **GFZ planetary Kp** chart uses the *same UTC cursor* but maintains its separate cadence. OMNI traces never interpolate across missing source records or convert wind readings into Kp. There is no assumed one-to-one CME association, and the 3D globe remains live rather than showing a falsely reconstructed historical magnetosphere.
+
+**Availability / verification:** The unit tests and browser smoke use deterministic fixtures, not fictitious production telemetry. Live-browser HAPI reachability and CORS are separately recorded in CI diagnostics; NASA or GFZ may block cross-origin access or return no valid records. A failure displays an explicit unavailable state with a direct original source link. A true historical data cache or server-side fetch can be added only after provenance and licensing are documented.
+
+Source documentation: [NASA OMNI high-resolution guide](https://omniweb.gsfc.nasa.gov/html/HROdocum.html); [HAPI 2.0 service](https://cdaweb.gsfc.nasa.gov/hapi); [Version 2 OMNI dataset descriptor](https://spase-metadata.org/NASA/NumericalData/OMNI/HighResolutionObservations/Version2/PT5M); [GFZ Kp archive](https://kp.gfz.de/en/data).
