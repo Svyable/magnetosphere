@@ -196,6 +196,22 @@ try {
     await page.getByText(/Ground truth is local, not a global storm diagnosis/i).waitFor();
     // USGS access can fail or be CORS-blocked: never turn a failed fetch into synthetic numbers.
     await page.locator(".ground-stations button[aria-pressed='true']").waitFor();
+    // Deterministic archive fixture exercises actual UI/chart wiring without assuming GFZ CORS.
+    await page.route("https://kp.gfz.de/app/json/**", async route => {
+      const start = new URL(route.request().url()).searchParams.get("start")?.slice(0,10);
+      await route.fulfill({ status:200, contentType:"application/json", headers:{"access-control-allow-origin":"*"},
+        body: JSON.stringify({ datetime:[start+"T00:00:00Z",start+"T06:00:00Z"],Kp:[5,8],status:["def","def"] }) });
+    });
+    await page.getByRole("tab", { name: /Major events · Sun/i }).click();
+    await page.getByRole("heading", { name: /major event replay/i }).waitFor();
+    await page.getByRole("heading", { name: /observed planetary Kp/i }).waitFor();
+    await page.getByText(/coverage 2\/56 bins/).waitFor();
+    await page.locator(".replay-kp-bar.missing").first().waitFor();
+    await page.getByRole("button", { name: /Later/i }).click();
+    await page.getByText(/Selected milestone date:.*2024-05-10/).waitFor();
+    await page.getByRole("combobox", { name: /Choose major space weather event/i }).selectOption("quebec-1989");
+    await page.getByText(/coverage 2\/80 bins/).waitFor();
+    await page.unroute("https://kp.gfz.de/app/json/**");
     await closeOverlay(page);
   });
   await check("Forecast receipts never claim accuracy without archived, later observed NOAA pairs", async () => {
@@ -234,6 +250,7 @@ try {
       "https://services.swpc.noaa.gov/json/rtsw/rtsw_wind_1m.json",
       "https://services.swpc.noaa.gov/json/rtsw/rtsw_mag_1m.json",
       "https://epic.gsfc.nasa.gov/api/natural",
+      "https://kp.gfz.de/app/json/?start=2024-05-10T00:00:00Z&end=2024-05-11T23:59:59Z&index=Kp&status=def",
     ];
     return Promise.all(urls.map(async url => {
       try { const r = await fetch(url, { signal: AbortSignal.timeout(8000) }); return { url, browserReached: r.ok, status: r.status }; }
