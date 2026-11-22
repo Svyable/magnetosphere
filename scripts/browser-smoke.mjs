@@ -239,6 +239,15 @@ try {
     await page.locator(".replay-kp-bar.missing").first().waitFor();
     await page.getByRole("button", { name: /Later/i }).click();
     await page.getByText(/Selected milestone date:.*2024-05-10/).waitFor();
+    // Unlike mocked OMNI and Kp, these are actual committed 2024 USGS source receipts.
+    await page.getByRole("heading", { name: /USGS magnetic observatories/i }).waitFor();
+    await page.getByText(/Archive coverage: 844\/864 actual 5-minute samples/).waitFor();
+    await page.getByRole("button", { name: /Boulder · BOU/i }).click();
+    await page.getByText(/Archive coverage: 864\/864 actual 5-minute samples, drawn from 4320\/4320/).waitFor();
+    await page.getByRole("button", { name: /Sitka · SIT/i }).click();
+    await page.getByText(/Archive coverage: 864\/864 actual 5-minute samples, drawn from 4317\/4320/).waitFor();
+    if (await page.getByRole("button", { name: /Sitka · SIT/i }).getAttribute("aria-pressed")!=="true") throw new Error("USGS station comparison did not switch");
+
     await page.getByRole("combobox", { name: /Choose major space weather event/i }).selectOption("quebec-1989");
     await page.getByText(/coverage 79\/80 bins/).waitFor();
     await page.unroute(archiveRoute);
