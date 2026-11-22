@@ -197,10 +197,24 @@ try {
     // USGS access can fail or be CORS-blocked: never turn a failed fetch into synthetic numbers.
     await page.locator(".ground-stations button[aria-pressed='true']").waitFor();
     // Deterministic archive fixture exercises actual UI/chart wiring without assuming GFZ CORS.
-    await page.route("https://kp.gfz.de/app/json/**", async route => {
-      const start = new URL(route.request().url()).searchParams.get("start")?.slice(0,10);
-      await route.fulfill({ status:200, contentType:"application/json", headers:{"access-control-allow-origin":"*"},
-        body: JSON.stringify({ datetime:[start+"T00:00:00Z",start+"T06:00:00Z"],Kp:[5,8],status:["def","def"] }) });
+    const archiveRoute = u => u.pathname.includes("/data/event-kp/") && u.pathname.endsWith(".json");
+    await page.route(archiveRoute, async route => {
+      const id = new URL(route.request().url()).pathname.split("/").at(-1)?.replace(".json","");
+      const dates = id === "may-2024" ? ["2024-05-08","2024-05-14"] :
+                    id === "quebec-1989" ? ["1989-03-06","1989-03-15"] : null;
+      if (!dates) throw new Error("Unrecognized archived event fixture: "+id);
+      const [start,end] = dates;
+      const begin = Date.parse(start+"T00:00:00Z");
+      const count = (Date.parse(end+"T00:00:00Z")+86400000-begin)/10800000;
+      const readings = Array.from({length:count},(_,i)=>i===1?null:{
+        utc:new Date(begin+i*10800000).toISOString().replace(".000Z","Z"),kp:i%8
+      }).filter(Boolean);
+      const q = new URLSearchParams({start:start+"T00:00:00Z",end:end+"T23:59:59Z",index:"Kp",status:"def"});
+      const receipt = {schemaVersion:1,eventId:id,source:"GFZ definitive planetary Kp",
+        sourceUrl:"https://kp.gfz.de/app/json/?"+q.toString(),license:"CC BY 4.0",
+        accessedAtUtc:"2026-11-22T13:59:54Z",timeBasis:"UTC start of three-hour Kp interval",
+        expectedBins:count,readings};
+      await route.fulfill({status:200,contentType:"application/json",body:JSON.stringify(receipt)});
     });
     const omniDataRoute = u => u.hostname === "cdaweb.gsfc.nasa.gov" && u.pathname === "/hapi/data";
     await page.route(omniDataRoute, async route => {
@@ -217,7 +231,7 @@ try {
     await page.getByRole("tab", { name: /Major events · Sun/i }).click();
     await page.getByRole("heading", { name: /major event replay/i }).waitFor();
     await page.getByRole("heading", { name: /observed planetary Kp/i }).waitFor();
-    await page.getByText(/coverage 2\/56 bins/).waitFor();
+    await page.getByText(/coverage 55\/56 bins/).waitFor();
     await page.getByText(/Valid 5-minute bins: Bz 2\/2016; speed 2\/2016/).waitFor();
     if (await page.getByRole("slider", { name: /Historical UTC observation time/i }).inputValue() !== String(Date.parse("2024-05-08T12:00:00Z"))) throw new Error("Milestone did not initialize the shared cursor");
     await page.getByText(/GSM Bz:.*-17\.5 nT/).waitFor();
@@ -226,8 +240,8 @@ try {
     await page.getByRole("button", { name: /Later/i }).click();
     await page.getByText(/Selected milestone date:.*2024-05-10/).waitFor();
     await page.getByRole("combobox", { name: /Choose major space weather event/i }).selectOption("quebec-1989");
-    await page.getByText(/coverage 2\/80 bins/).waitFor();
-    await page.unroute("https://kp.gfz.de/app/json/**");
+    await page.getByText(/coverage 79\/80 bins/).waitFor();
+    await page.unroute(archiveRoute);
     await page.unroute(omniDataRoute);
     await closeOverlay(page);
   });
