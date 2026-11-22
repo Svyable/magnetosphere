@@ -269,9 +269,14 @@ try {
       "https://epic.gsfc.nasa.gov/api/natural",
       "https://kp.gfz.de/app/json/?start=2024-05-10T00:00:00Z&end=2024-05-11T23:59:59Z&index=Kp&status=def",
       "https://cdaweb.gsfc.nasa.gov/hapi/info?id=OMNI_HRO2_5MIN",
+      "https://cdaweb.gsfc.nasa.gov/hapi/data?id=OMNI_HRO2_5MIN&parameters=BZ_GSM,flow_speed&time.min=2024-05-10T00%3A00%3A00Z&time.max=2024-05-10T01%3A00%3A00Z&format=json",
     ];
     return Promise.all(urls.map(async url => {
-      try { const r = await fetch(url, { signal: AbortSignal.timeout(8000) }); return { url, browserReached: r.ok, status: r.status }; }
+      try { const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+        if (!url.includes("/hapi/data")) return { url, browserReached:r.ok, status:r.status };
+        const data = r.ok ? await r.json() : null;
+        return {url,browserReached:r.ok,status:r.status,hasTimeAndVariables:Array.isArray(data?.parameters)&&data.parameters.some(p=>p.name==="BZ_GSM")&&data.parameters.some(p=>p.name==="flow_speed"),rowCount:Array.isArray(data?.data)?data.data.length:0};
+      }
       catch (e) { return { url, browserReached: false, error: String(e) }; }
     }));
   });
