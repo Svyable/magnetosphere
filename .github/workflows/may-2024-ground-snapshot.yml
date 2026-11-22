@@ -19,7 +19,7 @@ jobs:
           persist-credentials: false
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
-      - name: Verify and export four definitive USGS H station receipts
+      - name: Verify and export three quasi-definitive USGS H station receipts
         run: bun scripts/snapshot-may-2024-ground.mjs
       - name: Archive source-verified USGS data
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
