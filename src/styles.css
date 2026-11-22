@@ -889,3 +889,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px soli
 .replay-ground-numbers strong{font-size:.95rem;overflow-wrap:anywhere}
 .replay-ground-sources{display:flex;flex-wrap:wrap;gap:.4rem 1.2rem;font-size:.8rem}
 @media(max-width:600px){.replay-ground{padding:.75rem}.replay-ground-plot svg{height:5.5rem}.replay-ground-stations .btn{font-size:.76rem}}
+
+.replay-ground-context{border-top:1px solid var(--border);margin:1rem 0;padding:1rem .2rem .35rem}
+.replay-ground-context strong{font-size:.9rem}
+.replay-ground-context p{font-size:.81rem;max-width:76ch}
