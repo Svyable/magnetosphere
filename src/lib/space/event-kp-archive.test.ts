@@ -26,7 +26,7 @@ describe("verified static GFZ Kp event receipts",()=>{
    const expected=historicalKpSlots(start,end,[]).length;
    expect(archive.rows).toHaveLength(expected);
    expect(archive.sourceUrl).toBe(historicalKpUrl(start,end));
-   expect(new Date(archive.accessedAtUtc).toISOString()).toMatch(/^2026-/);
+   expect(Date.parse(archive.accessedAtUtc)).toBeGreaterThan(Date.parse(end+"T00:00:00Z"));
    total+=archive.rows.length;
   }
   expect(total).toBe(376);
