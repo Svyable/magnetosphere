@@ -202,7 +202,8 @@ try {
       await route.fulfill({ status:200, contentType:"application/json", headers:{"access-control-allow-origin":"*"},
         body: JSON.stringify({ datetime:[start+"T00:00:00Z",start+"T06:00:00Z"],Kp:[5,8],status:["def","def"] }) });
     });
-    await page.route(/cdaweb\\.gsfc\\.nasa\\.gov\\/hapi\\/data/, async route => {
+    const omniDataRoute = u => u.hostname === "cdaweb.gsfc.nasa.gov" && u.pathname === "/hapi/data";
+    await page.route(omniDataRoute, async route => {
       const params = new URL(route.request().url()).searchParams;
       const start = params.get("time.min")?.slice(0,10);
       if (!start) throw new Error("Missing NASA HAPI date range");
@@ -227,7 +228,7 @@ try {
     await page.getByRole("combobox", { name: /Choose major space weather event/i }).selectOption("quebec-1989");
     await page.getByText(/coverage 2\/80 bins/).waitFor();
     await page.unroute("https://kp.gfz.de/app/json/**");
-    await page.unroute(/cdaweb\\.gsfc\\.nasa\\.gov\\/hapi\\/data/);
+    await page.unroute(omniDataRoute);
     await closeOverlay(page);
   });
   await check("Forecast receipts never claim accuracy without archived, later observed NOAA pairs", async () => {
