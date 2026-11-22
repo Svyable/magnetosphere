@@ -250,6 +250,7 @@ try {
       "https://services.swpc.noaa.gov/json/rtsw/rtsw_wind_1m.json",
       "https://services.swpc.noaa.gov/json/rtsw/rtsw_mag_1m.json",
       "https://epic.gsfc.nasa.gov/api/natural",
+      "https://kp.gfz.de/app/json/?start=2024-05-10T00:00:00Z&end=2024-05-11T23:59:59Z&index=Kp&status=def",
     ];
     return Promise.all(urls.map(async url => {
       try { const r = await fetch(url, { signal: AbortSignal.timeout(8000) }); return { url, browserReached: r.ok, status: r.status }; }
