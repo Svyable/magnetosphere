@@ -218,7 +218,7 @@ try {
     await page.getByRole("heading", { name: /observed planetary Kp/i }).waitFor();
     await page.getByText(/coverage 2\/56 bins/).waitFor();
     await page.getByText(/Valid 5-minute bins: Bz 2\/2016; speed 2\/2016/).waitFor();
-    await page.getByRole("slider", { name: /Historical UTC observation time/i }).fill(String(Date.parse("2024-05-08T12:00:00Z")));
+    if (await page.getByRole("slider", { name: /Historical UTC observation time/i }).inputValue() !== String(Date.parse("2024-05-08T12:00:00Z"))) throw new Error("Milestone did not initialize the shared cursor");
     await page.getByText(/GSM Bz:.*-17\.5 nT/).waitFor();
     await page.getByText(/speed:.*650 km\/s/).waitFor();
     await page.locator(".replay-kp-bar.missing").first().waitFor();
