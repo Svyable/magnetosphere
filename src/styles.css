@@ -843,3 +843,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px soli
 .replay-kp-bar{flex:1 1 0;min-width:1px;background:#55a9bd;border-radius:2px 2px 0 0}
 .replay-kp-bar.storm{background:#ed985c}
 .replay-kp-foot{font-size:.82rem}
+
+/* A missing 3-hour Kp bin is an empty lane, never an implied zero. */
+.replay-kp-bar.missing{background:repeating-linear-gradient(135deg,transparent 0,transparent 3px,color-mix(in srgb,var(--border) 60%,transparent) 3px,color-mix(in srgb,var(--border) 60%,transparent) 5px);opacity:.6}
+.replay-kp-bar.replay-day{outline:2px solid color-mix(in srgb,var(--foreground) 65%,transparent);outline-offset:-1px}
