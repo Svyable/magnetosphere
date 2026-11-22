@@ -6,8 +6,8 @@ const start=Date.parse(MAY_GROUND_START);
 function sample(){return {schemaVersion:1,eventId:"may-2024",station:"BOU",sourceUrl:usgsHistoricalUrl("BOU"),source:"U.S. Geological Survey Geomagnetism Program",accessedAtUtc:"2026-11-22T21:35:03Z",start:MAY_GROUND_START,endExclusive:MAY_GROUND_END,element:"H",unit:"nT",processingLevel:"quasi-definitive",originalCadenceSeconds:60,retainedCadenceSeconds:300,timeBasis:"UTC sample timestamps",expectedSamples:MAY_GROUND_EXPECTED,rawCount:4320,samples:Array.from({length:MAY_GROUND_EXPECTED},(_,i)=>({utc:new Date(start+i*300000).toISOString().replace(".000Z","Z"),h:21000+i/10}))};}
 describe("source-verified May 2024 USGS station H histories",()=>{
  it("validates actual committed receipts and preserves source coverage",()=>{
-  const counts:Record<string,number>={BOU:864,FRD:844,SIT:864};
-  const raw:Record<string,number>={BOU:4320,FRD:4219,SIT:4317};
+  const counts={BOU:864,FRD:844,SIT:864} as const;
+  const raw={BOU:4320,FRD:4219,SIT:4317} as const;
   expect(MAY_GROUND_STATIONS).toHaveLength(3);
   for(const station of MAY_GROUND_STATIONS){
    const data=JSON.parse(readFileSync(resolve(process.cwd(),"public/data/may-2024-ground",station.code+".json"),"utf8"));
