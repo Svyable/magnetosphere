@@ -44,7 +44,7 @@ export default function May2024Ground({cursor}:{cursor:number}){
  const source=MAY_GROUND_STATIONS.find(s=>s.code===station)!;
  return <section className="replay-ground" aria-label="Historical USGS ground magnetometer observations">
   <h4>On the ground · USGS magnetic observatories</h4>
-  <p>Three days during the May 2024 storm, from <strong>May 10 to May 13 UTC</strong>. Real USGS <strong>quasi-definitive horizontal magnetic intensity (H)</strong> recorded at four observatories. A change at a single location is not the global Kp index, a G-scale storm rating, or a measurement of electrical grid current.</p>
+  <p>Three days during the May 2024 storm, from <strong>May 10 to May 13 UTC</strong>. Real USGS <strong>quasi-definitive horizontal magnetic intensity (H)</strong> recorded at three observatories. A change at a single location is not the global Kp index, a G-scale storm rating, or a measurement of electrical grid current.</p>
   <div className="replay-ground-stations" role="group" aria-label="Choose a USGS historical ground observatory">
    {MAY_GROUND_STATIONS.map(s=><button type="button" key={s.code} className={"btn"+(station===s.code?" active":"")} aria-pressed={station===s.code} onClick={()=>setStation(s.code)}>{s.name} · {s.code}</button>)}
   </div>
@@ -68,7 +68,7 @@ export default function May2024Ground({cursor}:{cursor:number}){
     </div>
     <p className="replay-kp-foot">Archive coverage: {samples.length}/{MAY_GROUND_EXPECTED} actual 5-minute samples, drawn from {rawCount}/4320 valid 1-minute readings. Source retrieved {accessed.replace("T"," ").slice(0,16)} UTC. No gaps filled.</p>
    </>}
-  <p className="mlab-inference"><strong>Read this correctly:</strong> ΔH = measured H minus the <em>median of available H during the first six UTC hours of May 10</em> at this observatory. This is a consistent local display reference, <strong>not</strong> a quiet-day baseline or a calibrated geomagnetically induced current estimate. Four stations occupy different latitudes and local time zones, so their amplitudes should not be ranked as universal storm severity.</p>
+  <p className="mlab-inference"><strong>Read this correctly:</strong> ΔH = measured H minus the <em>median of available H during the first six UTC hours of May 10</em> at this observatory. This is a consistent local display reference, <strong>not</strong> a quiet-day baseline or a calibrated geomagnetically induced current estimate. These stations occupy different latitudes and local time zones, so their amplitudes should not be ranked as universal storm severity.</p>
   <div className="replay-ground-sources">
    <a href={"https://geomag.usgs.gov/ws/data/?"+new URLSearchParams({id:station,elements:"H",sampling_period:"60",type:"quasi-definitive",format:"json",starttime:MAY_GROUND_START,endtime:MAY_GROUND_END})} target="_blank" rel="noreferrer">Open original USGS definitive H request ↗</a>
    <a href="https://www.usgs.gov/programs/geomagnetism/science/may-10-2024-magnetic-disturbance-peak-dst-351-nt" target="_blank" rel="noreferrer">USGS May 2024 storm account ↗</a>
