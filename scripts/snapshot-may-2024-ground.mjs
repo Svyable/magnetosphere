@@ -21,6 +21,7 @@ for(const s of MAY_GROUND_STATIONS){
  }
  if(!body)throw new Error(s.code+": unable to retrieve definitive H ("+String(lastError)+")");
  const data=parseUsGsHistoricalH(body);
+ console.log("USGS_PROBE "+s.code+" "+JSON.stringify({metadata:body.metadata,firstTimes:body.times?.slice(0,3),channels:body.values?.map(v=>({meta:v.metadata,first:v.values?.slice(0,4),nonNull:v.values?.filter(x=>typeof x==="number"&&x>0&&x<80000).length})),valid:data.rawCount,retained:data.samples.length}));
  const coverage=data.samples.length/MAY_GROUND_EXPECTED;
  if(coverage<.75||data.rawCount/data.expectedRaw<.75)throw new Error(s.code+": inadequate USGS coverage "+data.samples.length+"/"+MAY_GROUND_EXPECTED);
  if(groundReference(data.samples)===null)throw new Error(s.code+": first six-hour reference unavailable");
