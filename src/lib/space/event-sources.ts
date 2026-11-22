@@ -14,7 +14,6 @@ export const EVENT_DATASETS:Record<string,string[]>={
  "quebec-1989":["omni-hour","omni-high","gfz-kp","usgs-ground","isgi"],
  "halloween-2003":["omni-hour","omni-high","gfz-kp","usgs-ground","ncei-flare","isgi"],
  "may-2024":["omni-hour","omni-high","gfz-kp","usgs-ground","ncei-swpc","isgi"],
- "carrington-1859":["isgi"],
  "bastille-2000":["omni-hour","omni-high","gfz-kp","usgs-ground","ncei-flare","isgi"],
  "st-patricks-2015":["omni-hour","omni-high","gfz-kp","usgs-ground","ncei-flare","isgi"],
  "feb-2022":["omni-hour","omni-high","gfz-kp","usgs-ground","ncei-swpc","isgi"]
