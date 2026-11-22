@@ -4,6 +4,7 @@ import {REPLAY_EVENTS,replayPosition} from "@/lib/space/replay";
 import {archivesForEvent} from "@/lib/space/event-sources";
 import HistoricalKpChart from "./HistoricalKpChart";
 import HistoricalOmniChart from "./HistoricalOmniChart";
+import May2024Ground from "./May2024Ground";
 const PHASES={solar:"SUN / ERUPTION",transit:"INTERPLANETARY TRANSIT",earth:"EARTH / MAGNETOSPHERE",impact:"OBSERVED IMPACT"} as const;
 export default function EventReplay(){
  const [eventId,setEventId]=useState(REPLAY_EVENTS[2]!.id);
@@ -42,10 +43,11 @@ export default function EventReplay(){
    <label htmlFor="replay-utc-cursor"><strong>Historical observation cursor</strong> · {new Date(cursor).toISOString().slice(0,16).replace("T"," ")} UTC</label>
    <input id="replay-utc-cursor" type="range" min={from} max={until-3_600_000} step={3_600_000} value={cursor} onChange={e=>setCursor(Number(e.target.value))} aria-label="Historical UTC observation time"/>
    <div className="replay-clock-ends"><span>{dates[0]} UTC</span><span>{dates[1]} UTC</span></div>
-   <p>Selecting a milestone sets this cursor to <strong>noon UTC</strong> on that date; this is a navigation convention, not a claimed arrival time. Drag to compare actual NASA OMNI and GFZ readings at the same UTC time.</p>
+   <p>Selecting a milestone sets this cursor to <strong>noon UTC</strong> on that date; this is a navigation convention, not a claimed arrival time. Drag to compare actual NASA OMNI and GFZ readings at the same UTC time; for May 2024, also inspect USGS observations at four ground stations.</p>
   </section>
   <HistoricalOmniChart key={event.id+"-omni"} eventId={event.id} cursor={cursor}/>
   <HistoricalKpChart key={event.id} eventId={event.id} selectedDate={stage.at} cursor={cursor}/>
+  {event.id==="may-2024"&&<May2024Ground cursor={cursor}/> }
   <section className="replay-archives" aria-label="Historical event source data archives">
    <h4>Find the source data</h4>
    <p>These are official archive entry points with potentially relevant measurements, <strong>not</strong> preloaded or verified event-specific records. Select the historical interval in each archive. Instrument availability and processing levels differ by year.</p>
