@@ -817,3 +817,21 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px soli
 .ground-method strong{color:var(--foreground);}
 @media(max-width:860px){.mlab-tabs{grid-template-columns:repeat(3,minmax(0,1fr));}.ground-stations{grid-template-columns:repeat(2,minmax(0,1fr));}}
 @media(max-width:520px){.mlab-tabs{grid-template-columns:repeat(2,minmax(0,1fr));}.ground-kpis{grid-template-columns:1fr;}.ground-chart-heading{flex-direction:column;}}
+
+
+/* Historical event replay: stage positions encode day-level chronology, never telemetry. */
+.event-replay .replay-picker{display:flex;flex-direction:column;gap:.4rem;max-width:32rem;font-weight:600}
+.event-replay select{background:var(--card);color:var(--foreground);border:1px solid var(--border);border-radius:.4rem;padding:.65rem;max-width:100%}
+.replay-summary{max-width:68ch}
+.replay-track{height:4rem;position:relative;margin:1.4rem .8rem;background:linear-gradient(to right,transparent 6%,var(--border) 6%,var(--border) 94%,transparent 94%) center/100% 2px no-repeat}
+.replay-node{position:absolute;top:50%;transform:translate(-50%,-50%);border:2px solid var(--border);border-radius:50%;background:var(--card);color:var(--foreground);width:2.2rem;height:2.2rem;cursor:pointer}
+.replay-node.selected{border-color:var(--sun);box-shadow:0 0 0 3px color-mix(in srgb,var(--sun) 25%,transparent)}
+.replay-nav{display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap;font-size:.8rem}
+.replay-detail{margin:1rem 0;padding:1.1rem;border-left:3px solid var(--sun);background:var(--card);border-radius:.4rem}
+.replay-detail small,.replay-entry small{font-family:var(--font-mono);color:var(--muted-foreground)}
+.replay-detail h4{font-size:1.25rem;margin:.4rem 0}
+.replay-detail a{overflow-wrap:anywhere}
+.replay-all{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,12rem),1fr));gap:.5rem}
+.replay-entry{text-align:left;display:flex;flex-direction:column;gap:.3rem;padding:.65rem;background:var(--card);border:1px solid var(--border);border-radius:.35rem;color:var(--foreground);cursor:pointer}
+.replay-entry.active{border-color:var(--sun)}
+.replay-entry time{font-family:var(--font-mono);font-size:.75rem}
