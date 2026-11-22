@@ -1,10 +1,13 @@
 import {describe,it,expect} from "vitest";
 import {REPLAY_EVENTS,eventById,replayPosition} from "./replay";
+import {archivesForEvent} from "./event-sources";
 describe("curated historical event replay",()=>{
  it("contains sourced, ordered, UTC-date stages",()=>{
-  expect(REPLAY_EVENTS.length).toBeGreaterThanOrEqual(3);
+  expect(REPLAY_EVENTS.length).toBeGreaterThanOrEqual(6);
   for(const event of REPLAY_EVENTS){
    expect(event.stages.length).toBeGreaterThanOrEqual(3);
+   expect(archivesForEvent(event.id).length).toBeGreaterThanOrEqual(3);
+   expect(archivesForEvent(event.id).every(a=>a.url.startsWith("https://"))).toBe(true);
    const times=event.stages.map(s=>Date.parse(s.at+"T12:00:00Z"));
    expect(times.every(Number.isFinite)).toBe(true);
    expect(times).toEqual([...times].sort((a,b)=>a-b));
