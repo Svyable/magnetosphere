@@ -325,6 +325,7 @@ try {
       await cast.locator('#scene-wrap[data-globe-ready="true"]').waitFor({timeout:30_000});
       await cast.getByText("NOAA INPUTS CURRENT").waitFor({timeout:20_000});
       await cast.getByRole("heading",{name:/Earth is inside a magnetic ocean/i}).waitFor();
+      await cast.getByText("VIEW / EARTH").waitFor();
       await cast.getByRole("heading",{name:/MAGNETOSPHERE/i}).count(); // wordmark is visual text, not a heading
       const readings=cast.locator(".broadcast-reading");
       if(await readings.count()!==3)throw new Error("Broadcast telemetry panels missing");
@@ -335,6 +336,8 @@ try {
       await cast.screenshot({path:out+"/broadcast-1920x1080.png",fullPage:true});
       const bounds=await cast.locator(".broadcast-screen").boundingBox();
       if(!bounds||Math.abs(bounds.width-1920)>2||Math.abs(bounds.height-1080)>2)throw new Error("Broadcast source not full-bleed 1920x1080");
+      await cast.goto(new URL("?broadcast=1&shot=global&motion=off",url).toString(),{waitUntil:"domcontentloaded",timeout:35_000});
+      await cast.getByText("VIEW / GLOBAL").waitFor({timeout:20_000});
       await cast.goto(new URL("?broadcast=1&shot=tail&motion=off",url).toString(),{waitUntil:"domcontentloaded",timeout:35_000});
       await cast.getByText("VIEW / TAIL").waitFor({timeout:20_000});
     } finally {await cast.close();}
@@ -353,6 +356,7 @@ try {
       await cast.getByText(/REFERENCE MAGNETOSPHERE/).waitFor();
       const noData=await cast.locator(".broadcast-no-reading").count();
       if(noData!==3)throw new Error("Broadcast displayed stale values as current: "+noData+" blocked / 3");
+      await cast.locator('#scene-wrap[data-globe-ready="true"]').waitFor({timeout:30_000});
       await cast.screenshot({path:out+"/broadcast-stale-source.png",fullPage:true});
     }finally{await cast.close();}
   });
