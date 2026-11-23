@@ -416,6 +416,7 @@ export default function MissionApp() {
           <span className={live ? "mode mode-live" : "mode mode-hist"}>{live ? "LIVE" : "HISTORICAL"}</span>
           <span>L1 feed <StatusDot s={overall} /></span>
           <span className="hide-sm topbar-refreshed">Refreshed {lastRefresh ? fmtUtc(lastRefresh) : "—"}</span>
+          <a className="btn-ghost" href={import.meta.env.BASE_URL+"?broadcast=1"} title="OBS-ready 16:9 always-on space-weather broadcast">◉ Broadcast</a>
           <button className="btn-ghost forecast-topbar" onClick={() => setForecastOpen(true)}>↗ Incoming & future</button>
           <button className="btn-ghost mlab-topbar" onClick={() => setMissionLabOpen(true)}>⌖ Mission Lab</button>
           <button className="btn-ghost" onClick={() => setGalleryOpen(true)}>◉ Eyes on Earth</button>

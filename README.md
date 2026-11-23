@@ -220,3 +220,35 @@ USGS initially returned **no definitive readings** for Boulder during this inter
 The displayed **ΔH** is measured H minus the median of the earliest six hours of the *same station's* source record, not a physical zero field, regional quiet-day reference, planetary Kp, Dst, or a measurement of geomagnetically induced current. A five-minute sample here is a **real observed sample** picked from the one-minute series, **not a five-minute average or interpolation**. NASA OMNI, GFZ Kp, and USGS H stay distinct datasets with different physical meanings and time resolution.
 
 Evidence/context: [USGS May 10, 2024 magnetic disturbance](https://www.usgs.gov/programs/geomagnetism/science/may-10-2024-magnetic-disturbance-peak-dst-351-nt); [USGS official data service](https://www.usgs.gov/tools/web-service-geomagnetism-data); [GIC-related observations during the May 2024 storm (Space Weather, 2026)](https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2025SW004758).
+
+
+## 24/7 Space Weather Broadcast · OBS browser source
+
+The observatory now has a **dedicated television-safe presentation mode** for an always-on YouTube stream, digital signage, or a live event backdrop. It runs at the existing site URL and uses the *same official NOAA data providers* without exposing the full interactive dashboard's controls.
+
+**Capture URL:** `https://svyable.github.io/magnetosphere/?broadcast=1`
+
+**OBS setup:** Add a Browser Source, paste the URL, set **width 1920 / height 1080**, choose **30 fps** (60 fps only after confirming GPU stability), then use a standard 1920×1080 canvas. The broadcast mode contains no audio track or copyrighted music; add independently licensed or original sound in OBS if desired. **The page is not itself a YouTube livestream encoder, scheduler, audio engine, or streaming host.** A continuously running OBS/encoder and stable machine/network connection are still required.
+
+The broadcast is laid out for legibility at video resolution rather than for mouse interaction: a slowly orbiting 3D magnetosphere with live NOAA L1 wind speed, GSM Bz, planetary Kp, measurement timestamps and four-hour trend traces; a UTC clock; rotating explanatory science cards; aurora nowcast status; an explicit empirical-model or reference-geometry label; and a direct invitation to explore the full interactive observatory. It is deliberately not an alarm feed, a weather-warning replacement, or a claim that the schematic field lines were measured.
+
+Useful source variants (all stay on the same publicly hosted root URL):
+
+| Query | Production use |
+| --- | --- |
+| `?broadcast=1` | Primary widescreen, slowly rotating Earth close-up |
+| `?broadcast=1&shot=global` | Wide magnetopause and Earth-in-context view for a second OBS Browser Source |
+| `?broadcast=1&shot=tail` | Magnetotail overview for a second OBS Browser Source |
+| `?broadcast=1&shot=arctic` | High-latitude view (model/reference context) |
+| `?broadcast=1&motion=off` | Still-camera / reduced-motion broadcast |
+| `?broadcast=1&quality=low` | Lower rendering cost for constrained GPUs |
+| `?broadcast=1&safe=1` | Temporary title-safe boundary overlay for crop/OBS calibration; **remove before going live** |
+
+**24/7 safety/operating notes:**
+
+- Wind and magnetic-field readings are reported only if their NOAA source timestamps are within ten minutes of the UTC clock; Kp uses an age window of six hours because it is a three-hour index. Missing or stale data are **not** replaced by the previous number. A source-status pill and each metric's age remain visible.
+- The Shue magnetopause uses valid L1 measurements whose estimated propagation has arrived. Without timely drivers it displays a **labeled reference model** rather than pretending the boundary is observed in real time.
+- NOAA OVATION is a **probability nowcast**, not a photograph of auroras; if unavailable, the globe layer is hidden and the source state says so.
+- Story cards rotate every 32 seconds without audio or alarms. A southward Bz or storm-level Kp may change the relevant card only when the underlying reading is current; a Kp value is **not** represented as an issued SWPC alert.
+- Use an OBS/OS watchdog, uninterrupted power where practical, and an external encoder health check. This view is designed to degrade honestly when NOAA data fail, not to guarantee uninterrupted streaming or automatically recover a crashed browser/GPU process.
+- Use the browser test screenshots in the GitHub Actions `magnetosphere-browser-smoke` artifact to check 1920×1080 framing and stale-source behavior. The broadcast's graphical orbit is illustrative and its particle drift is **not scaled physical travel**.
