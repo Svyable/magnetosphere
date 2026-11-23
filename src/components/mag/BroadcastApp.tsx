@@ -1,5 +1,7 @@
 import {lazy,Suspense,useEffect,useMemo,useState} from "react";
-import {useKp,useMag,useOvation,useWind} from "@/lib/space/data";
+import {useKp,useMag,useOvation,useWind,useSwpcAlerts} from "@/lib/space/data";
+import {OPS_URLS} from "@/lib/space/ops";
+import {issuedBroadcastBulletin} from "@/lib/space/broadcast-bulletin";
 import {broadcastSourceState,broadcastStory,canShowMeasurement,observationAge} from "@/lib/space/broadcast";
 import {dynamicPressure,freshness,joinL1,kpLabel,laggedSample,propagationSeconds,shue,type Freshness,type L1Sample} from "@/lib/space/model";
 import type {LayerKey,Preset} from "./Scene";
@@ -42,7 +44,7 @@ function Reading({label,value,unit,age,source,status,children}:{label:string;val
  </section>;
 }
 export default function BroadcastApp(){
- const wind=useWind(),mag=useMag(),kp=useKp(),ov=useOvation();
+ const wind=useWind(),mag=useMag(),kp=useKp(),ov=useOvation(),alerts=useSwpcAlerts();
  const [now,setNow]=useState(()=>Date.now());
  const [storyStep,setStoryStep]=useState(0);
  const [reducedMotion,setReducedMotion]=useState(false);
@@ -80,6 +82,8 @@ export default function BroadcastApp(){
  const story=broadcastStory(storyStep,dataBz,dataKp);
  const streamLabel=sourceState==="current"?"NOAA INPUTS CURRENT":sourceState==="partial"?"PARTIAL NOAA INPUTS":"NOAA INPUTS UNAVAILABLE";
  const kpSummary=dataKp!==null?kpLabel(dataKp):"Kp unavailable";
+ const bulletin=issuedBroadcastBulletin(alerts.isError?null:alerts.data??null,now,alerts.dataUpdatedAt||null);
+ const nominalTransit=canShowMeasurement(wState,windAt?.v??null)?Math.round(propagationSeconds(windAt!.v)/60):null;
  return <main className={"broadcast-screen"+(safetyGuide?" broadcast-safe-guide":"")} aria-label="Magnetosphere continuous live broadcast view">
   <div className="broadcast-scene" aria-hidden="true">
    <Suspense fallback={<div className="broadcast-scene-loading">INITIALIZING EARTH OBSERVATORY</div>}>
@@ -95,6 +99,11 @@ export default function BroadcastApp(){
    <div className="broadcast-identity"><div className="broadcast-symbol" aria-hidden="true">✳</div><div><div className="broadcast-wordmark">MAGNETOSPHERE</div><div className="broadcast-tagline">EARTH NOW <span> / SPACE WEATHER OBSERVATORY</span></div></div></div>
    <div className="broadcast-timebox"><span className={"broadcast-live-pill "+sourceState}><span className="broadcast-pulse" aria-hidden="true"/> {streamLabel}</span><Clock/></div>
   </header>
+  <a className={"broadcast-noaa-bulletin type-"+bulletin.kind} href={OPS_URLS.alertsPage} target="_blank" rel="noreferrer" aria-label={"Official NOAA issued products: "+bulletin.heading+". "+bulletin.message}>
+   <span className="broadcast-bulletin-head">{bulletin.heading}</span>
+   <span className="broadcast-bulletin-message">{bulletin.message}</span>
+   <span className="broadcast-bulletin-stamp">{bulletin.issuance} · NOAA SWPC ↗</span>
+  </a>
   <div className="broadcast-scene-caption"><span className="broadcast-scene-index">VIEW / {shot.toUpperCase()}</span><span className="broadcast-scene-caption-line">{modelInput?"Shue magnetopause · propagated L1 drivers":"REFERENCE MAGNETOSPHERE · CURRENT DRIVERS UNAVAILABLE"}</span></div>
   <aside className="broadcast-left" aria-label="Live NOAA space weather measurements">
    <div className="broadcast-section-title"><span>01 / LIVE TELEMETRY</span><span>NOAA SWPC</span></div>
@@ -110,7 +119,7 @@ export default function BroadcastApp(){
     status={kState} source="NOAA · 3-hour index" age={observationAge(now,kpAt?.t??null)}>
     <p className="broadcast-kp-context">{kpSummary}</p>
    </Reading>
-   <div className="broadcast-model-chip"><span>MODELLED DAYSIDE BOUNDARY</span><strong>{modelInput?model.r0.toFixed(1)+" Rᴇ":"REFERENCE"}</strong><small>Shue 1998 · not measured</small></div>
+   <div className="broadcast-model-chip"><span>MODELLED DAYSIDE BOUNDARY</span><strong>{modelInput?model.r0.toFixed(1)+" Rᴇ":"REFERENCE"}</strong><small>Shue 1998 · not measured</small>{nominalTransit!==null&&<small className="broadcast-transit">L1 → Earth nominal transit: ≈{nominalTransit} min at measured wind speed; uncertain</small>}</div>
   </aside>
   <aside className="broadcast-right" aria-label="Space weather science explainer">
    <div className="broadcast-section-title"><span>02 / THE BIG PICTURE</span><span>FIELD NOTES</span></div>

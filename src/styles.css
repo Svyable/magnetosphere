@@ -1012,3 +1012,39 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px soli
 @keyframes broadcast-story-enter{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
 .broadcast-story{animation:broadcast-story-enter .8s ease-out both}
 @media(prefers-reduced-motion:reduce){.broadcast-story{animation:none}}
+
+
+/* Official NOAA-issued products are visually and semantically separate from the live L1 observations. */
+.broadcast-noaa-bulletin{position:absolute;z-index:5;right:var(--bc-edge);top:12.2%;width:clamp(260px,22vw,420px);
+ display:flex;flex-direction:column;gap:3px;min-width:0;max-height:66px;pointer-events:auto;
+ border-left:2px solid rgba(137,206,210,.47);padding:2px 12px;text-decoration:none;
+ background:linear-gradient(90deg,rgba(5,21,30,.7),transparent);
+ font-family:"IBM Plex Mono",monospace;letter-spacing:.045em;text-align:left;color:#c3dbe2}
+.broadcast-noaa-bulletin:hover,.broadcast-noaa-bulletin:focus-visible{border-color:#92e8de;outline:none;background:rgba(7,26,36,.8)}
+.broadcast-bulletin-head{font-size:clamp(10px,.72vw,14px);font-weight:600;letter-spacing:.07em;color:#b1dcdb;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.broadcast-bulletin-message{font-size:clamp(10px,.72vw,14px);white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.broadcast-bulletin-stamp{font-size:clamp(8px,.63vw,12px);color:#9cadba;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.broadcast-noaa-bulletin.type-warning{border-color:#f4c087}
+.broadcast-noaa-bulletin.type-warning .broadcast-bulletin-head{color:#ffe0b4}
+.broadcast-noaa-bulletin.type-watch{border-color:#bed3fb}
+.broadcast-noaa-bulletin.type-watch .broadcast-bulletin-head{color:#d1e1ff}
+.broadcast-noaa-bulletin.type-recent-alert{border-color:#ffd49d}
+.broadcast-noaa-bulletin.type-recent-alert .broadcast-bulletin-head{color:#f6d9b6}
+.broadcast-noaa-bulletin.type-offline{border-color:#b8a0a0}
+.broadcast-noaa-bulletin.type-offline .broadcast-bulletin-head{color:#dfb7ae}
+.broadcast-transit{color:#9bd7cb!important;line-height:1.45}
+@media(max-width:1170px) and (min-width:901px){
+ .broadcast-noaa-bulletin{width:28vw;top:12.6%}
+}
+@media(max-height:730px) and (min-width:901px){
+ .broadcast-noaa-bulletin{top:12.0%;max-height:54px;gap:2px;padding:0 8px}
+ .broadcast-bulletin-stamp{display:none}
+}
+@media(max-width:900px){
+ .broadcast-noaa-bulletin{position:relative;inset:auto;width:auto;max-height:none;margin:0 24px 10px;padding:10px 13px;
+ background:rgba(4,17,31,.82);white-space:normal}
+ .broadcast-bulletin-message,.broadcast-bulletin-stamp{white-space:normal}
+}
+
+/* Separate the official-products ribbon from the editorial heading at 1080p. */
+@media(min-height:731px) and (min-width:901px){.broadcast-right{top:20.5%}}
