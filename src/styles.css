@@ -901,7 +901,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px soli
    Static HUD elements remain title-safe at 1920x1080; the WebGL world drifts.
    ===================================================================== */
 .broadcast-screen{
- --bc-edge:clamp(28px,3.9vw,82px);--bc-cyan:#68eddf;--bc-amber:#f8bf7c;
+ --bc-edge:clamp(36px,5.2vw,110px);--bc-cyan:#68eddf;--bc-amber:#f8bf7c;
  position:fixed;inset:0;overflow:hidden;color:#e8f3f7;background:#030813;
  font-family:"Barlow",sans-serif;isolation:isolate;
 }
@@ -912,7 +912,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px soli
  linear-gradient(90deg,rgba(2,8,20,.85) 0%,rgba(2,8,20,.43) 20%,transparent 39%,transparent 62%,rgba(2,8,20,.44) 84%,rgba(2,8,20,.88) 100%),
  linear-gradient(0deg,rgba(2,8,20,.95),transparent 26%,transparent 74%,rgba(2,8,20,.83)),
  radial-gradient(ellipse 50% 55% at 50% 48%,transparent 0%,rgba(3,8,20,.25) 100%)}
-.broadcast-header{position:absolute;z-index:4;top:4.3%;left:var(--bc-edge);right:var(--bc-edge);display:flex;align-items:flex-start;justify-content:space-between;gap:30px;pointer-events:none}
+.broadcast-header{position:absolute;z-index:4;top:5.4%;left:var(--bc-edge);right:var(--bc-edge);display:flex;align-items:flex-start;justify-content:space-between;gap:30px;pointer-events:none}
 .broadcast-identity{display:flex;align-items:center;gap:clamp(11px,1vw,20px)}
 .broadcast-symbol{display:grid;place-items:center;width:clamp(40px,3.25vw,66px);height:clamp(40px,3.25vw,66px);font-size:clamp(26px,2.1vw,43px);color:var(--bc-cyan);border:1px solid rgba(104,237,223,.55);border-radius:50%;box-shadow:0 0 35px rgba(90,220,226,.16);text-shadow:0 0 20px rgba(104,237,223,.5)}
 .broadcast-wordmark{font-family:"Barlow Condensed",sans-serif;font-size:clamp(29px,2.75vw,55px);line-height:.95;font-weight:700;letter-spacing:.09em}
@@ -960,7 +960,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px soli
 .broadcast-aurora{margin-top:auto;border-top:1px solid rgba(148,208,217,.25);padding-top:14px;display:flex;flex-direction:column;gap:6px;font-family:"IBM Plex Mono",monospace;font-size:clamp(9px,.77vw,15px);letter-spacing:.09em;color:#a0c1c7}
 .broadcast-aurora strong{color:#addac4;font-weight:500;font-size:clamp(12px,.9vw,19px)}
 .broadcast-aurora small{color:#9eb2bb;font-size:clamp(9px,.65vw,13px);letter-spacing:0}
-.broadcast-bottom{position:absolute;z-index:4;left:var(--bc-edge);right:var(--bc-edge);bottom:4.2%;display:grid;grid-template-columns:1fr auto;align-items:center;gap:9px 30px;padding-top:clamp(12px,2vh,26px);border-top:1px solid rgba(141,208,228,.3);font-family:"IBM Plex Mono",monospace;font-size:clamp(9px,.77vw,15px);letter-spacing:.07em}
+.broadcast-bottom{position:absolute;z-index:4;left:var(--bc-edge);right:var(--bc-edge);bottom:5.4%;display:grid;grid-template-columns:1fr auto;align-items:center;gap:9px 30px;padding-top:clamp(12px,2vh,26px);border-top:1px solid rgba(141,208,228,.3);font-family:"IBM Plex Mono",monospace;font-size:clamp(9px,.77vw,15px);letter-spacing:.07em}
 .broadcast-bottom-status{display:flex;align-items:center;gap:10px;color:#c9e4e6}
 .broadcast-footer-dot{color:#8fe4d2;width:7px;height:7px}
 .broadcast-bottom-status>span:not(.broadcast-footer-dot){color:#638b9b}
