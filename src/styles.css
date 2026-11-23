@@ -1007,3 +1007,8 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px soli
 @media(prefers-reduced-motion:reduce){
  .broadcast-pulse,.broadcast-story,.broadcast-story-index{animation:none!important;transition:none!important}
 }
+
+
+@keyframes broadcast-story-enter{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+.broadcast-story{animation:broadcast-story-enter .8s ease-out both}
+@media(prefers-reduced-motion:reduce){.broadcast-story{animation:none}}
