@@ -236,8 +236,8 @@ Useful source variants (all stay on the same publicly hosted root URL):
 
 | Query | Production use |
 | --- | --- |
-| `?broadcast=1` | Primary widescreen, slow rotating global view |
-| `?broadcast=1&shot=earth` | Earth close-up for a second OBS Browser Source |
+| `?broadcast=1` | Primary widescreen, slowly rotating Earth close-up |
+| `?broadcast=1&shot=global` | Wide magnetopause and Earth-in-context view for a second OBS Browser Source |
 | `?broadcast=1&shot=tail` | Magnetotail overview for a second OBS Browser Source |
 | `?broadcast=1&shot=arctic` | High-latitude view (model/reference context) |
 | `?broadcast=1&motion=off` | Still-camera / reduced-motion broadcast |
