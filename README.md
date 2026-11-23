@@ -263,3 +263,14 @@ Priority is **current, non-cancelled, non-superseded warnings** within their val
 If the products fail to load or the last successful download is over 10 minutes old, the ribbon switches to **"NOAA ISSUED-PRODUCT FEED UNAVAILABLE"** and suppresses any prior alert text. Avoid placing automated weather-warning sounds, emergency sirens, or unrelated alerts on the OBS scene.
 
 The telemetry display also adds a **nominal L1-to-Earth transit time** (based on the live measured upstream wind speed). This value is a basic propagation estimate, **not a verified CME arrival time or a promise about when a geomagnetic storm will begin**. NOAA's official alerts page is the authoritative source for alerts and warnings.
+
+
+### Viewer-first 24/7 production: automated camera director and readable destination
+
+The default `?broadcast=1` source now automatically cycles **Earth close-up → full magnetopause → magnetotail → Arctic** every **six minutes**, with a brief soft-dark scene fade to hide abrupt WebGL camera cuts. All views show the *same current sources*, not historical reconstructions or synthetic changes in space weather. The rotating explanatory cards continue independently.
+
+A fixed `shot=earth|global|tail|arctic` query takes precedence for a camera that never cuts automatically. Operators can override this with `director=1`, or disable the tour explicitly with `director=0`. `motion=off` or an operating-system/browser reduced-motion preference disables the tour (and visual orbit) even if `director=1`; both are deliberate accessibility controls.
+
+The 16:9 overlay also prints **`svyable.github.io/magnetosphere`** inside the title-safe lower third. That matters because a YouTube viewer cannot click the website's link merely by seeing it in a video frame. Put the same URL in the eventual stream description and pinned comment if those are available.
+
+The automatic director is a **webpage feature**, not a YouTube stream switcher or recorder; an actual 24/7 broadcast still needs a long-running capture/encoder system.
