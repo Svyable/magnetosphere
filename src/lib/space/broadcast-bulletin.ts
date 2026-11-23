@@ -17,7 +17,7 @@ const issueStamp=(t:number)=>new Date(t).toISOString().slice(0,16).replace("T","
 export function issuedBroadcastBulletin(messages:SwpcMessage[]|null,now:number,dataUpdatedAt:number|null):BroadcastBulletin{
  if(!messages||!Number.isFinite(now)||dataUpdatedAt===null||!Number.isFinite(dataUpdatedAt)||
     dataUpdatedAt>now+60_000||now-dataUpdatedAt>MAX_FETCH_AGE){
-  return {kind:"offline",heading:"NOAA ISSUED-PRODUCT FEED UNAVAILABLE",message:"Current watch and warning status cannot be verified.",issuance:"Source check unavailable",productId:null};
+  return {kind:"offline",heading:"NOAA ISSUED-PRODUCT FEED UNAVAILABLE",message:"Watch/warning status cannot be verified.",issuance:"Source check unavailable",productId:null};
  }
  const state=opsStatus(messages,now);
  const warning=[...state.warnings].sort((a,b)=>((b.scale??"").localeCompare(a.scale??""))||b.issuedAt-a.issuedAt)[0];
@@ -38,6 +38,6 @@ export function issuedBroadcastBulletin(messages:SwpcMessage[]|null,now:number,d
   issuance:"Issued "+issueStamp(recent.issuedAt),productId:recent.code
  };
  return {kind:"none",heading:"NO CURRENT NOAA WATCH/WARNING IN FETCHED FEED",
-  message:"No current watch or warning identified in the returned products. Not an all-clear.",
+  message:"No current watch/warning found. Not an all-clear.",
   issuance:"Last checked "+issueStamp(dataUpdatedAt),productId:null};
 }
