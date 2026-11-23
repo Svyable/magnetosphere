@@ -323,7 +323,7 @@ try {
       const fmtSwpc = t => {const d=new Date(t);return d.getUTCFullYear()+" "+["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getUTCMonth()]+" "+String(d.getUTCDate()).padStart(2,"0")+" "+String(d.getUTCHours()).padStart(2,"0")+String(d.getUTCMinutes()).padStart(2,"0")+" UTC";};
       await cast.route(u=>u.hostname==="services.swpc.noaa.gov"&&u.pathname==="/products/alerts.json",async route=>{
         const now=Date.now();
-        const message="Space Weather Message Code: WARK05\\nSerial Number: 5001\\nIssue Time: "+fmtSwpc(now-15*60000)+"\\n\\nWARNING: Geomagnetic K-index of 5 expected\\nValid From: "+fmtSwpc(now-10*60000)+"\\nNow Valid Until: "+fmtSwpc(now+90*60000)+"\\nNOAA Scale: G1 - Minor";
+        const message="Space Weather Message Code: WARK05\nSerial Number: 5001\nIssue Time: "+fmtSwpc(now-15*60000)+"\n\nWARNING: Geomagnetic K-index of 5 expected\nValid From: "+fmtSwpc(now-10*60000)+"\nNow Valid Until: "+fmtSwpc(now+90*60000)+"\nNOAA Scale: G1 - Minor";
         await route.fulfill({status:200,contentType:"application/json",body:JSON.stringify([{product_id:"K05W",issue_datetime:new Date(now-15*60000).toISOString(),message}])});
       });
       await cast.goto(new URL("?broadcast=1",url).toString(),{waitUntil:"domcontentloaded",timeout:35_000});
