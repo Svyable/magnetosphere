@@ -4,13 +4,13 @@ import {OPS_URLS} from "@/lib/space/ops";
 import {issuedBroadcastBulletin} from "@/lib/space/broadcast-bulletin";
 import {broadcastSourceState,broadcastStory,canShowMeasurement,observationAge} from "@/lib/space/broadcast";
 import {dynamicPressure,freshness,joinL1,kpLabel,laggedSample,propagationSeconds,shue,type Freshness,type L1Sample} from "@/lib/space/model";
-import type {LayerKey,Preset} from "./Scene";
+import type {LayerKey} from "./Scene";
+import {DIRECTOR_INTERVAL_MS,isDirectorShot,nextDirectorShot,useAutoDirector,type DirectorShot} from "@/lib/space/broadcast-director";
 const Scene=lazy(()=>import("./Scene"));
 const LAYERS:Record<LayerKey,boolean>={saa:false,poles:false,mp:true,bs:true,fl:true,tail:true,wind:true,aurora:true,axes:false,geo:false,labels:false};
 const BASE=import.meta.env.BASE_URL;
 const fmt=(t:number)=>new Date(t).toISOString().slice(0,19).replace("T"," ")+" UTC";
 const safeValue=(n:number|null,state:Freshness,digits=0)=>canShowMeasurement(state,n)?n.toFixed(digits):"—";
-const STREAM_SHOTS:Preset[]=["global","earth","tail","arctic"];
 function Clock(){
  const [time,setTime]=useState(()=>Date.now());
  useEffect(()=>{const id=window.setInterval(()=>setTime(Date.now()),1000);return ()=>clearInterval(id);},[]);
@@ -50,10 +50,12 @@ export default function BroadcastApp(){
  const [reducedMotion,setReducedMotion]=useState(false);
  const [params]=useState(()=>new URLSearchParams(typeof window==="undefined"?"":window.location.search));
  const requestedShot=params.get("shot");
- const shot:Preset=STREAM_SHOTS.includes(requestedShot as Preset)?requestedShot as Preset:"earth";
+ const [shot,setShot]=useState<DirectorShot>(()=>isDirectorShot(requestedShot)?requestedShot:"earth");
+ const [cutting,setCutting]=useState(false);
  const motionDisabled=params.get("motion")==="off";
  const lowPower=params.get("quality")==="low";
  const safetyGuide=params.get("safe")==="1";
+ const autoDirector=useAutoDirector(params,reducedMotion);
  useEffect(()=>{
   const clock=window.setInterval(()=>setNow(Date.now()),15_000);
   const stories=window.setInterval(()=>setStoryStep(s=>(s+1)%6),32_000);
@@ -63,6 +65,23 @@ export default function BroadcastApp(){
   document.title="MAGNETOSPHERE · LIVE BROADCAST VIEW";
   return ()=>{window.clearInterval(clock);window.clearInterval(stories);q.removeEventListener("change",sync);};
  },[]);
+ // Stable editorial camera tour. Fade over the visual cut; data hooks keep updating.
+ // Reduced-motion and fixed-shot captures never change viewpoint automatically.
+ useEffect(()=>{
+  if(!autoDirector)return;
+  const pending=new Set<number>();
+  const interval=window.setInterval(()=>{
+   if(document.hidden)return;
+   setCutting(true);
+   const timer=window.setTimeout(()=>{
+    setShot(s=>nextDirectorShot(s));
+    setCutting(false);
+    pending.delete(timer);
+   },800);
+   pending.add(timer);
+  },DIRECTOR_INTERVAL_MS);
+  return ()=>{window.clearInterval(interval);pending.forEach(t=>window.clearTimeout(t));};
+ },[autoDirector]);
  const joined=useMemo(()=>joinL1(wind.data??[],mag.data??[]),[wind.data,mag.data]);
  const windAt=wind.data?.at(-1)??null,magAt=mag.data?.at(-1)??null,kpAt=kp.data?.at(-1)??null;
  const wState=freshness(windAt?.t??null,now,10*60_000,wind.isError&&!wind.data?.length);
@@ -93,6 +112,7 @@ export default function BroadcastApp(){
       cinematic={!motionDisabled} reducedMotion={motionDisabled||reducedMotion}
       lowPower={lowPower} fieldDetail="balanced" baseline={!modelInput} core={null}/>
    </Suspense>
+   <div className={"broadcast-director-scrim"+(cutting?" active":"")} aria-hidden="true"/>
   </div>
   <div className="broadcast-vignette" aria-hidden="true"/>
   <header className="broadcast-header">
@@ -104,7 +124,8 @@ export default function BroadcastApp(){
    <span className="broadcast-bulletin-message">{bulletin.message}</span>
    <span className="broadcast-bulletin-stamp">{bulletin.issuance} · NOAA SWPC ↗</span>
   </a>
-  <div className="broadcast-scene-caption"><span className="broadcast-scene-index">VIEW / {shot.toUpperCase()}</span><span className="broadcast-scene-caption-line">{modelInput?"Shue magnetopause · propagated L1 drivers":"REFERENCE MAGNETOSPHERE · CURRENT DRIVERS UNAVAILABLE"}</span></div>
+  <div className="broadcast-scene-caption"><span className="broadcast-scene-index">VIEW / {shot.toUpperCase()}</span>
+   <span className="broadcast-director-status">{autoDirector?"AUTOMATED CAMERA TOUR · NEW VIEW ABOUT EVERY SIX MINUTES":"FIXED OBS CAMERA"}</span><span className="broadcast-scene-caption-line">{modelInput?"Shue magnetopause · propagated L1 drivers":"REFERENCE MAGNETOSPHERE · CURRENT DRIVERS UNAVAILABLE"}</span></div>
   <aside className="broadcast-left" aria-label="Live NOAA space weather measurements">
    <div className="broadcast-section-title"><span>01 / LIVE TELEMETRY</span><span>NOAA SWPC</span></div>
    <Reading label="SOLAR WIND SPEED" value={safeValue(windAt?.v??null,wState)} unit="km/s"
@@ -139,7 +160,7 @@ export default function BroadcastApp(){
   <footer className="broadcast-bottom">
    <div className="broadcast-bottom-status"><span className="broadcast-footer-dot"/>NOAA IN-SITU MEASUREMENTS <span>+</span> EMPIRICAL / ILLUSTRATIVE 3D MODEL</div>
    <div className="broadcast-bottom-source">Measurements: NOAA SWPC L1 & Kp · Aurora: NOAA OVATION model · Geometry: Shue 1998 · Not a hazard alert</div>
-   <a className="broadcast-open" href={BASE} aria-label="Open interactive Magnetosphere observatory">EXPLORE THE INTERACTIVE OBSERVATORY <span aria-hidden>↗</span></a>
+   <a className="broadcast-open" href={BASE} aria-label="Open interactive Magnetosphere observatory"><strong>EXPLORE LIVE <span aria-hidden>↗</span></strong><span className="broadcast-viewer-url">svyable.github.io/magnetosphere</span></a>
   </footer>
   {safetyGuide&&<div className="broadcast-calibration" aria-hidden="true">5% TITLE-SAFE BOUNDARY · DISABLE ?safe=1 BEFORE STREAMING</div>}
  </main>;
