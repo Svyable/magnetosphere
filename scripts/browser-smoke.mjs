@@ -320,10 +320,17 @@ try {
         else body={};
         await route.fulfill({status:200,contentType:"application/json",headers:{"access-control-allow-origin":"*"},body:JSON.stringify(body)});
       });
+      const fmtSwpc = t => {const d=new Date(t);return d.getUTCFullYear()+" "+["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getUTCMonth()]+" "+String(d.getUTCDate()).padStart(2,"0")+" "+String(d.getUTCHours()).padStart(2,"0")+String(d.getUTCMinutes()).padStart(2,"0")+" UTC";};
+      await cast.route(u=>u.hostname==="services.swpc.noaa.gov"&&u.pathname==="/products/alerts.json",async route=>{
+        const now=Date.now();
+        const message="Space Weather Message Code: WARK05\\nSerial Number: 5001\\nIssue Time: "+fmtSwpc(now-15*60000)+"\\n\\nWARNING: Geomagnetic K-index of 5 expected\\nValid From: "+fmtSwpc(now-10*60000)+"\\nNow Valid Until: "+fmtSwpc(now+90*60000)+"\\nNOAA Scale: G1 - Minor";
+        await route.fulfill({status:200,contentType:"application/json",body:JSON.stringify([{product_id:"K05W",issue_datetime:new Date(now-15*60000).toISOString(),message}])});
+      });
       await cast.goto(new URL("?broadcast=1",url).toString(),{waitUntil:"domcontentloaded",timeout:35_000});
       await cast.getByRole("main",{name:/continuous live broadcast view/i}).waitFor({timeout:20_000});
       await cast.locator('#scene-wrap[data-globe-ready="true"]').waitFor({timeout:30_000});
       await cast.getByText("NOAA INPUTS CURRENT").waitFor({timeout:20_000});
+      await cast.getByText("NOAA WARNING · CURRENT VALIDITY WINDOW").waitFor({timeout:20_000});
       await cast.getByRole("heading",{name:/Earth is inside a magnetic ocean/i}).waitFor();
       await cast.getByText("VIEW / EARTH").waitFor();
       await cast.getByRole("heading",{name:/MAGNETOSPHERE/i}).count(); // wordmark is visual text, not a heading
@@ -336,6 +343,9 @@ try {
       await cast.screenshot({path:out+"/broadcast-1920x1080.png",fullPage:true});
       const bounds=await cast.locator(".broadcast-screen").boundingBox();
       if(!bounds||Math.abs(bounds.width-1920)>2||Math.abs(bounds.height-1080)>2)throw new Error("Broadcast source not full-bleed 1920x1080");
+      const bulletinBounds=await cast.locator(".broadcast-noaa-bulletin").boundingBox();
+      const panelBounds=await cast.locator(".broadcast-right").boundingBox();
+      if(!bulletinBounds||!panelBounds||bulletinBounds.y+bulletinBounds.height>panelBounds.y-2)throw new Error("Official NOAA status overlaps science panel");
       const brandBounds=await cast.locator(".broadcast-identity").boundingBox();
       const sourceBounds=await cast.locator(".broadcast-bottom-source").boundingBox();
       if(!brandBounds||brandBounds.x<96||brandBounds.y<54)throw new Error("Broadcast branding outside 5% title-safe frame");
@@ -355,8 +365,12 @@ try {
         const body=path.includes("rtsw_wind")?[{time_tag:stamp,proton_speed:780,proton_density:9}]:path.includes("rtsw_mag")?[{time_tag:stamp,bz_gsm:-25}]:[{time_tag:stamp,Kp:8}];
         await route.fulfill({status:200,contentType:"application/json",body:JSON.stringify(body)});
       });
+      await cast.route(u=>u.hostname==="services.swpc.noaa.gov"&&u.pathname==="/products/alerts.json",async route=>{
+        await route.fulfill({status:503,contentType:"text/plain",body:"NOAA unreachable for this fixture"});
+      });
       await cast.goto(new URL("?broadcast=1&motion=off",url).toString(),{waitUntil:"domcontentloaded",timeout:35_000});
       await cast.getByText("NOAA INPUTS UNAVAILABLE").waitFor({timeout:20_000});
+      await cast.getByText("NOAA ISSUED-PRODUCT FEED UNAVAILABLE").waitFor({timeout:20_000});
       await cast.getByText(/REFERENCE MAGNETOSPHERE/).waitFor();
       const noData=await cast.locator(".broadcast-no-reading").count();
       if(noData!==3)throw new Error("Broadcast displayed stale values as current: "+noData+" blocked / 3");
