@@ -305,6 +305,58 @@ try {
   });
   console.log("CORS/Browser access:", JSON.stringify(browserCors));
 
+  await check("OBS 16:9 broadcast mode shows real-source metrics with readable source attribution", async () => {
+    const cast = await browser.newPage({viewport:{width:1920,height:1080},deviceScaleFactor:1,reducedMotion:"reduce"});
+    cast.on("pageerror", err => pageErrors.push("broadcast: "+err.message));
+    try {
+      await cast.route(u => u.hostname==="services.swpc.noaa.gov" &&
+        (/\/json\/rtsw\/rtsw_(wind|mag)_1m.json/.test(u.pathname) || u.pathname.includes("noaa-planetary-k-index.json") || u.pathname.includes("ovation_aurora_latest.json")),async route=>{
+        const path=new URL(route.request().url()).pathname;
+        const stamp=m=>new Date(Date.now()-m*60_000).toISOString().replace(".000Z","Z");
+        let body;
+        if(path.includes("rtsw_wind"))body=[{time_tag:stamp(41),proton_speed:620,proton_density:6,source:"DSCOVR"},{time_tag:stamp(1),proton_speed:610,proton_density:5.8,source:"DSCOVR"}];
+        else if(path.includes("rtsw_mag"))body=[{time_tag:stamp(41),bz_gsm:-8.3,bt:12,source:"DSCOVR"},{time_tag:stamp(1),bz_gsm:-8.1,bt:11.8,source:"DSCOVR"}];
+        else if(path.includes("planetary-k-index"))body=[{time_tag:stamp(2),Kp:5.3}];
+        else body={};
+        await route.fulfill({status:200,contentType:"application/json",headers:{"access-control-allow-origin":"*"},body:JSON.stringify(body)});
+      });
+      await cast.goto(new URL("?broadcast=1",url).toString(),{waitUntil:"domcontentloaded",timeout:35_000});
+      await cast.getByRole("main",{name:/continuous live broadcast view/i}).waitFor({timeout:20_000});
+      await cast.locator('#scene-wrap[data-globe-ready="true"]').waitFor({timeout:30_000});
+      await cast.getByText("NOAA INPUTS CURRENT").waitFor({timeout:20_000});
+      await cast.getByRole("heading",{name:/Earth is inside a magnetic ocean/i}).waitFor();
+      await cast.getByRole("heading",{name:/MAGNETOSPHERE/i}).count(); // wordmark is visual text, not a heading
+      const readings=cast.locator(".broadcast-reading");
+      if(await readings.count()!==3)throw new Error("Broadcast telemetry panels missing");
+      if(!await cast.getByText("610",{exact:true}).count())throw new Error("Measured wind speed was not displayed");
+      if(!await cast.getByText("-8.1",{exact:true}).count())throw new Error("Measured Bz was not displayed");
+      if(!await cast.getByText("5.3",{exact:true}).count())throw new Error("Planetary Kp was not displayed");
+      await cast.getByText(/not measured/i).first().waitFor();
+      await cast.screenshot({path:out+"/broadcast-1920x1080.png",fullPage:true});
+      const bounds=await cast.locator(".broadcast-screen").boundingBox();
+      if(!bounds||Math.abs(bounds.width-1920)>2||Math.abs(bounds.height-1080)>2)throw new Error("Broadcast source not full-bleed 1920x1080");
+      await cast.goto(new URL("?broadcast=1&shot=tail&motion=off",url).toString(),{waitUntil:"domcontentloaded",timeout:35_000});
+      await cast.getByText("VIEW / TAIL").waitFor({timeout:20_000});
+    } finally {await cast.close();}
+  });
+  await check("OBS stream treats stale NOAA values as unavailable and labels reference geometry",async()=>{
+    const cast=await browser.newPage({viewport:{width:1920,height:1080},deviceScaleFactor:1,reducedMotion:"reduce"});
+    cast.on("pageerror",err=>pageErrors.push("broadcast offline: "+err.message));
+    try{
+      await cast.route(u=>u.hostname==="services.swpc.noaa.gov"&&(/\/json\/rtsw\/rtsw_(wind|mag)_1m.json/.test(u.pathname)||u.pathname.includes("noaa-planetary-k-index.json")),async route=>{
+        const path=new URL(route.request().url()).pathname,stamp=new Date(Date.now()-24*3600_000).toISOString();
+        const body=path.includes("rtsw_wind")?[{time_tag:stamp,proton_speed:780,proton_density:9}]:path.includes("rtsw_mag")?[{time_tag:stamp,bz_gsm:-25}]:[{time_tag:stamp,Kp:8}];
+        await route.fulfill({status:200,contentType:"application/json",body:JSON.stringify(body)});
+      });
+      await cast.goto(new URL("?broadcast=1&motion=off",url).toString(),{waitUntil:"domcontentloaded",timeout:35_000});
+      await cast.getByText("NOAA INPUTS UNAVAILABLE").waitFor({timeout:20_000});
+      await cast.getByText(/REFERENCE MAGNETOSPHERE/).waitFor();
+      const noData=await cast.locator(".broadcast-no-reading").count();
+      if(noData!==3)throw new Error("Broadcast displayed stale values as current: "+noData+" blocked / 3");
+      await cast.screenshot({path:out+"/broadcast-stale-source.png",fullPage:true});
+    }finally{await cast.close();}
+  });
+
   await page.close();
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, reducedMotion: "reduce", isMobile: true, hasTouch: true });
   mobile.on("pageerror", err => pageErrors.push("mobile: " + err.message));
