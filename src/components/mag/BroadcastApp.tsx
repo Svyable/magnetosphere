@@ -48,7 +48,7 @@ export default function BroadcastApp(){
  const [reducedMotion,setReducedMotion]=useState(false);
  const [params]=useState(()=>new URLSearchParams(typeof window==="undefined"?"":window.location.search));
  const requestedShot=params.get("shot");
- const shot:Preset=STREAM_SHOTS.includes(requestedShot as Preset)?requestedShot as Preset:"global";
+ const shot:Preset=STREAM_SHOTS.includes(requestedShot as Preset)?requestedShot as Preset:"earth";
  const motionDisabled=params.get("motion")==="off";
  const lowPower=params.get("quality")==="low";
  const safetyGuide=params.get("safe")==="1";
@@ -114,7 +114,7 @@ export default function BroadcastApp(){
   </aside>
   <aside className="broadcast-right" aria-label="Space weather science explainer">
    <div className="broadcast-section-title"><span>02 / THE BIG PICTURE</span><span>FIELD NOTES</span></div>
-   <article className="broadcast-story" aria-live="off">
+   <article key={storyStep} className="broadcast-story" aria-live="off">
     <p className="broadcast-story-eyebrow">{story.eyebrow}</p>
     <h1>{story.title}</h1>
     <p className="broadcast-story-body">{story.body}</p>
