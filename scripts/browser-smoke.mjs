@@ -336,6 +336,10 @@ try {
       await cast.screenshot({path:out+"/broadcast-1920x1080.png",fullPage:true});
       const bounds=await cast.locator(".broadcast-screen").boundingBox();
       if(!bounds||Math.abs(bounds.width-1920)>2||Math.abs(bounds.height-1080)>2)throw new Error("Broadcast source not full-bleed 1920x1080");
+      const brandBounds=await cast.locator(".broadcast-identity").boundingBox();
+      const sourceBounds=await cast.locator(".broadcast-bottom-source").boundingBox();
+      if(!brandBounds||brandBounds.x<96||brandBounds.y<54)throw new Error("Broadcast branding outside 5% title-safe frame");
+      if(!sourceBounds||sourceBounds.y+sourceBounds.height>1026)throw new Error("Broadcast source credit outside 5% bottom-safe frame");
       await cast.goto(new URL("?broadcast=1&shot=global&motion=off",url).toString(),{waitUntil:"domcontentloaded",timeout:35_000});
       await cast.getByText("VIEW / GLOBAL").waitFor({timeout:20_000});
       await cast.goto(new URL("?broadcast=1&shot=tail&motion=off",url).toString(),{waitUntil:"domcontentloaded",timeout:35_000});
