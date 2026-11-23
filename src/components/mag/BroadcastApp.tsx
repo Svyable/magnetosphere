@@ -68,7 +68,7 @@ export default function BroadcastApp(){
  // Stable editorial camera tour. Fade over the visual cut; data hooks keep updating.
  // Reduced-motion and fixed-shot captures never change viewpoint automatically.
  useEffect(()=>{
-  if(!autoDirector)return;
+  if(!autoDirector){setCutting(false);return;}
   const pending=new Set<number>();
   const interval=window.setInterval(()=>{
    if(document.hidden)return;
