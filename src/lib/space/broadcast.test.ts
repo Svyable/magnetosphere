@@ -30,7 +30,7 @@ describe("livestream / 24-7 source integrity",()=>{
  it("only a supplied storm-level Kp changes the three-hour story",()=>{
   expect(broadcastStory(3,null,5.4).title).toContain("Storm-level");
   expect(broadcastStory(3,null,4.9).title).not.toContain("Storm-level");
-  expect(broadcastStory(3,null,5.4).body).toContain("not a formal NOAA warning");
+  expect(broadcastStory(3,null,5.4).body).toContain("or a formal NOAA warning");
  });
  it("renders elapsed time honestly and handles clock skew",()=>{
   const now=Date.parse("2026-11-23T12:00:00Z");
