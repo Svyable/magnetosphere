@@ -252,3 +252,14 @@ Useful source variants (all stay on the same publicly hosted root URL):
 - Story cards rotate every 32 seconds without audio or alarms. A southward Bz or storm-level Kp may change the relevant card only when the underlying reading is current; a Kp value is **not** represented as an issued SWPC alert.
 - Use an OBS/OS watchdog, uninterrupted power where practical, and an external encoder health check. This view is designed to degrade honestly when NOAA data fail, not to guarantee uninterrupted streaming or automatically recover a crashed browser/GPU process.
 - Use the browser test screenshots in the GitHub Actions `magnetosphere-browser-smoke` artifact to check 1920×1080 framing and stale-source behavior. The broadcast's graphical orbit is illustrative and its particle drift is **not scaled physical travel**.
+
+
+### Broadcast upgrade: official NOAA watch / warning ribbon
+
+The broadcast now monitors [NOAA SWPC's actual issued products](https://www.swpc.noaa.gov/products/alerts-watches-and-warnings) through the existing validated `alerts.json` pipeline. A compact source-attributed ribbon appears under the UTC clock with a clickable NOAA product page.
+
+Priority is **current, non-cancelled, non-superseded warnings** within their validity windows, then **issued future watches**, then **threshold alerts issued in the previous three hours**. These categories mean different things and are labeled accordingly: a watch is a forecast; a recent alert describes a past observed threshold; neither is inferred from the Kp or Bz number displayed elsewhere. The issued UTC time comes from NOAA's product. When no current watch or warning is found, the site says so *only for the fetched feed*—not as an all-clear.
+
+If the products fail to load or the last successful download is over 10 minutes old, the ribbon switches to **"NOAA ISSUED-PRODUCT FEED UNAVAILABLE"** and suppresses any prior alert text. Avoid placing automated weather-warning sounds, emergency sirens, or unrelated alerts on the OBS scene.
+
+The telemetry display also adds a **nominal L1-to-Earth transit time** (based on the live measured upstream wind speed). This value is a basic propagation estimate, **not a verified CME arrival time or a promise about when a geomagnetic storm will begin**. NOAA's official alerts page is the authoritative source for alerts and warnings.
