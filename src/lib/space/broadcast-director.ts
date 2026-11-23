@@ -12,7 +12,7 @@ export function nextDirectorShot(shot:DirectorShot):DirectorShot{
  return DIRECTOR_SHOTS[(index+1)%DIRECTOR_SHOTS.length]!;
 }
 /** Default capture is a tour; ?shot=X gives a fixed camera unless explicitly overridden. */
-export function useAutoDirector(params:URLSearchParams,reducedMotion:boolean):boolean{
+export function shouldAutoDirect(params:URLSearchParams,reducedMotion:boolean):boolean{
  if(reducedMotion||params.get("motion")==="off")return false;
  const forced=params.get("director");
  if(forced==="0"||forced==="off")return false;
