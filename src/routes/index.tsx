@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import MissionApp from "@/components/mag/MissionApp";
+import BroadcastApp from "@/components/mag/BroadcastApp";
 
 export const Route = createFileRoute("/")({
   ssr: false,
@@ -13,5 +14,10 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: MissionApp,
+  component: IndexView,
 });
+/** Same documented root route works on GitHub Pages without SPA deep-link rewrites. */
+function IndexView(){
+ const broadcast=typeof window!=="undefined"&&new URLSearchParams(window.location.search).get("broadcast")==="1";
+ return broadcast?<BroadcastApp/>:<MissionApp/>;
+}
