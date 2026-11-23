@@ -1045,3 +1045,6 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px soli
  background:rgba(4,17,31,.82);white-space:normal}
  .broadcast-bulletin-message,.broadcast-bulletin-stamp{white-space:normal}
 }
+
+/* Separate the official-products ribbon from the editorial heading at 1080p. */
+@media(min-height:731px) and (min-width:901px){.broadcast-right{top:20.5%}}
