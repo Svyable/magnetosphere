@@ -6,7 +6,7 @@ import {broadcastSourceState,broadcastStory,canShowMeasurement,observationAge} f
 import {dynamicPressure,freshness,joinL1,kpLabel,laggedSample,propagationSeconds,shue,type Freshness,type L1Sample} from "@/lib/space/model";
 import type {LayerKey,Preset} from "./Scene";
 const Scene=lazy(()=>import("./Scene"));
-const LAYERS:Record<LayerKey,boolean>={saa:false,poles:false,mp:true,bs:true,fl:true,tail:true,wind:true,aurora:true,axes:false,geo:false,labels:false};
+const LAYERS:Record<LayerKey,boolean>={saa:false,poles:false,mp:true,bs:true,fl:true,tail:true,wind:true,aurora:true,axes:false,geo:false,labels:false,efield:false,goes:false};
 const BASE=import.meta.env.BASE_URL;
 const fmt=(t:number)=>new Date(t).toISOString().slice(0,19).replace("T"," ")+" UTC";
 const safeValue=(n:number|null,state:Freshness,digits=0)=>canShowMeasurement(state,n)?n.toFixed(digits):"—";

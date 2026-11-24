@@ -2,6 +2,8 @@ import { EPIC_API, parseEpic } from "./epic";
 import { parseXray, XRAY_URL } from "./xray";
 import { FORECAST_URLS, parseKpForecast, parseGeomagBulletin, parse27DayOutlook } from "./forecast";
 import { OPS_URLS, parseAlerts, parseThreeDayForecast } from "./ops";
+import { EFIELD_INDEX_URL, efieldStats, efieldUrls, parseEfield, pickEvery } from "./geoelectric";
+import { GOES_MAG_URLS, parseGoesLongitudes, parseGoesMag } from "./goes-mag";
 import { useQuery } from "@tanstack/react-query";
 import { parseHp30, parseKp, parseMag, parseOvation, parseWind } from "./model";
 
@@ -140,4 +142,50 @@ export const useThreeDayForecast = (enabled: boolean) =>
     queryFn: async () => parseThreeDayForecast(await getText(OPS_URLS.threeDay)),
     refetchInterval: enabled ? 30 * 60_000 : false, refetchOnWindowFocus: true,
     retry: 1, staleTime: 20 * 60_000,
+  });
+
+/**
+ * Newest NOAA/USGS geoelectric field map (EMTF 3D, ~50 kB gzipped). The index is small; the
+ * map refreshes every 5 minutes to keep load on NOAA modest (the product itself is 1-minute).
+ */
+export const useGeoelectricLatest = (enabled: boolean) =>
+  useQuery({
+    queryKey: ["noaa-efield-latest"], enabled,
+    queryFn: async () => {
+      const urls = efieldUrls(await getJson(EFIELD_INDEX_URL));
+      if (!urls.length) throw new Error("NOAA geoelectric index lists no maps");
+      return { map: parseEfield(await getJson(urls[0]!.url), urls[0]!.url), index: urls };
+    },
+    refetchInterval: enabled ? 5 * 60_000 : false, refetchOnWindowFocus: false, retry: 1, staleTime: 4 * 60_000,
+  });
+
+/** Seven maps across the last hour (~350 kB gzipped). Only while the Grid & GEO panel is open. */
+export const useGeoelectricHour = (index: { url: string; t: number }[] | undefined, enabled: boolean) =>
+  useQuery({
+    queryKey: ["noaa-efield-hour", index?.[0]?.url], enabled: enabled && !!index?.length,
+    queryFn: async () => {
+      const picks = pickEvery(index!, 60 * 60_000, 7);
+      const maps = await Promise.all(picks.map(async p => {
+        try { return { t: p.t, stats: efieldStats(parseEfield(await getJson(p.url), p.url)) }; }
+        catch { return { t: p.t, stats: null }; } // a missing minute stays missing
+      }));
+      return maps;
+    },
+    refetchOnWindowFocus: false, retry: 0, staleTime: 10 * 60_000,
+  });
+
+/** GOES-19 (primary) and GOES-18 (secondary) magnetometers at geosynchronous orbit, plus NOAA's slots. */
+export const useGoesMag = (enabled: boolean) =>
+  useQuery({
+    queryKey: ["noaa-goes-mag"], enabled,
+    queryFn: async () => {
+      // One retry per feed: NOAA rewrites these files every minute and a single read can fail mid-write.
+      const once = (u: string) => getJson(u).catch(() => new Promise(r => setTimeout(r, 1500)).then(() => getJson(u)));
+      const [p, s, l] = await Promise.allSettled([once(GOES_MAG_URLS.primary), once(GOES_MAG_URLS.secondary), once(GOES_MAG_URLS.longitudes)]);
+      if (l.status !== "fulfilled") throw new Error("NOAA GOES longitude list unavailable");
+      const samples = [p, s].flatMap(r => (r.status === "fulfilled" ? parseGoesMag(r.value) : []));
+      if (!samples.length) throw new Error("NOAA GOES magnetometer feeds unavailable");
+      return { samples, longitudes: parseGoesLongitudes(l.value), partial: p.status !== "fulfilled" || s.status !== "fulfilled" };
+    },
+    refetchInterval: enabled ? 2 * 60_000 : false, refetchOnWindowFocus: true, retry: 1, staleTime: 90_000,
   });

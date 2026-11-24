@@ -85,3 +85,10 @@ This repository is the dedicated GitHub source workspace. Its code was migrated 
 - Ground H variation is site-specific *observed* provisional data. Offset plots use the first valid measurement within the request, not a quiet-day correction; a 60-minute max-minus-min range is not a K-index, dB/dt, geoelectric hazard, or validated storm severity.
 - Station measurements cannot independently verify arrival of a specific L1 discontinuity or CME without separate timing/causal analysis. Show source observation time and browser retrieval time distinctly; no false all-clear on stale, failed or CORS-blocked sources.
 - Preserve USGS attribution, direct query links and honest unavailable states. Ground data must be an on-demand fetch to minimize load on public USGS infrastructure.
+
+## Grid & GEO (geoelectric field and GOES magnetometers)
+- `src/lib/space/geoelectric.ts` parses NOAA/USGS EMTF geoelectric maps. The map time comes only from the file name; reject maps without it. Always present it as a **model on measured inputs** needing validation, show distance to the nearest magnetometer, and never call a field level an outage, GIC value or NOAA scale. The NERC 8 V/km benchmark is context only (different reference Earth model).
+- Fetch the latest map at most every 5 minutes; fetch the one-hour sample only while the panel is open. Missing minutes stay missing.
+- `src/lib/space/goes-mag.ts`: a *possible magnetopause crossing* requires ≥ 2 consecutive dayside (06–18 LT) minutes of Hp < 0 with no arcjet flag. Nightside data never counts. Stale (> 20 min) or missing feeds are "no data", never "inside". Use NOAA's `satellite-longitudes.json`, not hard-coded positions, for the globe.
+- Compare GOES (measurement) with the Shue standoff (model) only when the L1 pressure and Bz are actually measured.
+

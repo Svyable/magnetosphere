@@ -265,6 +265,18 @@ try {
     // the UI must not manufacture a historical score while that happens.
     await closeOverlay(page);
   });
+  await check("Grid & GEO shows NOAA/USGS geoelectric field and GOES magnetometers, or an explicit unavailable state", async () => {
+    await page.getByRole("button", { name: /Grid & GEO/i }).first().click();
+    const dlg = page.getByRole("dialog", { name: /Grid & GEO/i });
+    await dlg.waitFor();
+    await dlg.getByRole("region", { name: /Geoelectric field under the power grid/i }).waitFor();
+    await dlg.getByRole("region", { name: /GOES magnetometers at geosynchronous orbit/i }).waitFor();
+    // Either real data rendered, or an honest "not an all-clear" message — never a blank panel.
+    await dlg.locator(".efield-map, .ops-section .forecast-empty").first().waitFor({ timeout: 30_000 });
+    await dlg.locator(".goes-trace, .ops-section .forecast-empty").first().waitFor({ timeout: 30_000 });
+    await dlg.getByText(/need validation against measured geoelectric fields/i).waitFor();
+    await closeOverlay(page);
+  });
   await check("4D Time Atlas reconstructs 2012 core field and opens 500 Ma evidence", async () => {
     await page.getByRole("button", { name: /4D Time Atlas/i }).click();
     await page.getByRole("dialog", { name: /Temporal Observatory/i }).waitFor({ timeout: 15_000 });

@@ -9,7 +9,9 @@ import { loadPrefs, savePrefs, clearPrefs } from "@/lib/space/prefs";
 import { FIELD_DETAIL_CHOICES, parseFieldDetail, type FieldDetail } from "@/lib/space/visuals";
 import { validateTarget, type Target } from "@/lib/space/explorer";
 import { measuredWindCsv } from "@/lib/space/export";
-import { useHp30, useKp, useMag, useOvation, useWind, useXray, useKpForecast, useSwpcAlerts, URLS } from "@/lib/space/data";
+import { useHp30, useKp, useMag, useOvation, useWind, useXray, useKpForecast, useSwpcAlerts, useGeoelectricLatest, useGoesMag, URLS } from "@/lib/space/data";
+import { efieldColorT, efieldStats } from "@/lib/space/geoelectric";
+import { satStatus } from "@/lib/space/goes-mag";
 import { highestIssuedG, opsStatus } from "@/lib/space/ops";
 import { forecastPeak, gFromKp } from "@/lib/space/forecast";
 import {parseForecastClock,parseForecastHorizon,parseStormTarget,type ForecastHorizon,type ForecastClock} from "@/lib/space/forecast-ux";
@@ -27,6 +29,7 @@ const Scene = lazy(() => import("./Scene"));
 const TimeAtlas = lazy(() => import("./TimeAtlas"));
 const ForecastCenter = lazy(() => import("./ForecastCenter"));
 const MissionLab = lazy(() => import("./MissionLab"));
+const GridGeo = lazy(() => import("./GridGeo"));
 
 const LAYERS: { key: LayerKey; name: string; kind: string; hint: string }[] = [
   { key: "saa", name: "Field strength · SAA", kind: "IGRF-14 model", hint: "Surface total field intensity. Warm = below 32,000 nT; the South Atlantic Anomaly is the weak-field dent where the inner radiation belt dips closest to Earth." },
@@ -38,6 +41,8 @@ const LAYERS: { key: LayerKey; name: string; kind: string; hint: string }[] = [
   { key: "wind", name: "Solar wind", kind: "L1 speed, visual", hint: "Particle drift speed scales with measured L1 speed; motion is not to scale." },
   { key: "aurora", name: "Aurora (OVATION)", kind: "model forecast", hint: "NOAA OVATION nowcast probabilities. Shown only in LIVE mode." },
   { key: "geo", name: "Geosynchronous orbit", kind: "reference", hint: "6.6 Earth radii; satellites here can be exposed when r0 < 6.6." },
+  { key: "goes", name: "GOES at GEO (measured)", kind: "GOES magnetometers", hint: "GOES-18 and GOES-19 at NOAA's listed longitudes, coloured by what their magnetometers measure: inside the magnetosphere, near the boundary, or a possible magnetopause crossing." },
+  { key: "efield", name: "Power-grid E-field (US)", kind: "model on measured data", hint: "NOAA/USGS geoelectric field under the contiguous US (EMTF 3D model, mV/km, log colour). Drives induced currents in power lines; not itself an outage." },
   { key: "axes", name: "Axes (GSE-like)", kind: "reference", hint: "+X toward the Sun, +Z north, dusk toward +Y (drawn on screen as depth)." },
   { key: "labels", name: "HUD labels", kind: "display", hint: "Floating labels in the scene." },
 ];
@@ -96,7 +101,7 @@ export default function MissionApp() {
   });
   const [preset, setPreset] = useState<Preset>(() => {
     const v = initQ.get("view");
-    return v === "global" || v === "earth" || v === "tail" || v === "saa" || v === "arctic" ? v : "earth";
+    return v === "global" || v === "earth" || v === "tail" || v === "saa" || v === "arctic" || v === "conus" ? v : "earth";
   });
   const [nonce, setNonce] = useState(0);
   const [cinematic, setCinematic] = useState(() => initQ.get("cine") === "1");
@@ -108,6 +113,7 @@ export default function MissionApp() {
   const [timeOpen, setTimeOpen] = useState(false);
   const [forecastOpen, setForecastOpen] = useState(() => parseForecastHorizon(initQ.get("forecast")) !== null);
   const [missionLabOpen,setMissionLabOpen] = useState(false);
+  const [gridOpen,setGridOpen] = useState(false);
   const [whatIf,setWhatIf] = useState<ScenarioInput|null>(null);
   const [forecastHorizon,setForecastHorizon] = useState<ForecastHorizon>(() => parseForecastHorizon(initQ.get("forecast")) ?? "incoming");
   const [stormFocus,setStormFocus] = useState<number|null>(() => parseStormTarget(initQ.get("storm")));
@@ -184,7 +190,7 @@ export default function MissionApp() {
     const onKey = (e: KeyboardEvent) => {
       if (e.altKey || e.ctrlKey || e.metaKey) return;
       if (e.key === "Escape") {
-        setGalleryOpen(false); setFieldOpen(false); setHelpOpen(false); setTourOpen(false); setDrawer(false); setPassportOpen(false); setTimeOpen(false); setForecastOpen(false); setMissionLabOpen(false);
+        setGalleryOpen(false); setFieldOpen(false); setHelpOpen(false); setTourOpen(false); setDrawer(false); setPassportOpen(false); setTimeOpen(false); setForecastOpen(false); setMissionLabOpen(false); setGridOpen(false);
         return;
       }
       const t = e.target;
@@ -202,6 +208,7 @@ export default function MissionApp() {
       else if (k === "t") setTimeOpen(true);
       else if (k === "p") setForecastOpen(true);
       else if (k === "m") setMissionLabOpen(true);
+      else if (k === "w") setGridOpen(true);
       else if (k === "v") setFieldDetail((d) => FIELD_DETAIL_CHOICES[(FIELD_DETAIL_CHOICES.indexOf(d) + 1) % FIELD_DETAIL_CHOICES.length]!);
     };
     window.addEventListener("keydown", onKey);
@@ -257,6 +264,12 @@ export default function MissionApp() {
   const bz = sample ? bzNear(all, sample) : null;
   const P = sample ? dynamicPressure(sample.n, sample.v) : null;
   const model = shue(P ?? 2, bz ?? 0);
+  const efieldQ = useGeoelectricLatest(true);
+  const goesQ = useGoesMag(true);
+  const efieldStatsNow = efieldQ.data ? efieldStats(efieldQ.data.map) : null;
+  const efieldPoints = useMemo(() => efieldQ.data ? efieldQ.data.map.points.map(p => [p.lon, p.lat, efieldColorT(p.mag)] as [number, number, number]) : null, [efieldQ.data]);
+  const goesStatuses = goesQ.data ? [19, 18].filter(s => goesQ.data!.longitudes.has(s)).map(s => satStatus(goesQ.data!.samples, s, goesQ.data!.longitudes.get(s)!, now)) : [];
+  const goesScene = goesStatuses.map(s => ({ sat: s.sat, lonWest: s.lonWest, state: s.state, hp: s.latest?.hp ?? null }));
   // The preview must be a genuine measured L1 sample with matched Bz that has
   // not yet nominally reached Earth. It does NOT replace measured nowcast metrics.
   const activePreview = live && !historicCore && incomingPreview?.bz !== null && incomingPreview !== null &&
@@ -418,6 +431,7 @@ export default function MissionApp() {
           <span className="hide-sm topbar-refreshed">Refreshed {lastRefresh ? fmtUtc(lastRefresh) : "—"}</span>
           <a className="btn-ghost" href={import.meta.env.BASE_URL+"?broadcast=1"} title="OBS-ready 16:9 always-on space-weather broadcast">◉ Broadcast</a>
           <button className="btn-ghost forecast-topbar" onClick={() => setForecastOpen(true)}>↗ Incoming & future</button>
+          <button className="btn-ghost gridgeo-topbar" onClick={() => setGridOpen(true)}>⚡ Grid & GEO</button>
           <button className="btn-ghost mlab-topbar" onClick={() => setMissionLabOpen(true)}>⌖ Mission Lab</button>
           <button className="btn-ghost" onClick={() => setGalleryOpen(true)}>◉ Eyes on Earth</button>
           <button className="btn-ghost" onClick={() => setFieldOpen(true)}>⌖ Field explorer</button>
@@ -433,7 +447,7 @@ export default function MissionApp() {
       <main className="stage">
         <div className="canvas-area">
           <Suspense fallback={<div className="loading">Initializing scene…</div>}>
-            <Scene layers={{ ...displayedLayers, mp: activePreview || activeWhatIf ? true : displayedLayers.mp, aurora: displayedLayers.aurora && !!ovValid && !activePreview && !activeWhatIf, wind: displayedLayers.wind && !activeWhatIf }} r0={scenarioModel.r0} alpha={scenarioModel.alpha} speed={activeWhatIf?null:activePreview?.v ?? sample?.v ?? null}
+            <Scene efield={live && !historicCore ? efieldPoints : null} goes={live && !historicCore ? goesScene : null} layers={{ ...displayedLayers, mp: activePreview || activeWhatIf ? true : displayedLayers.mp, aurora: displayedLayers.aurora && !!ovValid && !activePreview && !activeWhatIf, wind: displayedLayers.wind && !activeWhatIf }} r0={scenarioModel.r0} alpha={scenarioModel.alpha} speed={activeWhatIf?null:activePreview?.v ?? sample?.v ?? null}
               time={sceneTime} aurora={ovValid ? ov.data!.points : null} preset={preset} presetNonce={nonce} core={core}
               cinematic={cinematic} reducedMotion={motionOff} lowPower={lowPower} fieldDetail={fieldDetail} baseline={baseline && !activePreview && !activeWhatIf} onGlobePick={pickGlobe} selected={fieldTarget} />
           </Suspense>
@@ -524,6 +538,12 @@ export default function MissionApp() {
             </div>
             <button type="button" className="btn forecast-teaser-cta" onClick={() => setForecastOpen(true)}>See predictions →</button>
           </section>
+          <button type="button" className="gridgeo-teaser" onClick={() => setGridOpen(true)} aria-label="Open power-grid geoelectric field and GOES geosynchronous magnetometers">
+            <span>⚡ GRID & GEO · NOAA/USGS</span>
+            <strong>{efieldStatsNow ? (efieldStatsNow.max.mag >= 1000 ? (efieldStatsNow.max.mag / 1000).toFixed(2) + " V/km" : Math.round(efieldStatsNow.max.mag) + " mV/km") : efieldQ.isError ? "Unavailable" : "Loading"}</strong>
+            <small>{efieldStatsNow ? `Strongest US grid E-field · ${Math.abs(efieldStatsNow.max.lat).toFixed(1)}°N ${Math.abs(efieldStatsNow.max.lon).toFixed(1)}°W` : "Geoelectric field under the power grid"}{goesStatuses.length ? " · " + goesStatuses.map(s => `GOES-${s.sat} ${s.state === "inside" ? "inside" : s.state.replace("-", " ")}`).join(", ") : ""}</small>
+            <span className="incoming-teaser-cta">See the hidden instruments ↗</span>
+          </button>
           <h2>Solar wind at L1 <StatusDot s={st.wind} /></h2>
           <p className="sub">{sample ? `Sample ${fmtUtc(sample.t)} · ${sample.windSource ?? "?"} plasma / ${sample.magSource ?? "?"} mag` : "Awaiting valid propagated sample"}</p>
           <div className="metrics">
@@ -595,6 +615,13 @@ export default function MissionApp() {
       {toast && <div className="toast" role="status">{toast}</div>}
       {galleryOpen && <Gallery onClose={() => setGalleryOpen(false)} now={now} />}
       {timeOpen && <Suspense fallback={<div className="loading" role="status">Loading temporal evidence…</div>}><TimeAtlas onClose={() => setTimeOpen(false)} coreYear={coreYear} onYear={setCoreYear}/></Suspense>}
+      {gridOpen && <Overlay title="Grid & GEO · hidden instruments" onClose={() => setGridOpen(false)} wide>
+        <Suspense fallback={<p role="status">Loading NOAA geoelectric and GOES data…</p>}>
+          <GridGeo now={now} r0={live && !historicCore && P !== null && bz !== null ? model.r0 : null}
+            onShowGrid={() => { setLayers(l => ({ ...l, efield: true, goes: true, saa: false })); setEarthOnly(false); setPreset("conus"); setNonce(n => n + 1); setGridOpen(false); }}
+            onShowGoes={() => { setLayers(l => ({ ...l, goes: true, geo: true, labels: true })); setEarthOnly(false); setPreset("global"); setNonce(n => n + 1); setGridOpen(false); }} />
+        </Suspense>
+      </Overlay>}
       {missionLabOpen && <Overlay title="Earth Mission Lab" onClose={() => setMissionLabOpen(false)} wide>
         <Suspense fallback={<p role="status">Loading mission utilities…</p>}>
           <MissionLab now={now} onClose={() => setMissionLabOpen(false)} site={fieldTarget} onSite={setFieldTarget}
@@ -618,7 +645,7 @@ export default function MissionApp() {
           <div className="guide-shortcuts">
             <p><kbd>1</kbd> Global · <kbd>2</kbd> Earth · <kbd>3</kbd> Tail · <kbd>4</kbd> SAA · <kbd>5</kbd> Arctic</p>
             <p><kbd>L</kbd> Live · <kbd>E</kbd> Earth only · <kbd>F</kbd> Focus · <kbd>G</kbd> Satellite photos · <kbd>I</kbd> Field explorer · <kbd>D</kbd> Data passport</p>
-            <p><kbd>P</kbd> Future NOAA predictions · <kbd>M</kbd> Mission Lab · <kbd>T</kbd> 4D Time Atlas · <kbd>V</kbd> Cycle field-line detail · <kbd>?</kbd> or <kbd>H</kbd> Help · <kbd>Esc</kbd> Close overlays</p>
+            <p><kbd>P</kbd> Future NOAA predictions · <kbd>M</kbd> Mission Lab · <kbd>W</kbd> Grid &amp; GEO · <kbd>T</kbd> 4D Time Atlas · <kbd>V</kbd> Cycle field-line detail · <kbd>?</kbd> or <kbd>H</kbd> Help · <kbd>Esc</kbd> Close overlays</p>
           </div>
           <div className="guide-actions">
             <button className="btn" role="switch" aria-checked={lowPower} onClick={() => setLowPower((v) => !v)}>{lowPower ? "✓ Low-power mode" : "Low-power mode"}</button>

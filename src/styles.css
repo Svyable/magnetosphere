@@ -1048,3 +1048,29 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px soli
 
 /* Separate the official-products ribbon from the editorial heading at 1080p. */
 @media(min-height:731px) and (min-width:901px){.broadcast-right{top:20.5%}}
+
+/* Grid & GEO: NOAA/USGS geoelectric field + GOES geosynchronous magnetometers */
+.gridgeo-topbar { color: var(--sun); border-color: color-mix(in oklab, var(--sun) 45%, var(--border)); }
+.gridgeo-teaser { width: 100%; display: flex; flex-wrap: wrap; gap: .25rem .75rem; align-items: baseline; justify-content: space-between; text-align: left; border: 1px solid color-mix(in oklab, var(--sun) 45%, var(--border)); border-radius: .4rem; padding: .65rem; background: color-mix(in oklab, var(--sun) 5%, var(--card)); margin: 0 0 .9rem; cursor: pointer; color: inherit; }
+.gridgeo-teaser:hover, .gridgeo-teaser:focus-visible { border-color: var(--sun); outline-offset: 3px; }
+.gridgeo-teaser > span:first-child { font-family: var(--font-mono); font-size: .64rem; letter-spacing: .06em; color: var(--sun); }
+.gridgeo-teaser strong { font-family: var(--font-display); font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+.gridgeo-teaser small { flex: 1 1 100%; font-size: .64rem; color: var(--muted-foreground); line-height: 1.45; }
+.gridgeo-teaser .incoming-teaser-cta { color: var(--sun); }
+.gridgeo-lede { font-size: .82rem; }
+.efield-map { width: 100%; height: auto; display: block; border: 1px solid var(--border); border-radius: .5rem; background: var(--background); margin-top: .8rem; }
+.efield-max-ring { fill: none; stroke: #fff; stroke-width: 2; }
+.efield-max-label { fill: #fff; font: 11px var(--font-mono); paint-order: stroke; stroke: var(--background); stroke-width: 3px; }
+.efield-legend i { display: inline-block; width: 14px; height: 10px; border-radius: 2px; vertical-align: middle; margin-right: .3rem; }
+.efield-band-quiet { color: var(--ok); } .efield-band-elevated { color: var(--sun); } .efield-band-strong, .efield-band-severe { color: var(--bad); }
+.efield-pulse { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .35rem; align-items: end; margin: .3rem 0 .6rem; }
+.efield-pulse > div { display: flex; flex-direction: column; align-items: center; gap: .2rem; min-width: 0; }
+.efield-pulse i { display: block; width: 70%; border-radius: 3px 3px 0 0; }
+.efield-pulse b { font-family: var(--font-mono); font-size: .6rem; font-weight: 500; white-space: nowrap; }
+.efield-pulse small { font-family: var(--font-mono); font-size: .56rem; color: var(--muted-foreground); }
+.goes-trace { width: 100%; height: auto; display: block; border: 1px solid var(--border); border-radius: .5rem; background: var(--background); margin-top: .8rem; }
+.goes-zero { stroke: var(--bad); stroke-dasharray: 4 3; opacity: .8; }
+.goes-card.goes-inside strong { color: var(--cyan); }
+.goes-card.goes-near-boundary strong { color: var(--sun); }
+.goes-card.goes-possible-crossing strong { color: var(--bad); }
+.goes-card.goes-nightside strong, .goes-card.goes-no-data strong { color: var(--muted-foreground); }
