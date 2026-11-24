@@ -9,8 +9,8 @@ import { FIELD_DETAIL, type FieldDetail } from "@/lib/space/visuals";
 
 export interface CoreField { grid: FieldGrid; north: PoleMotion; south: PoleMotion; geomag: LatLon; year: number }
 
-export type LayerKey = "saa" | "poles" | "mp" | "bs" | "fl" | "tail" | "wind" | "aurora" | "axes" | "geo" | "labels";
-export type Preset = "global" | "earth" | "tail" | "saa" | "arctic";
+export type LayerKey = "saa" | "poles" | "mp" | "bs" | "fl" | "tail" | "wind" | "aurora" | "axes" | "geo" | "labels" | "efield" | "goes";
+export type Preset = "global" | "earth" | "tail" | "saa" | "arctic" | "conus";
 
 export interface SceneProps {
   layers: Record<LayerKey, boolean>;
@@ -31,6 +31,10 @@ export interface SceneProps {
   /** Earth-only picking: geographic latitude/longitude in degrees. */
   onGlobePick?: (lat: number, lon: number) => void;
   selected?: { lat: number; lon: number } | null;
+  /** NOAA/USGS geoelectric map points: lon, lat, colour position 0–1 (log |E|). */
+  efield?: [number, number, number][] | null;
+  /** GOES magnetometer satellites at their NOAA-listed slots (degrees west). */
+  goes?: { sat: number; lonWest: number; state: string; hp: number | null }[] | null;
 }
 
 const D2R = Math.PI / 180;
@@ -344,6 +348,36 @@ function AuroraDots({ points }: { points: [number, number, number][] }) {
   );
 }
 
+/** Geoelectric field: three-stop ramp (deep blue → amber → red) on a log scale; renderer only. */
+function EfieldDots({ points }: { points: [number, number, number][] }) {
+  const geom = useMemo(() => {
+    const pos = new Float32Array(points.length * 3), col = new Float32Array(points.length * 3);
+    const a = new THREE.Color("#1d3b8f"), b = new THREE.Color("#ffb347"), c = new THREE.Color("#ff2d55"), k = new THREE.Color();
+    points.forEach(([lon, lat, t], i) => {
+      geoDir(lat, lon, 1.006).toArray(pos, i * 3);
+      if (t < 0.6) k.copy(a).lerp(b, t / 0.6); else k.copy(b).lerp(c, (t - 0.6) / 0.4);
+      k.toArray(col, i * 3);
+    });
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    g.setAttribute("color", new THREE.BufferAttribute(col, 3));
+    return g;
+  }, [points]);
+  useEffect(() => () => geom.dispose(), [geom]);
+  return <points geometry={geom}><pointsMaterial vertexColors size={0.016} sizeAttenuation transparent opacity={0.95} depthWrite={false} /></points>;
+}
+
+const GOES_TONE: Record<string, string> = { inside: "#5ff2e0", "near-boundary": "#ffb347", "possible-crossing": "#ff2d55", nightside: "#7f8aa3", "no-data": "#555b66" };
+function GoesSats({ sats, labels }: { sats: NonNullable<SceneProps["goes"]>; labels: boolean }) {
+  return <>{sats.map(s => {
+    const p = geoDir(0, -s.lonWest, 6.62);
+    return <group key={s.sat}>
+      <mesh position={p}><octahedronGeometry args={[0.09, 0]} /><meshBasicMaterial color={GOES_TONE[s.state] ?? "#888"} /></mesh>
+      {labels && <Label position={geoDir(0.9, -s.lonWest, 6.62)} tone={s.state === "possible-crossing" ? "orange" : "cyan"}>GOES-{s.sat} · {s.hp === null ? "no data" : `Hp ${Math.round(s.hp)} nT`} · {s.state.replace("-", " ")}</Label>}
+    </group>;
+  })}</>;
+}
+
 type Tone = "cyan" | "orange" | "blue" | "muted";
 interface LabelEntry { obj: THREE.Object3D; surface: boolean; el: HTMLDivElement | null }
 interface LabelItem { id: string; tone: Tone; content: React.ReactNode }
@@ -412,13 +446,18 @@ const PRESETS: Record<Preset, { pos: [number, number, number]; target: [number, 
   tail: { pos: [-78, 38, 74], target: [-14, 0, 0] },
   saa: { pos: [0, 0, 0], target: [0, 0, 0] },
   arctic: { pos: [0, 0, 0], target: [0, 0, 0] },
+  conus: { pos: [0, 0, 0], target: [0, 0, 0] },
 };
 
 function CameraRig({ preset, nonce, cinematic, time, core }: { preset: Preset; nonce: number; cinematic: boolean; time: number; core: CoreField | null }) {
   const ref = useRef<OrbitImpl>(null);
   const { camera } = useThree();
   useEffect(() => {
-    if (preset === "saa" || preset === "arctic") {
+    if (preset === "conus") {
+      // Close over the contiguous US for the geoelectric layer.
+      camera.position.copy(toScene(32, -97, 3.3, time));
+      ref.current?.target.set(0, 0, 0);
+    } else if (preset === "saa" || preset === "arctic") {
       const t = preset === "saa" ? core?.grid.min ?? { lat: -26, lon: -60 } : core?.north.now ?? { lat: 86, lon: 136 };
       const d = toScene(preset === "saa" ? t.lat : Math.min(t.lat, 80), t.lon, preset === "saa" ? 3.1 : 2.9, time);
       camera.position.copy(d);
@@ -473,6 +512,8 @@ function World(p: SceneProps) {
             </group>
           )}
           {L.aurora && p.aurora && <AuroraDots points={p.aurora} />}
+          {L.efield && p.efield && <EfieldDots points={p.efield} />}
+          {L.goes && p.goes && <GoesSats sats={p.goes} labels={L.labels} />}
           {L.saa && p.core && <FieldMap grid={p.core.grid} />}
           {L.saa && p.core && L.labels && <SaaLabel grid={p.core.grid} />}
           {L.poles && p.core && (
