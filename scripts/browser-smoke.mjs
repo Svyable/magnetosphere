@@ -333,6 +333,7 @@ try {
       await cast.getByText("NOAA WARNING · CURRENT VALIDITY WINDOW").waitFor({timeout:20_000});
       await cast.getByRole("heading",{name:/Earth is inside a magnetic ocean/i}).waitFor();
       await cast.getByText("VIEW / EARTH").waitFor();
+      await cast.getByText("svyable.github.io/magnetosphere").waitFor();
       await cast.getByRole("heading",{name:/MAGNETOSPHERE/i}).count(); // wordmark is visual text, not a heading
       const readings=cast.locator(".broadcast-reading");
       if(await readings.count()!==3)throw new Error("Broadcast telemetry panels missing");
@@ -346,6 +347,8 @@ try {
       const bulletinBounds=await cast.locator(".broadcast-noaa-bulletin").boundingBox();
       const panelBounds=await cast.locator(".broadcast-right").boundingBox();
       if(!bulletinBounds||!panelBounds||bulletinBounds.y+bulletinBounds.height>panelBounds.y-2)throw new Error("Official NOAA status overlaps science panel");
+      const viewerBounds=await cast.locator(".broadcast-viewer-url").boundingBox();
+      if(!viewerBounds||viewerBounds.y+viewerBounds.height>1026||viewerBounds.x+viewerBounds.width>1824)throw new Error("On-video website address outside the 5% title-safe frame");
       const brandBounds=await cast.locator(".broadcast-identity").boundingBox();
       const sourceBounds=await cast.locator(".broadcast-bottom-source").boundingBox();
       if(!brandBounds||brandBounds.x<96||brandBounds.y<54)throw new Error("Broadcast branding outside 5% title-safe frame");
@@ -354,6 +357,10 @@ try {
       await cast.getByText("VIEW / GLOBAL").waitFor({timeout:20_000});
       await cast.goto(new URL("?broadcast=1&shot=tail&motion=off",url).toString(),{waitUntil:"domcontentloaded",timeout:35_000});
       await cast.getByText("VIEW / TAIL").waitFor({timeout:20_000});
+      await cast.getByText("FIXED OBS CAMERA").waitFor();
+      await cast.emulateMedia({reducedMotion:"no-preference"});
+      await cast.goto(new URL("?broadcast=1&director=1",url).toString(),{waitUntil:"domcontentloaded",timeout:35_000});
+      await cast.getByText(/AUTOMATED CAMERA TOUR/).waitFor({timeout:20_000});
     } finally {await cast.close();}
   });
   await check("OBS stream treats stale NOAA values as unavailable and labels reference geometry",async()=>{

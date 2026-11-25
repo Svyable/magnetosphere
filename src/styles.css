@@ -1048,3 +1048,14 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px soli
 
 /* Separate the official-products ribbon from the editorial heading at 1080p. */
 @media(min-height:731px) and (min-width:901px){.broadcast-right{top:20.5%}}
+
+
+/* OBS stays interesting unattended: an editorial view change is not a data change. */
+.broadcast-director-scrim{position:absolute;inset:0;z-index:3;pointer-events:none;background:#030813;opacity:0;transition:opacity .8s ease-in-out}
+.broadcast-director-scrim.active{opacity:.92}
+.broadcast-director-status{font-family:"IBM Plex Mono",monospace;font-size:clamp(9px,.69vw,13px);letter-spacing:.08em;color:#c3d2d7}
+.broadcast-open{display:flex;flex-direction:column;align-items:flex-end;gap:4px;text-align:right;line-height:1.25}
+.broadcast-open strong{font-weight:500;letter-spacing:.11em}
+.broadcast-viewer-url{font-family:"IBM Plex Mono",monospace;font-size:clamp(12px,.87vw,18px);font-weight:500;letter-spacing:.012em;color:#d3edea;text-transform:lowercase}
+@media(max-width:900px){.broadcast-open{align-items:flex-start;text-align:left}.broadcast-viewer-url{white-space:normal;overflow-wrap:anywhere}}
+@media(prefers-reduced-motion:reduce){.broadcast-director-scrim{transition:none}}
