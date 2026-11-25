@@ -1,71 +1,171 @@
 {
   "schemaVersion": 1,
-  "updatedAt": 1795559410256,
+  "updatedAt": 1795596154922,
   "earliestCaptureAt": 1795067714129,
-  "latestCaptureAt": 1795559410256,
-  "captures": 13,
-  "archivedPredictions": 220,
-  "sourceObservedRecords": 103,
-  "verifiedTargetPeriods": 39,
+  "latestCaptureAt": 1795596154922,
+  "captures": 14,
+  "archivedPredictions": 237,
+  "sourceObservedRecords": 106,
+  "verifiedTargetPeriods": 42,
   "rows": [
     {
       "band": "0–6h",
-      "pairedPeriods": 6,
-      "maeKp": 1.22,
-      "biasKp": 1.22,
-      "persistenceMaeKp": 0.61,
-      "persistencePairedPeriods": 6,
+      "pairedPeriods": 8,
+      "maeKp": 1.17,
+      "biasKp": 0.67,
+      "persistenceMaeKp": 0.8,
+      "persistencePairedPeriods": 8,
       "observedStormPeriods": 0,
       "predictedStormPeriods": 0,
       "hits": 0,
       "falseAlarms": 0,
       "missedStorms": 0,
-      "trueNegatives": 6
+      "trueNegatives": 8
     },
     {
       "band": "6–24h",
-      "pairedPeriods": 35,
-      "maeKp": 1.19,
-      "biasKp": 1.11,
-      "persistenceMaeKp": 0.73,
-      "persistencePairedPeriods": 35,
+      "pairedPeriods": 38,
+      "maeKp": 1.16,
+      "biasKp": 0.98,
+      "persistenceMaeKp": 0.74,
+      "persistencePairedPeriods": 38,
       "observedStormPeriods": 0,
       "predictedStormPeriods": 0,
       "hits": 0,
       "falseAlarms": 0,
       "missedStorms": 0,
-      "trueNegatives": 35
+      "trueNegatives": 38
     },
     {
       "band": "24–48h",
-      "pairedPeriods": 37,
-      "maeKp": 1.18,
-      "biasKp": 1.13,
-      "persistenceMaeKp": 1.01,
-      "persistencePairedPeriods": 37,
+      "pairedPeriods": 40,
+      "maeKp": 1.15,
+      "biasKp": 1,
+      "persistenceMaeKp": 1.06,
+      "persistencePairedPeriods": 40,
       "observedStormPeriods": 0,
       "predictedStormPeriods": 0,
       "hits": 0,
       "falseAlarms": 0,
       "missedStorms": 0,
-      "trueNegatives": 37
+      "trueNegatives": 40
     },
     {
       "band": "48–72h",
-      "pairedPeriods": 25,
-      "maeKp": 1.17,
-      "biasKp": 1.15,
-      "persistenceMaeKp": 1.13,
-      "persistencePairedPeriods": 25,
+      "pairedPeriods": 27,
+      "maeKp": 1.15,
+      "biasKp": 1.02,
+      "persistenceMaeKp": 1.19,
+      "persistencePairedPeriods": 27,
       "observedStormPeriods": 0,
       "predictedStormPeriods": 0,
       "hits": 0,
       "falseAlarms": 0,
       "missedStorms": 0,
-      "trueNegatives": 25
+      "trueNegatives": 27
     }
   ],
   "recentPairs": [
+    {
+      "targetAt": 1795575600000,
+      "fetchedAt": 1795559410256,
+      "leadHours": 4.5,
+      "band": "0–6h",
+      "forecastKp": 1.67,
+      "observedKp": 2.33,
+      "observationSeenAt": 1795596154922,
+      "persistenceKp": 1.33
+    },
+    {
+      "targetAt": 1795575600000,
+      "fetchedAt": 1795514317099,
+      "leadHours": 17.02,
+      "band": "6–24h",
+      "forecastKp": 1.67,
+      "observedKp": 2.33,
+      "observationSeenAt": 1795596154922,
+      "persistenceKp": 1.67
+    },
+    {
+      "targetAt": 1795575600000,
+      "fetchedAt": 1795478264056,
+      "leadHours": 27.04,
+      "band": "24–48h",
+      "forecastKp": 1.67,
+      "observedKp": 2.33,
+      "observationSeenAt": 1795596154922,
+      "persistenceKp": 0.67
+    },
+    {
+      "targetAt": 1795564800000,
+      "fetchedAt": 1795559410256,
+      "leadHours": 1.5,
+      "band": "0–6h",
+      "forecastKp": 1.67,
+      "observedKp": 3,
+      "observationSeenAt": 1795596154922,
+      "persistenceKp": 1.33
+    },
+    {
+      "targetAt": 1795564800000,
+      "fetchedAt": 1795514317099,
+      "leadHours": 14.02,
+      "band": "6–24h",
+      "forecastKp": 1.67,
+      "observedKp": 3,
+      "observationSeenAt": 1795596154922,
+      "persistenceKp": 1.67
+    },
+    {
+      "targetAt": 1795564800000,
+      "fetchedAt": 1795478264056,
+      "leadHours": 24.04,
+      "band": "24–48h",
+      "forecastKp": 1.67,
+      "observedKp": 3,
+      "observationSeenAt": 1795596154922,
+      "persistenceKp": 0.67
+    },
+    {
+      "targetAt": 1795564800000,
+      "fetchedAt": 1795376708193,
+      "leadHours": 52.25,
+      "band": "48–72h",
+      "forecastKp": 1.67,
+      "observedKp": 3,
+      "observationSeenAt": 1795596154922,
+      "persistenceKp": 0.33
+    },
+    {
+      "targetAt": 1795554000000,
+      "fetchedAt": 1795478264056,
+      "leadHours": 21.04,
+      "band": "6–24h",
+      "forecastKp": 1.67,
+      "observedKp": 1.33,
+      "observationSeenAt": 1795596154922,
+      "persistenceKp": 0.67
+    },
+    {
+      "targetAt": 1795554000000,
+      "fetchedAt": 1795419910205,
+      "leadHours": 37.25,
+      "band": "24–48h",
+      "forecastKp": 1.67,
+      "observedKp": 1.33,
+      "observationSeenAt": 1795596154922,
+      "persistenceKp": 0.33
+    },
+    {
+      "targetAt": 1795554000000,
+      "fetchedAt": 1795376708193,
+      "leadHours": 49.25,
+      "band": "48–72h",
+      "forecastKp": 1.67,
+      "observedKp": 1.33,
+      "observationSeenAt": 1795596154922,
+      "persistenceKp": 0.33
+    },
     {
       "targetAt": 1795543200000,
       "fetchedAt": 1795478264056,
@@ -85,106 +185,6 @@
       "observedKp": 1.33,
       "observationSeenAt": 1795559410256,
       "persistenceKp": 0.33
-    },
-    {
-      "targetAt": 1795543200000,
-      "fetchedAt": 1795330561261,
-      "leadHours": 59.07,
-      "band": "48–72h",
-      "forecastKp": 1.67,
-      "observedKp": 1.33,
-      "observationSeenAt": 1795559410256,
-      "persistenceKp": 1
-    },
-    {
-      "targetAt": 1795532400000,
-      "fetchedAt": 1795478264056,
-      "leadHours": 15.04,
-      "band": "6–24h",
-      "forecastKp": 1.33,
-      "observedKp": 0.67,
-      "observationSeenAt": 1795559410256,
-      "persistenceKp": 0.67
-    },
-    {
-      "targetAt": 1795532400000,
-      "fetchedAt": 1795419910205,
-      "leadHours": 31.25,
-      "band": "24–48h",
-      "forecastKp": 1.33,
-      "observedKp": 0.67,
-      "observationSeenAt": 1795559410256,
-      "persistenceKp": 0.33
-    },
-    {
-      "targetAt": 1795532400000,
-      "fetchedAt": 1795330561261,
-      "leadHours": 56.07,
-      "band": "48–72h",
-      "forecastKp": 1.33,
-      "observedKp": 0.67,
-      "observationSeenAt": 1795559410256,
-      "persistenceKp": 1
-    },
-    {
-      "targetAt": 1795521600000,
-      "fetchedAt": 1795478264056,
-      "leadHours": 12.04,
-      "band": "6–24h",
-      "forecastKp": 1.33,
-      "observedKp": 1,
-      "observationSeenAt": 1795559410256,
-      "persistenceKp": 0.67
-    },
-    {
-      "targetAt": 1795521600000,
-      "fetchedAt": 1795419910205,
-      "leadHours": 28.25,
-      "band": "24–48h",
-      "forecastKp": 1.33,
-      "observedKp": 1,
-      "observationSeenAt": 1795559410256,
-      "persistenceKp": 0.33
-    },
-    {
-      "targetAt": 1795521600000,
-      "fetchedAt": 1795330561261,
-      "leadHours": 53.07,
-      "band": "48–72h",
-      "forecastKp": 1.33,
-      "observedKp": 1,
-      "observationSeenAt": 1795559410256,
-      "persistenceKp": 1
-    },
-    {
-      "targetAt": 1795510800000,
-      "fetchedAt": 1795478264056,
-      "leadHours": 9.04,
-      "band": "6–24h",
-      "forecastKp": 1.33,
-      "observedKp": 1,
-      "observationSeenAt": 1795559410256,
-      "persistenceKp": 0.67
-    },
-    {
-      "targetAt": 1795510800000,
-      "fetchedAt": 1795419910205,
-      "leadHours": 25.25,
-      "band": "24–48h",
-      "forecastKp": 1.33,
-      "observedKp": 1,
-      "observationSeenAt": 1795559410256,
-      "persistenceKp": 0.33
-    },
-    {
-      "targetAt": 1795510800000,
-      "fetchedAt": 1795330561261,
-      "leadHours": 50.07,
-      "band": "48–72h",
-      "forecastKp": 1.33,
-      "observedKp": 1,
-      "observationSeenAt": 1795559410256,
-      "persistenceKp": 1
     }
   ],
   "provenance": {
